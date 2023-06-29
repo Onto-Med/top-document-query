@@ -1,0 +1,32 @@
+subjectQuery:
+  baseQuery: "SELECT subject_id, birth_date, sex FROM subject\nWHERE TRUE"
+  sexListPart: "\nAND sex IN ({values})"
+  birthdateIntervalPart: "\nAND birth_date {operator} {value}"
+  output:
+    id: subject_id
+    sex: sex
+    birthdate: birth_date
+phenotypeQueries:
+  default:
+    baseQuery: "SELECT subject_id, created_at, unit, number_value, text_value, date_time_value, boolean_value FROM phenotype\nWHERE code_system || '|' || code IN ({codes}) AND (number_value IS NOT NULL OR text_value IS NOT NULL OR date_time_value IS NOT NULL OR boolean_value IS NOT NULL)"
+    numberValueIntervalPart: "\nAND number_value {operator} {value}" 
+    numberValueListPart: "\nAND number_value IN ({values})"
+    dateTimeValueIntervalPart: "\nAND date_time_value {operator} {value}" 
+    dateTimeValueListPart: "\nAND date_time_value IN ({values})" 
+    textValueListPart: "\nAND text_value IN ({values})" 
+    booleanValueListPart: "\nAND boolean_value IN ({values})" 
+    dateTimeIntervalPart: "\nAND created_at {operator} {value}"
+    subjectsPart: "\nAND subject_id IN ({values})"
+    output:
+      subject: subject_id
+      numberValue: number_value
+      textValue: text_value
+      dateTimeValue: date_time_value
+      booleanValue: boolean_value
+      dateTime: created_at
+birthdateMapping:
+  code: http://loinc.org|21112-8
+ageMapping:
+  code: http://loinc.org|30525-0
+sexMapping:
+  code: http://loinc.org|46098-0

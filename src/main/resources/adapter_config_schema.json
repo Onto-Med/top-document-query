@@ -1,0 +1,203 @@
+{
+  "$id": "https://github.com/Onto-Med/top-phenotypic-query/blob/main/adapter_config.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TOP Adapter Configuration Schema",
+  "description": "Schema of TOP adapter configurations",
+  "definitions": {
+    "mapping": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "restrictionMappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "model": {
+                "type": "array",
+                "items": {
+                  "type": ["string", "number"]
+                }
+              },
+              "source": {
+                "type": "array",
+                "items": {
+                  "type": ["string", "number"]
+                }
+              }
+            },
+            "required": ["model", "source"]
+          }
+        },
+        "type": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "phenotypeMappings": {
+          "type": "object",
+          "properties": {
+            "codes": {
+              "type": "string"
+            },
+            "phenotype": {
+              "type": "string"
+            }
+          },
+          "oneOf": [
+            {
+              "required": ["codes"]
+            },
+            {
+              "required": ["phenotype"]
+            }
+          ]
+        }
+      },
+      "required": ["code"]
+    },
+    "phenotypeQuery": {
+      "type": "object",
+      "properties": {
+        "baseQuery": {
+          "type": "string"
+        },
+        "dateTimeIntervalPart": {
+          "type": "string"
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "conceptValue": {
+              "type": "string"
+            },
+            "dateTime": {
+              "type": "string"
+            },
+            "dateTimeValue": {
+              "type": "string"
+            },
+            "numberValue": {
+              "type": "string"
+            },
+            "subject": {
+              "type": "string"
+            },
+            "textValue": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": ["subject", "dateTime"]
+        },
+        "subjectsPart": {
+          "type": "string"
+        },
+        "valueIntervalPart": {
+          "type": "string"
+        },
+        "valueListPart": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "baseQuery",
+        "dateTimeIntervalPart",
+        "output"
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "adapter": {
+      "type": "string"
+    },
+    "connection": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "IP or hostname to connect to"
+        },
+        "user": {
+          "type": "string",
+          "description": "Username for authentication"
+        },
+        "password": {
+          "type": "string",
+          "description": "Password for authentication"
+        },
+        "token": {
+          "type": "string",
+          "description": "Token for HTTP bearer authentication"
+        }
+      },
+      "required": ["url"]
+    },
+    "subjectQuery": {
+      "type": "object",
+      "properties": {
+        "baseQuery": {
+          "type": "string"
+        },
+        "sexListPart": {
+          "type": "string"
+        },
+        "birthdateIntervalPart": {
+          "type": "string"
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "sex": {
+              "type": "string"
+            },
+            "birthdate": {
+              "type": "string"
+            }
+          },
+          "required": ["sex", "birthdate"]
+        }
+      },
+      "required": [
+        "baseQuery",
+        "sexListPart",
+        "birthdateIntervalPart",
+        "output"
+      ]
+    },
+    "phenotypeQueries": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/phenotypeQuery"
+      }
+    },
+    "birthdateMapping": {
+      "$ref": "#/definitions/mapping"
+    },
+    "ageMapping": {
+      "$ref": "#/definitions/mapping"
+    },
+    "sexMapping": {
+      "$ref": "#/definitions/mapping"
+    },
+    "codeMappings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/mapping"
+      }
+    }
+  },
+  "required": ["id", "adapter", "connection"]
+}

@@ -1,0 +1,9 @@
+id: Generic_Elasticsearch_Adapter
+adapter: care.smith.top.top_phenotypic_query.song.adapter.lucene.LuceneAdapter
+connection:
+  url: http://localhost
+  port: 9200
+index:
+  - test_documents
+field:
+  - text

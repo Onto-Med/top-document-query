@@ -1,0 +1,4 @@
+id: SMITH_FHIR_Adapter
+adapter: care.smith.top.top_phenotypic_query.data_adapter.fhir.FHIRAdapter
+connection:
+  url: http://localhost:8080/baseR4
