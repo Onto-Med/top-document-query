@@ -6,9 +6,9 @@ import care.smith.top.model.ExpressionFunction;
 import care.smith.top.model.ExpressionFunction.NotationEnum;
 import care.smith.top.model.Value;
 import care.smith.top.top_document_query.SONG;
-import care.smith.top.top_phenotypic_query.util.Values;
-import care.smith.top.top_phenotypic_query.util.builder.Exp;
-import care.smith.top.top_phenotypic_query.util.builder.Val;
+import care.smith.top.top_document_query.util.Values;
+import care.smith.top.top_document_query.util.builder.Exp;
+import care.smith.top.top_document_query.util.builder.Val;
 import java.util.List;
 
 public class XProd extends TextFunction {

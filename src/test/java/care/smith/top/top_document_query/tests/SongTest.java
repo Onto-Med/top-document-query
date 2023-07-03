@@ -13,7 +13,7 @@ import care.smith.top.top_document_query.functions.SubTree;
 import care.smith.top.top_document_query.functions.XProd;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
-import care.smith.top.top_phenotypic_query.util.builder.Exp;
+import care.smith.top.top_document_query.util.builder.Exp;
 import care.smith.top.top_document_query.util.builder.Cat;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;

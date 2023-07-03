@@ -17,10 +17,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import care.smith.top.top_phenotypic_query.util.Restrictions;
-import care.smith.top.top_phenotypic_query.util.Values;
-import care.smith.top.top_phenotypic_query.util.builder.Exp;
-import care.smith.top.top_phenotypic_query.util.builder.Val;
+import care.smith.top.top_document_query.util.Values;
+import care.smith.top.top_document_query.util.builder.Exp;
+import care.smith.top.top_document_query.util.builder.Val;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,7 +168,6 @@ public class SONG {
     if (exp == null) return "null";
     if (exp.getEntityId() != null) return exp.getEntityId();
     if (exp.getValues() != null) return Values.toString(exp.getValues());
-    if (exp.getRestriction() != null) return Restrictions.toString(exp.getRestriction());
     return operatorToString(exp);
   }
 

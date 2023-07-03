@@ -1,7 +1,7 @@
 package care.smith.top.top_document_query.util;
 
 import care.smith.top.model.*;
-import care.smith.top.top_phenotypic_query.util.HTTP;
+//import care.smith.top.top_phenotypic_query.util.HTTP;
 import java.io.IOException;
 import java.util.*;
 import java.util.ArrayList;
@@ -55,11 +55,11 @@ public class Entities {
         return new Entities(entities).repository(repo);
     }
 
-    public static Entities of(String repoUrl, String user, String password)
-            throws IOException, InterruptedException {
-        String token = HTTP.getToken(user, password);
-        return of(HTTP.readRepository(repoUrl, token), HTTP.readEntities(repoUrl, token));
-    }
+//    public static Entities of(String repoUrl, String user, String password)
+//            throws IOException, InterruptedException {
+//        String token = HTTP.getToken(user, password);
+//        return of(HTTP.readRepository(repoUrl, token), HTTP.readEntities(repoUrl, token));
+//    }
 
     public Entities repository(Repository repo) {
         this.repo = repo;

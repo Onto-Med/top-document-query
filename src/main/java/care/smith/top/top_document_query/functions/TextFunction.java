@@ -4,7 +4,7 @@ import care.smith.top.model.Expression;
 import care.smith.top.model.ExpressionFunction.NotationEnum;
 import care.smith.top.model.Value;
 import care.smith.top.top_document_query.SONG;
-import care.smith.top.top_phenotypic_query.util.Values;
+import care.smith.top.top_document_query.util.Values;
 import java.util.List;
 import java.util.stream.Collectors;
 

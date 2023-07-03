@@ -3,7 +3,7 @@ package care.smith.top.top_document_query.adapter.lucene;
 import care.smith.top.model.Expression;
 import care.smith.top.top_document_query.SONG;
 import care.smith.top.top_document_query.functions.Or;
-import care.smith.top.top_phenotypic_query.util.builder.Exp;
+import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
 import java.util.stream.Collectors;
 

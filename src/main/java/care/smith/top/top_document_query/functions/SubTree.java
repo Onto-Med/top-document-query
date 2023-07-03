@@ -5,7 +5,7 @@ import care.smith.top.model.Expression;
 import care.smith.top.model.ExpressionFunction;
 import care.smith.top.model.ExpressionFunction.NotationEnum;
 import care.smith.top.top_document_query.SONG;
-import care.smith.top.top_phenotypic_query.util.builder.Exp;
+import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
 
 public class SubTree extends TextFunction {

@@ -5,11 +5,11 @@ import care.smith.top.model.Expression;
 import care.smith.top.model.Phenotype;
 import care.smith.top.model.Value;
 import care.smith.top.top_document_query.SONG;
-import care.smith.top.top_phenotypic_query.c2reasoner.functions.bool.Not;
-import care.smith.top.top_phenotypic_query.c2reasoner.functions.set.In;
-import care.smith.top.top_phenotypic_query.util.Entities;
-import care.smith.top.top_phenotypic_query.util.Phenotypes;
-import care.smith.top.top_phenotypic_query.util.Values;
+//import care.smith.top.top_phenotypic_query.c2reasoner.functions.bool.Not;
+//import care.smith.top.top_phenotypic_query.c2reasoner.functions.set.In;
+import care.smith.top.top_document_query.util.Entities;
+//import care.smith.top.top_phenotypic_query.util.Phenotypes;
+import care.smith.top.top_document_query.util.Values;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -104,51 +104,6 @@ public class Expressions {
         return null;
     }
 
-    public static Set<String> getDirectVariables(Expression exp, care.smith.top.top_phenotypic_query.util.Entities phenotypes) {
-        return getVariables(exp, phenotypes, true);
-    }
-
-    public static Set<String> getVariables(Expression exp, care.smith.top.top_phenotypic_query.util.Entities phenotypes) {
-        return getVariables(exp, phenotypes, false);
-    }
-
-    public static Set<String> getVariables(Expression exp, care.smith.top.top_phenotypic_query.util.Entities phenotypes, boolean direct) {
-        Set<String> vars = new LinkedHashSet<>();
-        addVariables(exp, vars, phenotypes, direct);
-        return vars;
-    }
-
-    private static void addVariables(
-            Expression exp, Set<String> vars, care.smith.top.top_phenotypic_query.util.Entities phenotypes, boolean direct) {
-        if (exp == null) return;
-        if (exp.getEntityId() != null) {
-            vars.add(exp.getEntityId());
-            Phenotype varPhe = phenotypes.getPhenotype(exp.getEntityId());
-            if (varPhe != null && !direct) {
-                Expression varPheExp = varPhe.getExpression();
-                if (varPheExp != null) addVariables(varPheExp, vars, phenotypes, direct);
-            }
-        } else if (exp.getArguments() != null && !isSingleRestriction(exp, phenotypes))
-            for (Expression arg : exp.getArguments()) addVariables(arg, vars, phenotypes, direct);
-    }
-
-    private static boolean isSingleRestriction(Expression e, care.smith.top.top_phenotypic_query.util.Entities phenotypes) {
-        return In.get().getFunctionId().equals(e.getFunctionId())
-                && Phenotypes.isSinglePhenotype(
-                phenotypes.getPhenotype(e.getArguments().get(0).getEntityId()));
-    }
-
-    public static boolean containsNegation(Expression exp, Entities phenotypes) {
-        if (exp.getFunctionId() != null) {
-            if (Not.get().getFunctionId().equals(exp.getFunctionId())) return true;
-            for (Expression arg : exp.getArguments()) if (containsNegation(arg, phenotypes)) return true;
-        } else if (exp.getEntityId() != null) {
-            Phenotype phe = phenotypes.getPhenotype(exp.getEntityId());
-            if (phe.getExpression() == null) return false;
-            return containsNegation(phe.getExpression(), phenotypes);
-        }
-        return false;
-    }
 
     public static boolean isEmpty(Expression exp) {
         return exp.getConstantId() == null
