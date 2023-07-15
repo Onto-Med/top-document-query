@@ -74,8 +74,8 @@ public class LuceneAdapter extends TextAdapter {
         Expressions.getStringValue(
             LuceneSong.get()
                 .concepts(
-                    entities) // ToDo: this needs to be added; how do I get the Concept Entities
-                .lang("en") // ToDo: do I get this from query?
+                    entities)
+                .lang(query.getLanguage())
                 .generate(query.getEntityId()));
     // execute query and return resulting documents
     return execute(queryString);

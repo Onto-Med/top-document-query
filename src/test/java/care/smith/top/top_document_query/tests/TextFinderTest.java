@@ -42,7 +42,8 @@ class TextFinderTest extends AbstractElasticTest {
                 adapter,
                 adapter.getConfig(),
                 entities.getConcepts().toArray(new Concept[0]),
-                PARENT_CAT_ID)
+                PARENT_CAT_ID,
+                "en")
             .getFinder();
     List<Document> documents = tf.execute();
     assertEquals(1, documents.size());

@@ -14,10 +14,10 @@ public class CQue {
   private Entity[] entities;
 
   public CQue(
-      TextAdapter adapter, TextAdapterConfig config, Entity[] entities, String parentCatId) {
+      TextAdapter adapter, TextAdapterConfig config, Entity[] entities, String parentCatId, String lang) {
     this.adapter = adapter;
     this.config = config;
-    this.query = new ConceptQuery().entityId(parentCatId);
+    this.query = new ConceptQuery().entityId(parentCatId).language(lang);
     this.entities = entities;
   }
 
