@@ -3,7 +3,7 @@ package care.smith.top.top_document_query.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import care.smith.top.model.Concept;
-import care.smith.top.top_document_query.adapter.Document;
+import care.smith.top.top_document_query.adapter.ElasticDocument;
 import care.smith.top.top_document_query.adapter.TextFinder;
 import care.smith.top.top_document_query.functions.And;
 import care.smith.top.top_document_query.functions.Dist;
@@ -45,7 +45,7 @@ class TextFinderTest extends AbstractElasticTest {
                 PARENT_CAT_ID,
                 "en")
             .getFinder();
-    List<Document> documents = tf.execute();
+    List<ElasticDocument> documents = tf.execute();
     assertEquals(1, documents.size());
   }
 }

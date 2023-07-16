@@ -1,6 +1,6 @@
 package care.smith.top.top_document_query.adapter;
 
-public class Document {
+public class ElasticDocument {
 
   public String name;
   public String text;
