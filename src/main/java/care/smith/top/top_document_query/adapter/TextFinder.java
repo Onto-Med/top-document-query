@@ -25,7 +25,7 @@ public class TextFinder {
     return entities;
   }
 
-  public List<Document> execute() {
+  public List<ElasticDocument> execute() {
     return adapter.execute(query, entities);
   }
 }
