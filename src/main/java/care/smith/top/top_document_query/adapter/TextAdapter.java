@@ -43,7 +43,7 @@ public abstract class TextAdapter {
   }
 
   // generate and execute query
-  public abstract List<ElasticDocument> execute(ConceptQuery query, Entities entities);
+  public abstract List<? extends AbstractDocument> execute(ConceptQuery query, Entities entities);
 
-  public abstract List<ElasticDocument> execute(String queryString);
+  public abstract List<? extends AbstractDocument> execute(String queryString);
 }

@@ -21,7 +21,7 @@ public abstract class AbstractElasticTest {
   protected static DocumentElasticsearchContainer elasticsearchContainer =
       new DocumentElasticsearchContainer();
   protected static ElasticsearchClient esClient;
-  protected static TextAdapter adapter;
+  protected static LuceneAdapter adapter;
   protected static Map<String, String> documents =
       Map.of(
           "test01", "What do we have here? A test document. With an entity. Nice.",
@@ -68,7 +68,7 @@ public abstract class AbstractElasticTest {
             .getResource("config/Elastic_Adapter_Test.yml");
     assertNotNull(configFile);
 
-    adapter = LuceneAdapter.getInstance(configFile.getPath());
+    adapter = (LuceneAdapter) LuceneAdapter.getInstance(configFile.getPath());
     assertNotNull(adapter);
   }
 
