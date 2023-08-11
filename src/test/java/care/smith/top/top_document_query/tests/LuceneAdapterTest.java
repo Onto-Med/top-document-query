@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+//ToDo: Test still uses local ES instance and not the TestContainer
 class LuceneAdapterTest extends AbstractElasticTest {
   Concept documentEntity = new Cat("document", false).titleEn("document").get();
   Concept entityEntity = new Cat("entity", false).titleEn("entity").synonymEn("entities").get();
