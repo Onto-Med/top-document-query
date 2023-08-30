@@ -11,7 +11,6 @@ public class TextFinder {
   private ConceptQuery query;
   private Entities entities;
   private TextAdapter adapter;
-
   private TextAdapterConfig config;
 
   public TextFinder(ConceptQuery query, Entity[] entities, TextAdapter adapter) {
@@ -25,7 +24,7 @@ public class TextFinder {
     return entities;
   }
 
-  public List<Document> execute() {
-    return adapter.execute(query, entities);
+  public List<AbstractDocument> execute() {
+    return (List<AbstractDocument>) adapter.execute(query, entities);
   }
 }

@@ -85,7 +85,22 @@ public class SongTest {
           .synonymEn("f2-en")
           .get();
 
+  Concept de_only =
+      new Cat("de_only", false)
+          .titleDe("de_only")
+          .synonymDe("de_only_syn")
+          .get();
+
+  Concept en_and_de =
+      new Cat("en_and_de", false)
+          .titleDe("de_title")
+          .synonymDe("de_syn")
+          .titleEn("en_title")
+          .synonymEn("en_syn")
+          .get();
+
   Entities concepts = Entities.of(a, b, c, d, e, f);
+  Entities concepts_for_lang = Entities.of(de_only, en_and_de);
 
   @Test
   public void test1() {
@@ -160,4 +175,36 @@ public class SongTest {
             + " c1-de OR c2-de) AND (f-de OR f1-de OR \"f2- de\")))",
         query);
   }
+
+  @Test
+  public void test_no_set_language() {
+    // if no language is set, it should take all languages
+    Expression exp = And.of(de_only, en_and_de);
+    String query =
+        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang(null).generate(exp));
+    assertEquals(
+        "((de_only OR de_only_syn) AND (de_title OR en_title OR de_syn OR en_syn))",
+        query);
+  }
+
+  @Test
+  public void test_set_specific_language_accessible() {
+    Expression exp = And.of(de_only, en_and_de);
+    String query =
+        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang("de").generate(exp));
+    assertEquals(
+        "((de_only OR de_only_syn) AND (de_title OR de_syn))",
+        query);
+  }
+
+  @Test
+  public void test_set_specific_language_not_accessible() {
+    Expression exp = And.of(de_only, en_and_de);
+    String query =
+        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang("en").generate(exp));
+    assertEquals(
+        "((en_title OR en_syn))",
+        query);
+  }
 }
+

@@ -1,8 +1,6 @@
 package care.smith.top.top_document_query.util;
 
 import care.smith.top.model.*;
-//import care.smith.top.top_phenotypic_query.util.HTTP;
-import java.io.IOException;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Entities {
     private final Map<String, Entity> entities = new LinkedHashMap<>();
@@ -55,12 +54,6 @@ public class Entities {
         return new Entities(entities).repository(repo);
     }
 
-//    public static Entities of(String repoUrl, String user, String password)
-//            throws IOException, InterruptedException {
-//        String token = HTTP.getToken(user, password);
-//        return of(HTTP.readRepository(repoUrl, token), HTTP.readEntities(repoUrl, token));
-//    }
-
     public Entities repository(Repository repo) {
         this.repo = repo;
         return this;
@@ -82,23 +75,12 @@ public class Entities {
         return entities.get(id);
     }
 
-    public Category getCategory(String id) {
-        return (Category) getEntity(id);
-    }
-
     public Collection<Entity> getEntities() {
         return entities.values();
     }
 
     public Entity[] getEntitiesArray() {
         return getEntities().toArray(new Entity[0]);
-    }
-
-    public Collection<Category> getCategories() {
-        return getEntities().stream()
-                .filter(e -> e.getEntityType() == EntityType.CATEGORY)
-                .map(Category.class::cast)
-                .collect(Collectors.toSet());
     }
 
     public Collection<Concept> getConcepts() {
@@ -153,9 +135,10 @@ public class Entities {
     }
 
     private static String getText(List<LocalisableText> texts, String lang) {
+        if (lang == null) { return (texts.isEmpty()) ? null : texts.get(0).getText(); }
         return texts.stream()
                 .filter(t -> Objects.equals(t.getLang(), lang))
-                .map(t -> t.getText())
+                .map(LocalisableText::getText)
                 .findFirst()
                 .orElse(null);
     }
@@ -187,8 +170,12 @@ public class Entities {
     }
 
     private static List<String> getAnnotations(List<LocalisableText> txts, String lang) {
-        return txts.stream()
-                .filter(t -> lang.trim().equals(t.getLang().trim()) && !t.getText().isBlank())
+        Stream<LocalisableText> textStream = txts.stream();
+//      // only filter annotations by language if lang is set
+        if (lang != null) textStream = textStream.filter(t ->
+            lang.trim().equals(t.getLang().trim()) && !t.getText().isBlank());
+        // else take all that are available
+        return textStream
                 .map(t -> t.getText().trim())
                 .collect(Collectors.toList());
     }

@@ -1,22 +1,26 @@
 package care.smith.top.top_document_query.adapter;
 
-public class Document {
+public class ElasticDocument extends AbstractDocument {
 
   public String name;
   public String text;
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public void setName(String name) {
     this.name = name;
   }
 
+  @Override
   public String getText() {
     return text;
   }
 
+  @Override
   public void setText(String text) {
     this.text = text;
   }

@@ -165,7 +165,13 @@ public class SONG {
   }
 
   public String toString(Expression exp) {
-    if (exp == null) return "null";
+    if (
+        (exp == null) ||
+        (exp.getFunctionId() == null && exp.getEntityId() == null && exp.getConstantId() == null &&
+            (exp.getArguments() == null || exp.getArguments().isEmpty()) &&
+            exp.getType() == null
+        )
+    ) return "null";
     if (exp.getEntityId() != null) return exp.getEntityId();
     if (exp.getValues() != null) return Values.toString(exp.getValues());
     return operatorToString(exp);

@@ -3,7 +3,7 @@ package care.smith.top.top_document_query.tests;
 import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
-import care.smith.top.top_document_query.adapter.Document;
+import care.smith.top.top_document_query.adapter.ElasticDocument;
 import care.smith.top.top_document_query.adapter.lucene.LuceneSong;
 import care.smith.top.top_document_query.functions.And;
 import care.smith.top.top_document_query.util.Entities;
@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+//ToDo: Test still uses local ES instance and not the TestContainer
 class LuceneAdapterTest extends AbstractElasticTest {
   Concept documentEntity = new Cat("document", false).titleEn("document").get();
   Concept entityEntity = new Cat("entity", false).titleEn("entity").synonymEn("entities").get();
@@ -46,11 +47,11 @@ class LuceneAdapterTest extends AbstractElasticTest {
     initAdaper();
     assertNotNull(adapter);
 
-    List<Document> documents = adapter.execute(queryString);
+    List<ElasticDocument> documents = adapter.execute(queryString);
     assertEquals(correctDocumentCount, documents.size());
     assertEquals(
         new HashSet<>(Arrays.asList("test01", "test02")),
-        documents.stream().map(Document::getName).collect(Collectors.toSet()));
+        documents.stream().map(ElasticDocument::getName).collect(Collectors.toSet()));
 
     // Test if "field" specification correctly excludes documents when searching on "name" field
     adapter.getConfig().setField(new String[] {"name"});
