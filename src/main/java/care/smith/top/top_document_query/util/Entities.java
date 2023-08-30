@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Entities {
     private final Map<String, Entity> entities = new LinkedHashMap<>();
@@ -134,9 +135,10 @@ public class Entities {
     }
 
     private static String getText(List<LocalisableText> texts, String lang) {
+        if (lang == null) { return (texts.isEmpty()) ? null : texts.get(0).getText(); }
         return texts.stream()
                 .filter(t -> Objects.equals(t.getLang(), lang))
-                .map(t -> t.getText())
+                .map(LocalisableText::getText)
                 .findFirst()
                 .orElse(null);
     }
@@ -168,8 +170,12 @@ public class Entities {
     }
 
     private static List<String> getAnnotations(List<LocalisableText> txts, String lang) {
-        return txts.stream()
-                .filter(t -> lang.trim().equals(t.getLang().trim()) && !t.getText().isBlank())
+        Stream<LocalisableText> textStream = txts.stream();
+//      // only filter annotations by language if lang is set
+        if (lang != null) textStream = textStream.filter(t ->
+            lang.trim().equals(t.getLang().trim()) && !t.getText().isBlank());
+        // else take all that are available
+        return textStream
                 .map(t -> t.getText().trim())
                 .collect(Collectors.toList());
     }
