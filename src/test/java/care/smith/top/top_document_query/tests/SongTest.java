@@ -181,7 +181,7 @@ public class SongTest {
     // if no language is set, it should take all languages
     Expression exp = And.of(de_only, en_and_de);
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).generate(exp));
+        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang(null).generate(exp));
     assertEquals(
         "((de_only OR de_only_syn) AND (de_title OR en_title OR de_syn OR en_syn))",
         query);
