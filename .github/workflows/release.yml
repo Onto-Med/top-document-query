@@ -22,12 +22,9 @@ jobs:
         cache: 'maven'
         server-id: github
         settings-path: ${{ github.workspace }}
-    - name: Build with Maven
-      run: mvn -B --no-transfer-progress package -s .mvn-ci.xml --file pom.xml
-      env:
-        GH_MAVEN_PKG_AUTH_TOKEN: ${{ secrets.GH_MAVEN_PKG_AUTH_TOKEN }}
-        GH_MAVEN_PKG_USER: ${{ secrets.GH_MAVEN_PKG_USER }}
     - name: Publish to GitHub Packages Apache Maven
-      run: mvn -B --no-transfer-progress deploy -s $GITHUB_WORKSPACE/settings.xml
+      run: mvn -B --no-transfer-progress deploy -s $GITHUB_WORKSPACE/settings.xml -s .mvn-ci.xml --file pom.xml
       env:
         GITHUB_TOKEN: ${{ github.token }}
+        GH_MAVEN_PKG_AUTH_TOKEN: ${{ secrets.GH_MAVEN_PKG_AUTH_TOKEN }}
+        GH_MAVEN_PKG_USER: ${{ secrets.GH_MAVEN_PKG_USER }}
