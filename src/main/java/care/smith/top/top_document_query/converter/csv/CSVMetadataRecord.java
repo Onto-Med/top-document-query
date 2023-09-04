@@ -11,7 +11,6 @@ import care.smith.top.top_document_query.util.Expressions;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CSVMetadataRecord extends CSVRecordCompositeEntries {
   private static final long serialVersionUID = 1L;

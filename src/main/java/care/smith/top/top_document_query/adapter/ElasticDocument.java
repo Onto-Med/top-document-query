@@ -4,6 +4,13 @@ public class ElasticDocument extends AbstractDocument {
 
   public String name;
   public String text;
+  public String id;
+
+  @Override
+  public String getId() { return null; }
+
+  @Override
+  public void setId(String id) { this.id = id; }
 
   @Override
   public String getName() {
