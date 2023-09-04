@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>care.smith.top</groupId>
 	<artifactId>top-document-query</artifactId>
-	<version>0.7.2</version>
+	<version>0.7.3-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -30,6 +30,11 @@
             <groupId>care.smith.top</groupId>
             <artifactId>top-api</artifactId>
             <version>0.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>care.smith.top</groupId>
+            <artifactId>top-backend</artifactId>
+            <version>0.7.0</version>
         </dependency>
         <dependency>
             <groupId>co.elastic.clients</groupId>
