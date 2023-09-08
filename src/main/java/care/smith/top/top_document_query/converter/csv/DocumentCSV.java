@@ -6,10 +6,14 @@ import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.adapter.AbstractDocument;
 import care.smith.top.top_document_query.util.Entities;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class DocumentCSV {
 
@@ -69,5 +73,30 @@ public class DocumentCSV {
       );
     }
     writer.flush();
+  }
+
+  public List<String> readColumn(InputStream inputStream) {
+    return readColumn(inputStream, 0);
+  }
+
+  public List<String> readColumn(InputStream inputStream, int position) {
+    List<String> records = new ArrayList<>();
+    try (Scanner scanner = new Scanner(inputStream, charset)) {
+      while (scanner.hasNextLine()) {
+        try (Scanner rowScanner = new Scanner(scanner.nextLine())) {
+          rowScanner.useDelimiter(entriesDelimiter);
+          int currentPos = 0;
+          while (rowScanner.hasNext()) {
+            if (currentPos > position) {
+              break;
+            } else if (currentPos == position) {
+              records.add(rowScanner.next());
+            }
+            currentPos++;
+          }
+        }
+      }
+    }
+    return records;
   }
 }
