@@ -4,6 +4,7 @@ package care.smith.top.top_document_query.converter.csv;
 import care.smith.top.model.Concept;
 import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.adapter.AbstractDocument;
+import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.util.Entities;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -62,20 +63,21 @@ public class DocumentCSV {
     writer.flush();
   }
 
-  public void write(List<? extends AbstractDocument> documents, OutputStream outputStream) {
+  public void write(List<DocumentHit> documents, OutputStream outputStream) {
     CSVWriter writer = new CSVWriter(outputStream, entriesDelimiter, charset);
     writer.write(CSVDataRecord.FIELDS);
-    for (AbstractDocument document : documents){
+    for (DocumentHit document : documents){
       writer.write(new CSVDataRecord(
-          document.getId(),
-          document.getName(),
-          document.getText().substring(0, excerptLength))
+          document.getDocumentId(),
+          String.valueOf(document.getScore()),
+          document.getDocument().getName(),
+          document.getDocument().getText().substring(0, excerptLength))
       );
     }
     writer.flush();
   }
 
-  public List<String> readColumn(InputStream inputStream) {
+  public List<String> readFirstColumn(InputStream inputStream) {
     return readColumn(inputStream, 0);
   }
 
@@ -90,7 +92,9 @@ public class DocumentCSV {
             if (currentPos > position) {
               break;
             } else if (currentPos == position) {
-              records.add(rowScanner.next());
+              String item = rowScanner.next();
+              if (!CSVDataRecord.FIELDS.contains(item))
+                records.add(item);
             }
             currentPos++;
           }

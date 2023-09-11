@@ -24,7 +24,7 @@ public class TextFinder {
     return entities;
   }
 
-  public List<AbstractDocument> execute() {
-    return (List<AbstractDocument>) adapter.execute(query, entities);
+  public List<DocumentHit> execute() {
+    return (List<DocumentHit>) adapter.execute(query, entities);
   }
 }

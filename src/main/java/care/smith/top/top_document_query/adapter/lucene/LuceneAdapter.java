@@ -1,6 +1,7 @@
 package care.smith.top.top_document_query.adapter.lucene;
 
 import care.smith.top.model.ConceptQuery;
+import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.ElasticDocument;
 import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.TextAdapterConfig;
@@ -68,7 +69,7 @@ public class LuceneAdapter extends TextAdapter {
   }
 
   @Override
-  public List<ElasticDocument> execute(ConceptQuery query, Entities entities) {
+  public List<DocumentHit> execute(ConceptQuery query, Entities entities) {
 
     String queryString =
         Expressions.getStringValue(
@@ -82,7 +83,7 @@ public class LuceneAdapter extends TextAdapter {
   }
 
   @Override
-  public List<ElasticDocument> execute(String queryString) {
+  public List<DocumentHit> execute(String queryString) {
     SearchResponse<ElasticDocument> searchResponse;
     try {
       searchResponse =
@@ -99,6 +100,10 @@ public class LuceneAdapter extends TextAdapter {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return searchResponse.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
+    return searchResponse.hits().hits()
+        .stream()
+        .map(hit -> new DocumentHit(hit.id(), hit.source(), hit.score()))
+        .collect(Collectors.toList());
+    //
   }
 }

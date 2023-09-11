@@ -10,11 +10,13 @@ public class CSVDataRecord extends CSVRecord {
   public static List<String> FIELDS =
       List.of(
           "id",
+          "score",
           "title",
           "extract");
 
-  public CSVDataRecord(String id, String title, String extract) {
+  public CSVDataRecord(String id, String score, String title, String extract) {
     addEntry(id);
+    addEntry(score);
     addEntry(title);
     addEntry(extract);
   }
