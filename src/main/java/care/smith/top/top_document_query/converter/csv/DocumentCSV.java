@@ -3,11 +3,9 @@ package care.smith.top.top_document_query.converter.csv;
 
 import care.smith.top.model.Concept;
 import care.smith.top.model.Entity;
-import care.smith.top.top_document_query.adapter.AbstractDocument;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.util.Entities;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
