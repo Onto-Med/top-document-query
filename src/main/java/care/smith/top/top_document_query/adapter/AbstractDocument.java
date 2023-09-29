@@ -3,9 +3,12 @@ package care.smith.top.top_document_query.adapter;
 public abstract class AbstractDocument {
   public String name;
   public String text;
+  public String id;
 
-  abstract String getName();
+  public abstract String getId();
+  abstract void setId(String id);
+  public abstract String getName();
   abstract void setName(String name);
-  abstract String getText();
+  public abstract String getText();
   abstract void setText(String text);
 }

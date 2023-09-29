@@ -3,6 +3,7 @@ package care.smith.top.top_document_query.tests;
 import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
+import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.ElasticDocument;
 import care.smith.top.top_document_query.adapter.lucene.LuceneSong;
 import care.smith.top.top_document_query.functions.And;
@@ -47,11 +48,13 @@ class LuceneAdapterTest extends AbstractElasticTest {
     initAdaper();
     assertNotNull(adapter);
 
-    List<ElasticDocument> documents = adapter.execute(queryString);
+    List<DocumentHit> documents = adapter.execute(queryString);
     assertEquals(correctDocumentCount, documents.size());
     assertEquals(
         new HashSet<>(Arrays.asList("test01", "test02")),
-        documents.stream().map(ElasticDocument::getName).collect(Collectors.toSet()));
+        documents.stream()
+            .map(documentHit -> documentHit.getDocument().getName())
+            .collect(Collectors.toSet()));
 
     // Test if "field" specification correctly excludes documents when searching on "name" field
     adapter.getConfig().setField(new String[] {"name"});
