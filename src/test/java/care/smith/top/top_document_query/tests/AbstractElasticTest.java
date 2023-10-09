@@ -65,7 +65,7 @@ public abstract class AbstractElasticTest {
     URL configFile =
         Thread.currentThread()
             .getContextClassLoader()
-            .getResource("config/Elastic_Adapter_Test.yml");
+            .getResource("config/Example_Adapter.yml");
     assertNotNull(configFile);
 
     adapter = (LuceneAdapter) LuceneAdapter.getInstance(configFile.getPath());

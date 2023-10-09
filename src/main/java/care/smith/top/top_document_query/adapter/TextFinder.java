@@ -2,6 +2,7 @@ package care.smith.top.top_document_query.adapter;
 
 import care.smith.top.model.ConceptQuery;
 import care.smith.top.model.Entity;
+import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.util.Entities;
 
 import java.util.List;
