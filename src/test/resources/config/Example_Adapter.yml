@@ -11,9 +11,6 @@ graphDB:
   connection:
     url: bolt://localhost
     port: 7687
-  authentication:
-    username: user
-    password: password
 conceptGraph:
   connection:
     url: http://localhost

@@ -21,7 +21,6 @@ public class TextAdapterConfig {
     TextAdapterConfig config = null;
     try {
       config = mapper.readValue(new File(yamlFilePath), TextAdapterConfig.class);
-      System.out.println("");
     } catch (IOException e) {
       e.printStackTrace();
     }
