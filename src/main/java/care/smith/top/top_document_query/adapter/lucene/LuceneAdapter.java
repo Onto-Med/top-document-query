@@ -4,7 +4,7 @@ import care.smith.top.model.ConceptQuery;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.ElasticDocument;
 import care.smith.top.top_document_query.adapter.TextAdapter;
-import care.smith.top.top_document_query.adapter.TextAdapterConfig;
+import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -44,18 +44,18 @@ public class LuceneAdapter extends TextAdapter {
     String host;
 
     try {
-      URL url = new URL(config.getConnectionAttribute("url"));
+      URL url = new URL(config.getConnection().getUrl());
       protocol = url.getProtocol();
       host = url.getHost();
     } catch (MalformedURLException e) {
-      host = config.getConnectionAttribute("url");
+      host = config.getConnection().getUrl();
     }
 
     RestClient restClient;
     if (Objects.equals(protocol, "http")) {
       restClient =
           RestClient.builder(
-                  new HttpHost(host, Integer.parseInt(config.getConnectionAttribute("port"))))
+                  new HttpHost(host, Integer.parseInt(config.getConnection().getPort())))
               .build();
     } else {
       throw new NotImplementedException("only http supported at the moment");

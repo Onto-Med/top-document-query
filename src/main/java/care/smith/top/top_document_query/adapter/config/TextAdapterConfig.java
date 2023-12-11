@@ -1,19 +1,20 @@
-package care.smith.top.top_document_query.adapter;
+package care.smith.top.top_document_query.adapter.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 public class TextAdapterConfig {
 
   private String id;
   private String adapter;
-  private Map<String, String> connection;
+  private Connection connection;
   private String dateField;
   private String[] index;
   private String[] field;
+  private ConceptGraphConfig conceptGraph;
+  private GraphDBConfig graphDB;
 
   public static TextAdapterConfig getInstance(String yamlFilePath) {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -42,15 +43,11 @@ public class TextAdapterConfig {
     this.id = id;
   }
 
-  public Map<String, String> getConnection() {
+  public Connection getConnection() {
     return connection;
   }
 
-  public String getConnectionAttribute(String name) {
-    return connection.get(name);
-  }
-
-  public void setConnection(Map<String, String> connection) {
+  public void setConnection(Connection connection) {
     this.connection = connection;
   }
 
@@ -76,6 +73,22 @@ public class TextAdapterConfig {
 
   public void setField(String[] field) {
     this.field = field;
+  }
+
+  public ConceptGraphConfig getConceptGraph() {
+    return conceptGraph;
+  }
+
+  public void setConceptGraph(ConceptGraphConfig conceptGraph) {
+    this.conceptGraph = conceptGraph;
+  }
+
+  public GraphDBConfig getGraphDB() {
+    return graphDB;
+  }
+
+  public void setGraphDB(GraphDBConfig graphDB) {
+    this.graphDB = graphDB;
   }
 
   @Override
