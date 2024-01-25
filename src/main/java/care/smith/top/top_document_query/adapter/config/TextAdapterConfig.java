@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TextAdapterConfig {
 
@@ -13,6 +15,8 @@ public class TextAdapterConfig {
   private String dateField;
   private String[] index;
   private String[] field;
+  private Integer batchSize;
+  private Map<String, String> replaceFields;
   private ConceptGraphConfig conceptGraph;
   private GraphDBConfig graphDB;
 
@@ -25,6 +29,28 @@ public class TextAdapterConfig {
       e.printStackTrace();
     }
     return config;
+  }
+
+  public Integer getBatchSize() {
+    return batchSize;
+  }
+
+  public void setBatchSize(Integer batchSize) {
+    this.batchSize = batchSize;
+  }
+
+  public Map<String, String> getReplaceFields() {
+    return replaceFields;
+  }
+
+  public String getReplaceFieldsAsString() {
+      return replaceFields.keySet().stream()
+          .map(key -> key + ":" + replaceFields.get(key))
+          .collect(Collectors.joining(", ", "{", "}"));
+    }
+
+  public void setReplaceFields(Map<String, String> replaceFields) {
+    this.replaceFields = replaceFields;
   }
 
   public String getAdapter() {
