@@ -45,7 +45,7 @@ public class TextAdapterConfig {
 
   public String getReplaceFieldsAsString() {
       return replaceFields.keySet().stream()
-          .map(key -> key + ":" + replaceFields.get(key))
+          .map(key -> key + ": " + replaceFields.get(key))
           .collect(Collectors.joining(", ", "{", "}"));
     }
 
