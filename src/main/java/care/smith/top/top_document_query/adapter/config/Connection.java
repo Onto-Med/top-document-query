@@ -19,6 +19,4 @@ public class Connection {
   public void setPort(String port) {
     this.port = port;
   }
-
-
 }

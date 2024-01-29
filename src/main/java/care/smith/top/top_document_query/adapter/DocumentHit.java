@@ -5,7 +5,6 @@ public class DocumentHit {
   private String documentId;
   private double score;
 
-
   public DocumentHit(String documentId, AbstractDocument document) {
     this.setDocumentId(documentId);
     this.setDocument(document);
@@ -41,7 +40,7 @@ public class DocumentHit {
   }
 
   public DocumentHit setScore(Double score) {
-    this.score = score != null? score: 0.0;
+    this.score = score != null ? score : 0.0;
     return this;
   }
 }

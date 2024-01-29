@@ -3,7 +3,6 @@ package care.smith.top.top_document_query.tests;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
-import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.lucene.LuceneAdapter;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
@@ -12,7 +11,6 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
-
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 
@@ -40,21 +38,21 @@ public abstract class AbstractElasticTest {
     assertNotNull(esClient);
 
     try {
-      esClient.index(i -> i
-              .id("01")
-              .index(ELASTIC_INDEX[0])
-              .document( new TextDocument("test01", documents.get("test01")))
-      );
-      esClient.index(i -> i
-              .id("02")
-              .index(ELASTIC_INDEX[0])
-              .document( new TextDocument("test02", documents.get("test02")))
-      );
-      esClient.index(i -> i
-              .id("03")
-              .index(ELASTIC_INDEX[0])
-              .document( new TextDocument("test03", documents.get("test03")))
-      );
+      esClient.index(
+          i ->
+              i.id("01")
+                  .index(ELASTIC_INDEX[0])
+                  .document(new TextDocument("test01", documents.get("test01"))));
+      esClient.index(
+          i ->
+              i.id("02")
+                  .index(ELASTIC_INDEX[0])
+                  .document(new TextDocument("test02", documents.get("test02"))));
+      esClient.index(
+          i ->
+              i.id("03")
+                  .index(ELASTIC_INDEX[0])
+                  .document(new TextDocument("test03", documents.get("test03"))));
       await().until(() -> esClient.count().count() == 3);
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -63,9 +61,7 @@ public abstract class AbstractElasticTest {
 
   protected static void initAdaper() throws InstantiationException {
     URL configFile =
-        Thread.currentThread()
-            .getContextClassLoader()
-            .getResource("config/Example_Adapter.yml");
+        Thread.currentThread().getContextClassLoader().getResource("config/Example_Adapter.yml");
     assertNotNull(configFile);
 
     adapter = (LuceneAdapter) LuceneAdapter.getInstance(configFile.getPath());
@@ -75,6 +71,7 @@ public abstract class AbstractElasticTest {
   static class TextDocument {
     public String name;
     public String text;
+
     public TextDocument(String name, String text) {
       this.name = name;
       this.text = text;

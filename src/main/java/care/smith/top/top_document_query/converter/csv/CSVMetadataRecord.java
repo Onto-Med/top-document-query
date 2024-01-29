@@ -1,6 +1,5 @@
 package care.smith.top.top_document_query.converter.csv;
 
-
 import care.smith.top.model.CompositeConcept;
 import care.smith.top.model.Concept;
 import care.smith.top.model.Entity;
@@ -8,7 +7,6 @@ import care.smith.top.model.EntityType;
 import care.smith.top.top_document_query.adapter.lucene.LuceneSong;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +24,8 @@ public class CSVMetadataRecord extends CSVRecordCompositeEntries {
           "descriptions",
           "expression");
 
-  public CSVMetadataRecord(Concept con, Entity[] concepts, String entryPartsDelimiter, String lang) {
+  public CSVMetadataRecord(
+      Concept con, Entity[] concepts, String entryPartsDelimiter, String lang) {
     super(entryPartsDelimiter);
     add(con.getId());
     addParents(con);

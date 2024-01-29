@@ -10,16 +10,15 @@ import care.smith.top.top_document_query.functions.TextFunction;
 import care.smith.top.top_document_query.functions.XProd;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
+import care.smith.top.top_document_query.util.Values;
+import care.smith.top.top_document_query.util.builder.Exp;
+import care.smith.top.top_document_query.util.builder.Val;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import care.smith.top.top_document_query.util.Values;
-import care.smith.top.top_document_query.util.builder.Exp;
-import care.smith.top.top_document_query.util.builder.Val;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,13 +164,12 @@ public class SONG {
   }
 
   public String toString(Expression exp) {
-    if (
-        (exp == null) ||
-        (exp.getFunctionId() == null && exp.getEntityId() == null && exp.getConstantId() == null &&
-            (exp.getArguments() == null || exp.getArguments().isEmpty()) &&
-            exp.getType() == null
-        )
-    ) return "null";
+    if ((exp == null)
+        || (exp.getFunctionId() == null
+            && exp.getEntityId() == null
+            && exp.getConstantId() == null
+            && (exp.getArguments() == null || exp.getArguments().isEmpty())
+            && exp.getType() == null)) return "null";
     if (exp.getEntityId() != null) return exp.getEntityId();
     if (exp.getValues() != null) return Values.toString(exp.getValues());
     return operatorToString(exp);

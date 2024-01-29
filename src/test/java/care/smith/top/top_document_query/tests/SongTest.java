@@ -13,8 +13,8 @@ import care.smith.top.top_document_query.functions.SubTree;
 import care.smith.top.top_document_query.functions.XProd;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
-import care.smith.top.top_document_query.util.builder.Exp;
 import care.smith.top.top_document_query.util.builder.Cat;
+import care.smith.top.top_document_query.util.builder.Exp;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,11 +85,7 @@ public class SongTest {
           .synonymEn("f2-en")
           .get();
 
-  Concept de_only =
-      new Cat("de_only", false)
-          .titleDe("de_only")
-          .synonymDe("de_only_syn")
-          .get();
+  Concept de_only = new Cat("de_only", false).titleDe("de_only").synonymDe("de_only_syn").get();
 
   Concept en_and_de =
       new Cat("en_and_de", false)
@@ -181,30 +177,27 @@ public class SongTest {
     // if no language is set, it should take all languages
     Expression exp = And.of(de_only, en_and_de);
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang(null).generate(exp));
+        Expressions.getStringValue(
+            LuceneSong.get().concepts(concepts_for_lang).lang(null).generate(exp));
     assertEquals(
-        "((de_only OR de_only_syn) AND (de_title OR en_title OR de_syn OR en_syn))",
-        query);
+        "((de_only OR de_only_syn) AND (de_title OR en_title OR de_syn OR en_syn))", query);
   }
 
   @Test
   public void test_set_specific_language_accessible() {
     Expression exp = And.of(de_only, en_and_de);
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang("de").generate(exp));
-    assertEquals(
-        "((de_only OR de_only_syn) AND (de_title OR de_syn))",
-        query);
+        Expressions.getStringValue(
+            LuceneSong.get().concepts(concepts_for_lang).lang("de").generate(exp));
+    assertEquals("((de_only OR de_only_syn) AND (de_title OR de_syn))", query);
   }
 
   @Test
   public void test_set_specific_language_not_accessible() {
     Expression exp = And.of(de_only, en_and_de);
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang("en").generate(exp));
-    assertEquals(
-        "((en_title OR en_syn))",
-        query);
+        Expressions.getStringValue(
+            LuceneSong.get().concepts(concepts_for_lang).lang("en").generate(exp));
+    assertEquals("((en_title OR en_syn))", query);
   }
 }
-

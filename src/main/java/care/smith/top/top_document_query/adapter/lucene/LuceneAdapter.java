@@ -54,8 +54,7 @@ public class LuceneAdapter extends TextAdapter {
     RestClient restClient;
     if (Objects.equals(protocol, "http")) {
       restClient =
-          RestClient.builder(
-                  new HttpHost(host, Integer.parseInt(config.getConnection().getPort())))
+          RestClient.builder(new HttpHost(host, Integer.parseInt(config.getConnection().getPort())))
               .build();
     } else {
       throw new NotImplementedException("only http supported at the moment");
@@ -73,8 +72,7 @@ public class LuceneAdapter extends TextAdapter {
     String queryString =
         Expressions.getStringValue(
             LuceneSong.get()
-                .concepts(
-                    entities)
+                .concepts(entities)
                 .lang(query.getLanguage())
                 .generate(query.getEntityId()));
     // execute query and return resulting documents
@@ -99,8 +97,7 @@ public class LuceneAdapter extends TextAdapter {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return searchResponse.hits().hits()
-        .stream()
+    return searchResponse.hits().hits().stream()
         .map(hit -> new DocumentHit(hit.id(), hit.source(), hit.score()))
         .collect(Collectors.toList());
     //

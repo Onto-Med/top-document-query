@@ -8,10 +8,14 @@ public class ElasticDocument extends AbstractDocument {
   public double score;
 
   @Override
-  public String getId() { return null; }
+  public String getId() {
+    return null;
+  }
 
   @Override
-  public void setId(String id) { this.id = id; }
+  public void setId(String id) {
+    this.id = id;
+  }
 
   @Override
   public String getName() {
@@ -37,7 +41,7 @@ public class ElasticDocument extends AbstractDocument {
     return score;
   }
 
-  public void setScore(double score){
+  public void setScore(double score) {
     this.score = score;
   }
 }

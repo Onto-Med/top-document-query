@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
 import care.smith.top.top_document_query.adapter.DocumentHit;
-import care.smith.top.top_document_query.adapter.ElasticDocument;
 import care.smith.top.top_document_query.adapter.lucene.LuceneSong;
 import care.smith.top.top_document_query.functions.And;
 import care.smith.top.top_document_query.util.Entities;
@@ -17,7 +16,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-//ToDo: Test still uses local ES instance and not the TestContainer
+// ToDo: Test still uses local ES instance and not the TestContainer
 class LuceneAdapterTest extends AbstractElasticTest {
   Concept documentEntity = new Cat("document", false).titleEn("document").get();
   Concept entityEntity = new Cat("entity", false).titleEn("entity").synonymEn("entities").get();

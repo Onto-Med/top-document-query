@@ -44,10 +44,10 @@ public class TextAdapterConfig {
   }
 
   public String getReplaceFieldsAsString() {
-      return replaceFields.keySet().stream()
-          .map(key -> key + ": " + replaceFields.get(key))
-          .collect(Collectors.joining(", ", "{", "}"));
-    }
+    return replaceFields.keySet().stream()
+        .map(key -> key + ": " + replaceFields.get(key))
+        .collect(Collectors.joining(", ", "{", "}"));
+  }
 
   public void setReplaceFields(Map<String, String> replaceFields) {
     this.replaceFields = replaceFields;
