@@ -3,7 +3,7 @@ package care.smith.top.top_document_query.tests;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
-import care.smith.top.top_document_query.adapter.lucene.LuceneAdapter;
+import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
@@ -19,7 +19,7 @@ public abstract class AbstractElasticTest {
   protected static DocumentElasticsearchContainer elasticsearchContainer =
       new DocumentElasticsearchContainer();
   protected static ElasticsearchClient esClient;
-  protected static LuceneAdapter adapter;
+  protected static ElasticsearchAdapter adapter;
   protected static Map<String, String> documents =
       Map.of(
           "test01", "What do we have here? A test document. With an entity. Nice.",
@@ -64,7 +64,7 @@ public abstract class AbstractElasticTest {
         Thread.currentThread().getContextClassLoader().getResource("config/Example_Adapter.yml");
     assertNotNull(configFile);
 
-    adapter = (LuceneAdapter) LuceneAdapter.getInstance(configFile.getPath());
+    adapter = (ElasticsearchAdapter) ElasticsearchAdapter.getInstance(configFile.getPath());
     assertNotNull(adapter);
   }
 

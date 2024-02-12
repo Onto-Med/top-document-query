@@ -1,5 +1,5 @@
 id: Lucene Data Source
-adapter: care.smith.top.top_document_query.adapter.lucene.LuceneAdapter
+adapter: care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter
 connection:
   url: http://localhost
   port: 9201

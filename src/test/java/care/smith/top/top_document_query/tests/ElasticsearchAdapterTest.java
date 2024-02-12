@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
 import care.smith.top.top_document_query.adapter.DocumentHit;
-import care.smith.top.top_document_query.adapter.lucene.LuceneSong;
+import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
 import care.smith.top.top_document_query.functions.And;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 // ToDo: Test still uses local ES instance and not the TestContainer
-class LuceneAdapterTest extends AbstractElasticTest {
+class ElasticsearchAdapterTest extends AbstractElasticTest {
   Concept documentEntity = new Cat("document", false).titleEn("document").get();
   Concept entityEntity = new Cat("entity", false).titleEn("entity").synonymEn("entities").get();
 
@@ -36,7 +36,7 @@ class LuceneAdapterTest extends AbstractElasticTest {
     Entities concepts = Entities.of(documentEntity, entityEntity);
     String queryString =
         Expressions.getStringValue(
-            LuceneSong.get()
+            ElasticsearchSong.get()
                 .concepts(concepts)
                 .lang("en")
                 .generate(And.of(documentEntity, entityEntity)));

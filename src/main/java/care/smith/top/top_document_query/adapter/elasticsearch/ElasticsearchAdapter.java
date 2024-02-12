@@ -1,4 +1,4 @@
-package care.smith.top.top_document_query.adapter.lucene;
+package care.smith.top.top_document_query.adapter.elasticsearch;
 
 import care.smith.top.model.ConceptQuery;
 import care.smith.top.top_document_query.adapter.DocumentHit;
@@ -17,48 +17,37 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 
-// ToDo: rename this with ElasticsearchAdapter to be more precise
-public class LuceneAdapter extends TextAdapter {
+public class ElasticsearchAdapter extends TextAdapter {
 
   private ElasticsearchClient esClient;
 
-  public LuceneAdapter(TextAdapterConfig config) {
+  public ElasticsearchAdapter(TextAdapterConfig config) {
     super(config);
     initConnection();
   }
 
-  public LuceneAdapter(String configFile) {
+  public ElasticsearchAdapter(String configFile) {
     super(configFile);
     initConnection();
   }
 
-  // ToDo: implement https protocol possibilities
   private void initConnection() {
-    String protocol = "http";
     String host;
 
     try {
       URL url = new URL(config.getConnection().getUrl());
-      protocol = url.getProtocol();
       host = url.getHost();
     } catch (MalformedURLException e) {
       host = config.getConnection().getUrl();
     }
 
-    RestClient restClient;
-    if (Objects.equals(protocol, "http")) {
-      restClient =
-          RestClient.builder(new HttpHost(host, Integer.parseInt(config.getConnection().getPort())))
-              .build();
-    } else {
-      throw new NotImplementedException("only http supported at the moment");
-    }
+    RestClient restClient =
+        RestClient.builder(new HttpHost(host, Integer.parseInt(config.getConnection().getPort())))
+            .build();
 
     ElasticsearchTransport transport =
         new RestClientTransport(restClient, new JacksonJsonpMapper());
@@ -68,14 +57,12 @@ public class LuceneAdapter extends TextAdapter {
 
   @Override
   public List<DocumentHit> execute(ConceptQuery query, Entities entities) {
-
     String queryString =
         Expressions.getStringValue(
-            LuceneSong.get()
+            ElasticsearchSong.get()
                 .concepts(entities)
                 .lang(query.getLanguage())
                 .generate(query.getEntityId()));
-    // execute query and return resulting documents
     return execute(queryString);
   }
 
@@ -100,6 +87,5 @@ public class LuceneAdapter extends TextAdapter {
     return searchResponse.hits().hits().stream()
         .map(hit -> new DocumentHit(hit.id(), hit.source(), hit.score()))
         .collect(Collectors.toList());
-    //
   }
 }
