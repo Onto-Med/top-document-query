@@ -1,22 +1,48 @@
 package care.smith.top.top_document_query.adapter.config;
 
+import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TextAdapterConfig {
+  private static final Logger LOGGER = Logger.getLogger(TextAdapterConfig.class.getName());
 
-  private String id;
-  private String adapter;
+  @JsonSetter(nulls = Nulls.SKIP)
+  private String id = "Default Adapter";
+
+  @JsonSetter(nulls = Nulls.SKIP)
+  private String adapter = ElasticsearchAdapter.class.getName();
+
   private Connection connection;
+
+  @JsonSetter(nulls = Nulls.SKIP)
   private String dateField;
-  private String[] index;
-  private String[] field;
-  private Integer batchSize;
-  private Map<String, String> replaceFields;
+
+  @JsonSetter(nulls = Nulls.SKIP)
+  private String[] index = new String[] {"documents"};
+
+  @JsonSetter(nulls = Nulls.SKIP)
+  private String[] field = new String[] {"text"};
+
+  @JsonSetter(nulls = Nulls.SKIP)
+  private Integer batchSize = 30;
+
+  @JsonSetter(nulls = Nulls.SKIP)
+  private Map<String, String> replaceFields =
+      new HashMap<>() {
+        {
+          put("text", "content");
+        }
+      };
+
   private ConceptGraphConfig conceptGraph;
   private GraphDBConfig graphDB;
 
@@ -26,7 +52,7 @@ public class TextAdapterConfig {
     try {
       config = mapper.readValue(new File(yamlFilePath), TextAdapterConfig.class);
     } catch (IOException e) {
-      e.printStackTrace();
+      LOGGER.severe(e.getMessage());
     }
     return config;
   }

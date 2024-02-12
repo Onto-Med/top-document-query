@@ -43,7 +43,6 @@ public abstract class TextAdapter {
     return config;
   }
 
-  // generate and execute query
   public abstract List<DocumentHit> execute(ConceptQuery query, Entities entities);
 
   public abstract List<DocumentHit> execute(String queryString);
