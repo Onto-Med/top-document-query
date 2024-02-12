@@ -1,5 +1,6 @@
 package care.smith.top.top_document_query.concept_cluster;
 
+import care.smith.top.model.ConceptGraphProcess;
 import care.smith.top.top_document_query.concept_cluster.model.*;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiGraphMethod;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiPipelineMethod;
@@ -62,8 +63,7 @@ public class ConceptPipelineManager {
    * @return Number of pipelines.
    */
   public long count() {
-    ProcessOverviewEntity processes = getAllStoredProcesses();
-    return processes != null ? Arrays.stream(processes.getProcesses()).count() : 0;
+    return getAllStoredProcesses().size();
   }
 
   public PipelineResponseEntity startPipelineForData(
@@ -149,21 +149,23 @@ public class ConceptPipelineManager {
     return result;
   }
 
-  private ProcessOverviewEntity getAllStoredProcesses() {
+  public List<ConceptGraphProcess> getAllStoredProcesses() {
+    ProcessOverviewEntity processOverviewEntity = null;
     try {
-      return conceptGraphsApi
-          .get()
-          .uri(uriBuilder -> uriBuilder.path(ApiProcessMethod.ALL.getEndpoint()).build())
-          .retrieve()
-          .bodyToMono(ProcessOverviewEntity.class)
-          .block();
+      processOverviewEntity =
+          conceptGraphsApi
+              .get()
+              .uri(uriBuilder -> uriBuilder.path(ApiProcessMethod.ALL.getEndpoint()).build())
+              .retrieve()
+              .bodyToMono(ProcessOverviewEntity.class)
+              .block();
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
-      return null;
     }
+    return processOverviewEntity != null ? processOverviewEntity.toApiModel() : new ArrayList<>();
   }
 
-  private ConceptGraphEntity getGraphForIdAndProcess(String id, String processName) {
+  public ConceptGraphEntity getGraphForIdAndProcess(String id, String processName) {
     try {
       return conceptGraphsApi
           .get()
@@ -182,7 +184,7 @@ public class ConceptPipelineManager {
     }
   }
 
-  private ConceptGraphStatisticsEntity getGraphStatisticsForProcess(String processName) {
+  public ConceptGraphStatisticsEntity getGraphStatisticsForProcess(String processName) {
     try {
       return conceptGraphsApi
           .get()
