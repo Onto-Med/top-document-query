@@ -9,9 +9,9 @@ import care.smith.top.top_document_query.concept_cluster.model.pipeline_response
 import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineResponseEntity;
 import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineStatusEntity;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.ArrayUtils;
@@ -120,6 +120,33 @@ public class ConceptPipelineManager {
       Map<String, File> configs) {
     MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
     return callApi(labels, processName, language, skipPresent, returnStatistics, configs, parts);
+  }
+
+  public Map<String, ConceptGraphEntity> getConceptGraphs(
+      String processName, @Nullable List<String> graphIds) {
+    List<String> ids;
+    if (graphIds == null || graphIds.isEmpty()) {
+      ConceptGraphStatisticsEntity statistics = getGraphStatisticsForProcess(processName);
+      if (statistics != null) {
+        ids =
+            Arrays.stream(statistics.getConceptGraphs())
+                .map(GraphStatsEntity::getId)
+                .collect(Collectors.toList());
+      } else {
+        ids = new ArrayList<>();
+      }
+    } else {
+      ids = new ArrayList<>(graphIds);
+    }
+    HashMap<String, ConceptGraphEntity> result = new HashMap<>();
+    ids.forEach(
+        id -> {
+          ConceptGraphEntity graph = getGraphForIdAndProcess(id, processName);
+          if (graph != null) {
+            result.put(id, graph);
+          }
+        });
+    return result;
   }
 
   private ProcessOverviewEntity getAllStoredProcesses() {
