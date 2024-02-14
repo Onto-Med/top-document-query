@@ -44,7 +44,6 @@ public class TextAdapterConfig {
       };
 
   private ConceptGraphConfig conceptGraph;
-  private GraphDBConfig graphDB;
 
   public static TextAdapterConfig getInstance(String yamlFilePath) {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -133,14 +132,6 @@ public class TextAdapterConfig {
 
   public void setConceptGraph(ConceptGraphConfig conceptGraph) {
     this.conceptGraph = conceptGraph;
-  }
-
-  public GraphDBConfig getGraphDB() {
-    return graphDB;
-  }
-
-  public void setGraphDB(GraphDBConfig graphDB) {
-    this.graphDB = graphDB;
   }
 
   @Override

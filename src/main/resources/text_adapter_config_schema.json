@@ -38,18 +38,6 @@
         }
       },
       "required": ["url"]
-    },
-    "graphDB": {
-      "type": "object",
-      "properties": {
-        "connection": {
-          "$ref": "#/definitions/connection"
-        },
-        "authentication": {
-          "$ref": "#/definitions/authentication"
-        }
-      },
-      "required": ["connection"]
     }
   },
   "type": "object",
@@ -89,9 +77,6 @@
     },
     "conceptGraph": {
       "$ref": "#/definitions/conceptGraph"
-    },
-    "graphDB": {
-      "$ref": "#/definitions/graphDB"
     }
   },
   "required": ["id", "adapter", "connection"]

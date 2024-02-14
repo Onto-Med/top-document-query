@@ -9,10 +9,6 @@ field:
   - text
 batchSize: 30
 replaceFields: {'text': 'content'}
-graphDB:
-  connection:
-    url: bolt://localhost
-    port: 7687
 conceptGraph:
   connection:
     url: http://localhost
