@@ -35,10 +35,20 @@ import reactor.core.publisher.Mono;
  * and one for extracting relevant clusters from these graphs.
  */
 public class ConceptPipelineManager {
+  public static final int DEFAULT_MAX_IN_MEMORY_SIZE = 16 * 1024 * 1024;
   private static final Logger LOGGER = Logger.getLogger(ConceptPipelineManager.class.getName());
   private WebClient conceptGraphsApi;
-  private int maxInMemorySize = 16 * 1024 * 1024;
+  private int maxInMemorySize = DEFAULT_MAX_IN_MEMORY_SIZE;
 
+  /**
+   * Instantiate a new concept pipeline manager with the given concept-graphs endpoint. See <a
+   * href="https://github.com/Onto-Med/concept-graphs">concept-graphs</a> for details.
+   *
+   * <p>Maximum in-memory size for requests to Elasticsearch defaults to {@link
+   * #DEFAULT_MAX_IN_MEMORY_SIZE} bytes.
+   *
+   * @param conceptGraphApiEndpoint The concept-graphs endpoint.
+   */
   public ConceptPipelineManager(String conceptGraphApiEndpoint) {
     ExchangeStrategies exchangeStrategies =
         ExchangeStrategies.builder()
@@ -52,6 +62,13 @@ public class ConceptPipelineManager {
             .build();
   }
 
+  /**
+   * Instantiate a new concept pipeline manager with the given concept-graphs endpoint. See <a
+   * href="https://github.com/Onto-Med/concept-graphs">concept-graphs</a> for details.
+   *
+   * @param conceptGraphApiEndpoint The concept-graphs endpoint.
+   * @param maxInMemorySize Maximum in-memory size in bytes for requests to Elasticsearch.
+   */
   public ConceptPipelineManager(String conceptGraphApiEndpoint, int maxInMemorySize) {
     this.maxInMemorySize = maxInMemorySize;
     new ConceptPipelineManager(conceptGraphApiEndpoint);
@@ -66,89 +83,77 @@ public class ConceptPipelineManager {
     return getAllStoredProcesses().size();
   }
 
-  public PipelineResponseEntity startPipelineForData(
-      @Nonnull File data,
+  /**
+   * Start a new concept pipeline with the given {@code processName}. You should at least specify a
+   * {@code data} file or {@code configs} to access a remote Elasticsearch server with text
+   * documents that will be processed by the pipeline.
+   *
+   * @param data An optional ZIP file of text documents.
+   * @param configs Additional configurations for the text processing. For instance, a remote
+   *     Elasticsearch container can be specified here.
+   * @param labels An optional text file containing relevant labels that will be used to process the
+   *     text documents.
+   * @param processName Name of the process scheduled with the pipeline.
+   * @param language Determines the pretrained text modules that will be used to process the text
+   *     documents (available languages are 'de' and 'en').
+   * @param skipPresent If a process with the given name already exists, the completed steps will be
+   *     skipped and the pipeline will pick up where it left off.
+   * @param returnStatistics Whether the function should return statistics about the pipeline.
+   *     Setting this parameter to {@code true} forces the function to wait for the pipeline to
+   *     finish.
+   * @return A {@link PipelineResponseEntity} containing minimal information about the pipeline or
+   *     detailed statistics.
+   */
+  public PipelineResponseEntity startPipeline(
+      @Nullable File data,
+      @Nullable Map<String, File> configs,
+      @Nullable File labels,
       @Nonnull String processName,
       @Nullable String language,
       @Nullable Boolean skipPresent,
       @Nullable Boolean returnStatistics) {
-    return startPipelineForDataAndLabelsAndConfigs(
-        data, null, processName, language, skipPresent, returnStatistics, null);
-  }
-
-  public PipelineResponseEntity startPipelineForDataAndLabels(
-      @Nonnull File data,
-      @Nonnull File labels,
-      @Nonnull String processName,
-      @Nullable String language,
-      @Nullable Boolean skipPresent,
-      @Nullable Boolean returnStatistics) {
-    return startPipelineForDataAndLabelsAndConfigs(
-        data, labels, processName, language, skipPresent, returnStatistics, null);
-  }
-
-  public PipelineResponseEntity startPipelineForDataAndConfigs(
-      @Nonnull File data,
-      @Nullable String processName,
-      @Nullable String language,
-      @Nullable Boolean skipPresent,
-      @Nullable Boolean returnStatistics,
-      @Nonnull Map<String, File> configs) {
-    return startPipelineForDataAndLabelsAndConfigs(
-        data, null, processName, language, skipPresent, returnStatistics, configs);
-  }
-
-  public PipelineResponseEntity startPipelineForDataAndLabelsAndConfigs(
-      @Nonnull File data,
-      File labels,
-      @Nullable String processName,
-      @Nullable String language,
-      @Nullable Boolean skipPresent,
-      @Nullable Boolean returnStatistics,
-      Map<String, File> configs) {
     MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
-    parts.add("data", new FileSystemResource(data));
+    if (data != null) {
+      parts.add("data", new FileSystemResource(data));
+    }
     return callApi(labels, processName, language, skipPresent, returnStatistics, configs, parts);
   }
 
-  public PipelineResponseEntity startPipelineForDataServerAndLabelsAndConfigs(
-      File labels,
-      @Nullable String processName,
-      @Nullable String language,
-      @Nullable Boolean skipPresent,
-      @Nullable Boolean returnStatistics,
-      Map<String, File> configs) {
-    MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
-    return callApi(labels, processName, language, skipPresent, returnStatistics, configs, parts);
-  }
-
+  /**
+   * Get graphs that were constructed by the specified pipeline. You can optionally filter the
+   * graphs by their ID.
+   *
+   * @param processName Name of the process to retrieve the graphs from.
+   * @param graphIds Optional list of graph IDs to filter by.
+   * @return {@link Map} of available concept graphs for the given {@code pipelineName}. The map
+   *     contains graph IDs as keys.
+   */
   public Map<String, ConceptGraphEntity> getConceptGraphs(
       String processName, @Nullable List<String> graphIds) {
     List<String> ids;
     if (graphIds == null || graphIds.isEmpty()) {
-      ConceptGraphStatisticsEntity statistics = getGraphStatisticsForProcess(processName);
-      if (statistics != null) {
-        ids =
-            Arrays.stream(statistics.getConceptGraphs())
-                .map(GraphStatsEntity::getId)
-                .collect(Collectors.toList());
-      } else {
-        ids = new ArrayList<>();
-      }
+      ids =
+          getGraphStatisticsForProcess(processName)
+              .map(
+                  conceptGraphStatisticsEntity ->
+                      Arrays.stream(conceptGraphStatisticsEntity.getConceptGraphs())
+                          .map(GraphStatsEntity::getId)
+                          .collect(Collectors.toList()))
+              .orElseGet(ArrayList::new);
     } else {
       ids = new ArrayList<>(graphIds);
     }
     HashMap<String, ConceptGraphEntity> result = new HashMap<>();
     ids.forEach(
-        id -> {
-          ConceptGraphEntity graph = getGraphForIdAndProcess(id, processName);
-          if (graph != null) {
-            result.put(id, graph);
-          }
-        });
+        id -> getGraphForIdAndProcess(id, processName).ifPresent(graph -> result.put(id, graph)));
     return result;
   }
 
+  /**
+   * Get a list of all processes previously scheduled to process text documents.
+   *
+   * @return List of processes.
+   */
   public List<ConceptGraphProcess> getAllStoredProcesses() {
     ProcessOverviewEntity processOverviewEntity = null;
     try {
@@ -165,41 +170,56 @@ public class ConceptPipelineManager {
     return processOverviewEntity != null ? processOverviewEntity.toApiModel() : new ArrayList<>();
   }
 
-  public ConceptGraphEntity getGraphForIdAndProcess(String id, String processName) {
+  /**
+   * Get a single graph from a process with the specified {@code graphId}
+   *
+   * @param graphId Graph ID to filter by.
+   * @param processName Process name to filter by.
+   * @return {@link Optional} containing the graph, if there is any.
+   */
+  public Optional<ConceptGraphEntity> getGraphForIdAndProcess(String graphId, String processName) {
     try {
-      return conceptGraphsApi
-          .get()
-          .uri(
-              uriBuilder ->
-                  uriBuilder
-                      .path(ApiGraphMethod.GRAPH.getEndpoint(id))
-                      .queryParam("process", processName)
-                      .build())
-          .retrieve()
-          .bodyToMono(ConceptGraphEntity.class)
-          .block();
+      return Optional.ofNullable(
+          conceptGraphsApi
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path(ApiGraphMethod.GRAPH.getEndpoint(graphId))
+                          .queryParam("process", processName)
+                          .build())
+              .retrieve()
+              .bodyToMono(ConceptGraphEntity.class)
+              .block());
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
-      return null;
+      return Optional.empty();
     }
   }
 
-  public ConceptGraphStatisticsEntity getGraphStatisticsForProcess(String processName) {
+  /**
+   * Get statistics about the graphs that where constructed by a process.
+   *
+   * @param processName Name of the process.
+   * @return {@link Optional} containing the statistics, of a process with the given name exists.
+   */
+  public Optional<ConceptGraphStatisticsEntity> getGraphStatisticsForProcess(String processName) {
     try {
-      return conceptGraphsApi
-          .get()
-          .uri(
-              uriBuilder ->
-                  uriBuilder
-                      .path(ApiGraphMethod.STATISTICS.getEndpoint())
-                      .queryParam("process", processName)
-                      .build())
-          .retrieve()
-          .bodyToMono(ConceptGraphStatisticsEntity.class)
-          .block();
+      return Optional.ofNullable(
+          conceptGraphsApi
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path(ApiGraphMethod.STATISTICS.getEndpoint())
+                          .queryParam("process", processName)
+                          .build())
+              .retrieve()
+              .bodyToMono(ConceptGraphStatisticsEntity.class)
+              .block());
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
-      return null;
+      return Optional.empty();
     }
   }
 
