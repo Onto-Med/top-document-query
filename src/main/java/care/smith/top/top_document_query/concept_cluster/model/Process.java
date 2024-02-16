@@ -26,11 +26,13 @@ public class Process {
   public ConceptGraphProcess toApiModel() {
     ConceptGraphProcess process = new ConceptGraphProcess();
     process.setName(getName());
-    for (ProcessStep processStep : getFinishedSteps()) {
-      ConceptGraphProcessFinishedSteps finishedSteps = new ConceptGraphProcessFinishedSteps();
-      finishedSteps.setName(processStep.getName());
-      finishedSteps.setRank(processStep.getRank());
-      process.addFinishedStepsItem(finishedSteps);
+    if (finishedSteps != null) {
+      for (ProcessStep processStep : getFinishedSteps()) {
+        ConceptGraphProcessFinishedSteps finishedSteps = new ConceptGraphProcessFinishedSteps();
+        finishedSteps.setName(processStep.getName());
+        finishedSteps.setRank(processStep.getRank());
+        process.addFinishedStepsItem(finishedSteps);
+      }
     }
     return process;
   }
