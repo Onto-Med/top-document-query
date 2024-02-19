@@ -1,10 +1,18 @@
 package care.smith.top.top_document_query.adapter;
 
 import care.smith.top.model.ConceptQuery;
+import care.smith.top.model.Document;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.util.Entities;
+import org.springframework.data.domain.Page;
+import org.springframework.lang.NonNull;
+
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public abstract class TextAdapter {
 
@@ -39,11 +47,41 @@ public abstract class TextAdapter {
     return getInstance(TextAdapterConfig.getInstance(configFile));
   }
 
+  public abstract List<DocumentHit> execute(ConceptQuery query, Entities entities);
+
+  public abstract List<DocumentHit> execute(String queryString);
+
+  public abstract long count();
+
   public TextAdapterConfig getConfig() {
     return config;
   }
 
-  public abstract List<DocumentHit> execute(ConceptQuery query, Entities entities);
+  public abstract Stream<List<Document>> getAllDocumentsBatched(Integer batchSize);
 
-  public abstract List<DocumentHit> execute(String queryString);
+  public abstract Page<Document> getAllDocuments(Integer page) throws IOException;
+
+  public abstract Optional<Document> getDocumentById(@NonNull String documentId) throws IOException;
+
+  public abstract Page<Document> getDocumentsByName(@NonNull String documentName, Integer page)
+          throws IOException;
+
+  public abstract Page<Document> getDocumentsByIds(@NonNull Collection<String> ids, Integer page)
+          throws IOException;
+
+  public abstract Page<Document> getDocumentsByPhrases(@NonNull Collection<String> phrases, Integer page)
+          throws IOException;
+
+  public abstract Page<Document> getDocumentsByIdsAndPhrases(
+          @NonNull Collection<String> ids, @NonNull Collection<String> phrases, Integer page);
+
+  public abstract Page<Document> getDocumentsByTerms(String[] terms, String[] fields);
+
+  public abstract Page<Document> getDocumentsByTermsBoolean(
+          String[] mustTerms, String[] shouldTerms, String[] notTerms, String[] fields);
+
+  public abstract Page<Document> getDocumentsByPhrases(String[] phrases, String[] fields);
+
+  public abstract Page<Document> getDocumentsByPhrasesBoolean(
+          String[] mustPhrases, String[] shouldPhrases, String[] notPhrases, String[] fields);
 }
