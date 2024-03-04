@@ -7,6 +7,7 @@ import care.smith.top.top_document_query.adapter.ElasticDocument;
 import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
+import care.smith.top.top_document_query.elasticsearch.DocumentFields;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -168,7 +169,7 @@ public class ElasticsearchAdapter extends TextAdapter {
                   q ->
                       q.wildcard(
                           new WildcardQuery.Builder()
-                              .field("title")
+                              .field(DocumentFields.TITLE.name())
                               .wildcard(documentName)
                               .caseInsensitive(true)
                               .build()));
