@@ -161,6 +161,9 @@ public class ElasticsearchAdapter extends TextAdapter {
   public Page<Document> getDocumentsByName(@NonNull String documentName, Integer page)
       throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
+    if (documentName.trim().isEmpty()) {
+      return getAllDocuments(page);
+    }
     SearchResponse<DocumentEntity> response =
         esClient.search(
             s -> {
