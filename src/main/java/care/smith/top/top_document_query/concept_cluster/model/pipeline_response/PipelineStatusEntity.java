@@ -26,7 +26,7 @@ public class PipelineStatusEntity implements PipelineResponseEntity {
   @Override
   public PipelineResponse getSpecificResponse() {
     return new PipelineResponse()
-        .name(this.getName())
+        .pipelineId(this.getName())
         .response(this.getStatus().toJsonString())
         .status(PipelineResponseStatus.SUCCESSFUL);
   }

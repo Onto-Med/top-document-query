@@ -1,7 +1,7 @@
 package care.smith.top.top_document_query.concept_cluster.model;
 
-import care.smith.top.model.ConceptGraphProcess;
-import care.smith.top.model.ConceptGraphProcessFinishedSteps;
+import care.smith.top.model.ConceptGraphPipeline;
+import care.smith.top.model.ConceptGraphPipelineFinishedSteps;
 
 public class Process {
   private String name;
@@ -23,12 +23,12 @@ public class Process {
     this.finishedSteps = finishedSteps;
   }
 
-  public ConceptGraphProcess toApiModel() {
-    ConceptGraphProcess process = new ConceptGraphProcess();
-    process.setName(getName());
+  public ConceptGraphPipeline toApiModel() {
+    ConceptGraphPipeline process = new ConceptGraphPipeline();
+    process.setPipelineId(getName());
     if (finishedSteps != null) {
       for (ProcessStep processStep : getFinishedSteps()) {
-        ConceptGraphProcessFinishedSteps finishedSteps = new ConceptGraphProcessFinishedSteps();
+        ConceptGraphPipelineFinishedSteps finishedSteps = new ConceptGraphPipelineFinishedSteps();
         finishedSteps.setName(processStep.getName());
         finishedSteps.setRank(processStep.getRank());
         process.addFinishedStepsItem(finishedSteps);

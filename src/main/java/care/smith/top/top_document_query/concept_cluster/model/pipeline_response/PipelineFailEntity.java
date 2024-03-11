@@ -17,7 +17,7 @@ public class PipelineFailEntity implements PipelineResponseEntity {
   @Override
   public PipelineResponse getSpecificResponse() {
     return new PipelineResponse()
-        .name(this.getName())
+        .pipelineId(this.getName())
         .response("Pipeline failed. Check the logs.")
         .status(PipelineResponseStatus.FAILED);
   }

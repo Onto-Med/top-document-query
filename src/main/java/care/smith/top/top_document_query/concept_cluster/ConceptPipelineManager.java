@@ -1,6 +1,6 @@
 package care.smith.top.top_document_query.concept_cluster;
 
-import care.smith.top.model.ConceptGraphProcess;
+import care.smith.top.model.ConceptGraphPipeline;
 import care.smith.top.top_document_query.concept_cluster.model.*;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiGraphMethod;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiPipelineMethod;
@@ -154,7 +154,7 @@ public class ConceptPipelineManager {
    *
    * @return List of processes.
    */
-  public List<ConceptGraphProcess> getAllStoredProcesses() {
+  public List<ConceptGraphPipeline> getAllStoredProcesses() {
     ProcessOverviewEntity processOverviewEntity = null;
     try {
       processOverviewEntity =

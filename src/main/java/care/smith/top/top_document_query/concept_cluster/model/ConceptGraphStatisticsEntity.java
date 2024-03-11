@@ -44,7 +44,7 @@ public class ConceptGraphStatisticsEntity implements PipelineResponseEntity {
   public PipelineResponse getSpecificResponse() {
     if (numberOfGraphs == 0 || conceptGraphs == null || conceptGraphs.length == 0) {
       return new PipelineResponse()
-          .name(this.getName())
+          .pipelineId(this.getName())
           .response("There seem to be no concept graphs available.")
           .status(PipelineResponseStatus.FAILED);
     }
@@ -60,7 +60,7 @@ public class ConceptGraphStatisticsEntity implements PipelineResponseEntity {
       LOGGER.severe(e.getMessage());
     }
     return new PipelineResponse()
-        .name(this.getName())
+        .pipelineId(this.getName())
         .response(status)
         .status(PipelineResponseStatus.SUCCESSFUL);
   }
