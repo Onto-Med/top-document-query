@@ -4,6 +4,7 @@ import care.smith.top.model.ConceptQuery;
 import care.smith.top.model.Document;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.util.Entities;
+import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.NonNull;
 
@@ -69,19 +70,22 @@ public abstract class TextAdapter {
   public abstract Page<Document> getDocumentsByIds(@NonNull Collection<String> ids, Integer page)
           throws IOException;
 
-  public abstract Page<Document> getDocumentsByPhrases(@NonNull Collection<String> phrases, Integer page)
+  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> phrases, Integer page)
+          throws IOException;
+
+  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> phrases, TermConcatenationTypes concatenationTypes, Integer page)
           throws IOException;
 
   public abstract Page<Document> getDocumentsByIdsAndPhrases(
           @NonNull Collection<String> ids, @NonNull Collection<String> phrases, Integer page);
 
-  public abstract Page<Document> getDocumentsByTerms(String[] terms, String[] fields);
-
-  public abstract Page<Document> getDocumentsByTermsBoolean(
-          String[] mustTerms, String[] shouldTerms, String[] notTerms, String[] fields);
-
-  public abstract Page<Document> getDocumentsByPhrases(String[] phrases, String[] fields);
-
-  public abstract Page<Document> getDocumentsByPhrasesBoolean(
-          String[] mustPhrases, String[] shouldPhrases, String[] notPhrases, String[] fields);
+//  public abstract Page<Document> getDocumentsByTerms(String[] terms, String[] fields);
+//
+//  public abstract Page<Document> getDocumentsByTermsBoolean(
+//          String[] mustTerms, String[] shouldTerms, String[] notTerms, String[] fields);
+//
+//  public abstract Page<Document> getDocumentsByPhrases(String[] phrases, String[] fields);
+//
+//  public abstract Page<Document> getDocumentsByPhrasesBoolean(
+//          String[] mustPhrases, String[] shouldPhrases, String[] notPhrases, String[] fields);
 }

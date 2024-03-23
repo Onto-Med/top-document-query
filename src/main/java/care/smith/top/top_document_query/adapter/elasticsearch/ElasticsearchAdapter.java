@@ -10,8 +10,10 @@ import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
 import care.smith.top.top_document_query.elasticsearch.DocumentFields;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
+import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.IdsQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.SimpleQueryStringQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -195,16 +197,30 @@ public class ElasticsearchAdapter extends TextAdapter {
     return toPage(response, page);
   }
 
-  public Page<Document> getDocumentsByPhrases(@NonNull Collection<String> phrases, Integer page)
+  @Override
+  public Page<Document> getDocumentsByTerms(@NonNull Collection<String> phrases, Integer page)
       throws IOException {
+    return getDocumentsByTerms(phrases, TermConcatenationTypes.AND, page);
+  }
+
+  public Page<Document> getDocumentsByTerms(@NonNull Collection<String> phrases, TermConcatenationTypes concatenationTypes, Integer page)
+      throws IOException {
+    String queryString;
+    if (concatenationTypes.equals(TermConcatenationTypes.AND)) {
+      queryString = phrases.stream()
+          .map(s -> String.format("+%s", s))
+          .collect(Collectors.joining(" "));
+    } else {
+      queryString = String.join(" | ", phrases);
+    }
+
     int batchSize = prepareBatchSize(config.getBatchSize());
     SearchResponse<DocumentEntity> response =
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              // TODO: filter by phrases, and/or?
-              // could use: SimpleQueryStringQuery.of(q -> q.euery("+John +Doe"))._toQuery();
-              return s;
+              return s.query(
+                  SimpleQueryStringQuery.of(q -> q.query(queryString))._toQuery());
             },
             DocumentEntity.class);
     return toPage(response, page);
@@ -218,41 +234,41 @@ public class ElasticsearchAdapter extends TextAdapter {
     //      .map(DocumentEntity::toApiModel);
   }
 
-  public Page<Document> getDocumentsByTerms(String[] terms, String[] fields) {
-    throw new NotImplementedException();
-    //    return documentRepository.getESDocumentsByTerms(terms, fields).stream()
-    //      .map(DocumentEntity::toApiModel)
-    //      .collect(Collectors.toList());
-  }
+//  public Page<Document> getDocumentsByTerms(String[] terms, String[] fields) {
+//    throw new NotImplementedException();
+//    //    return documentRepository.getESDocumentsByTerms(terms, fields).stream()
+//    //      .map(DocumentEntity::toApiModel)
+//    //      .collect(Collectors.toList());
+//  }
 
   // ### method calls for the custom ES repository
 
-  public Page<Document> getDocumentsByTermsBoolean(
-      String[] mustTerms, String[] shouldTerms, String[] notTerms, String[] fields) {
-    throw new NotImplementedException();
-    //    return documentRepository
-    //      .getESDocumentsByTermsBoolean(shouldTerms, mustTerms, notTerms, fields)
-    //      .stream()
-    //      .map(DocumentEntity::toApiModel)
-    //      .collect(Collectors.toList());
-  }
+//  public Page<Document> getDocumentsByTermsBoolean(
+//      String[] mustTerms, String[] shouldTerms, String[] notTerms, String[] fields) {
+//    throw new NotImplementedException();
+//    //    return documentRepository
+//    //      .getESDocumentsByTermsBoolean(shouldTerms, mustTerms, notTerms, fields)
+//    //      .stream()
+//    //      .map(DocumentEntity::toApiModel)
+//    //      .collect(Collectors.toList());
+//  }
 
-  public Page<Document> getDocumentsByPhrases(String[] phrases, String[] fields) {
-    throw new NotImplementedException();
-    //    return documentRepository.getESDocumentsByPhrases(phrases, fields).stream()
-    //      .map(DocumentEntity::toApiModel)
-    //      .collect(Collectors.toList());
-  }
+//  public Page<Document> getDocumentsByPhrases(String[] phrases, String[] fields) {
+//    throw new NotImplementedException();
+//    //    return documentRepository.getESDocumentsByPhrases(phrases, fields).stream()
+//    //      .map(DocumentEntity::toApiModel)
+//    //      .collect(Collectors.toList());
+//  }
 
-  public Page<Document> getDocumentsByPhrasesBoolean(
-      String[] mustPhrases, String[] shouldPhrases, String[] notPhrases, String[] fields) {
-    throw new NotImplementedException();
-    //    return documentRepository
-    //      .getESDocumentsByPhrasesBoolean(shouldPhrases, mustPhrases, notPhrases, fields)
-    //      .stream()
-    //      .map(DocumentEntity::toApiModel)
-    //      .collect(Collectors.toList());
-  }
+//  public Page<Document> getDocumentsByPhrasesBoolean(
+//      String[] mustPhrases, String[] shouldPhrases, String[] notPhrases, String[] fields) {
+//    throw new NotImplementedException();
+//    //    return documentRepository
+//    //      .getESDocumentsByPhrasesBoolean(shouldPhrases, mustPhrases, notPhrases, fields)
+//    //      .stream()
+//    //      .map(DocumentEntity::toApiModel)
+//    //      .collect(Collectors.toList());
+//  }
 
   private int prepareBatchSize(Integer batchSize) {
     return batchSize == null || batchSize <= 0 ? DEFAULT_BATCH_SIZE : batchSize;
