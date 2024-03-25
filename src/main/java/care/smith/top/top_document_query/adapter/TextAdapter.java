@@ -70,22 +70,15 @@ public abstract class TextAdapter {
   public abstract Page<Document> getDocumentsByIds(@NonNull Collection<String> ids, Integer page)
           throws IOException;
 
-  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> phrases, Integer page)
+  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, Integer page)
           throws IOException;
 
-  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> phrases, TermConcatenationTypes concatenationTypes, Integer page)
+  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page)
           throws IOException;
 
-  public abstract Page<Document> getDocumentsByIdsAndPhrases(
-          @NonNull Collection<String> ids, @NonNull Collection<String> phrases, Integer page);
+  public abstract Page<Document> getDocumentsByIdsAndTerms(
+          @NonNull Collection<String> ids, @NonNull Collection<String> terms, Integer page) throws IOException;
 
-//  public abstract Page<Document> getDocumentsByTerms(String[] terms, String[] fields);
-//
-//  public abstract Page<Document> getDocumentsByTermsBoolean(
-//          String[] mustTerms, String[] shouldTerms, String[] notTerms, String[] fields);
-//
-//  public abstract Page<Document> getDocumentsByPhrases(String[] phrases, String[] fields);
-//
-//  public abstract Page<Document> getDocumentsByPhrasesBoolean(
-//          String[] mustPhrases, String[] shouldPhrases, String[] notPhrases, String[] fields);
+  public abstract Page<Document> getDocumentsByIdsAndTerms(
+          @NonNull Collection<String> ids, @NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page) throws IOException;
 }

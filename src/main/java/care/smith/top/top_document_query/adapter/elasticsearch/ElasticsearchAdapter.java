@@ -16,6 +16,7 @@ import co.elastic.clients.elasticsearch._types.query_dsl.IdsQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.SimpleQueryStringQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
 import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
@@ -29,7 +30,7 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang3.NotImplementedException;
+
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.springframework.data.domain.Page;
@@ -163,7 +164,8 @@ public class ElasticsearchAdapter extends TextAdapter {
   public Page<Document> getDocumentsByName(@NonNull String documentName, Integer page)
       throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
-    if (documentName.trim().isEmpty()) {
+    final String finalDocumentName = documentName.trim();
+    if (finalDocumentName.isEmpty()) {
       return getAllDocuments(page);
     }
     SearchResponse<DocumentEntity> response =
@@ -175,7 +177,7 @@ public class ElasticsearchAdapter extends TextAdapter {
                       q.wildcard(
                           new WildcardQuery.Builder()
                               .field(DocumentFields.TITLE.name())
-                              .wildcard(documentName)
+                              .wildcard(finalDocumentName)
                               .caseInsensitive(true)
                               .build()));
             },
@@ -190,31 +192,23 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              return s.query(
-                  q -> q.ids(new IdsQuery.Builder().values(new ArrayList<>(ids)).build()));
+              return addIdSearchToBuilder(s, ids);
             },
             DocumentEntity.class);
     return toPage(response, page);
   }
 
   @Override
-  public Page<Document> getDocumentsByTerms(@NonNull Collection<String> phrases, Integer page)
+  public Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, Integer page)
       throws IOException {
-    return getDocumentsByTerms(phrases, TermConcatenationTypes.AND, page);
+    return getDocumentsByTerms(terms, TermConcatenationTypes.AND, page);
   }
 
-  public Page<Document> getDocumentsByTerms(@NonNull Collection<String> phrases, TermConcatenationTypes concatenationTypes, Integer page)
+  public Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page)
       throws IOException {
-    String queryString;
-    if (concatenationTypes.equals(TermConcatenationTypes.AND)) {
-      queryString = phrases.stream()
-          .map(s -> String.format("+%s", s))
-          .collect(Collectors.joining(" "));
-    } else {
-      queryString = String.join(" | ", phrases);
-    }
-
+    String queryString = queryStringByConcatenationType(terms, concatenationTypes);
     int batchSize = prepareBatchSize(config.getBatchSize());
+
     SearchResponse<DocumentEntity> response =
         esClient.search(
             s -> {
@@ -226,49 +220,47 @@ public class ElasticsearchAdapter extends TextAdapter {
     return toPage(response, page);
   }
 
-  public Page<Document> getDocumentsByIdsAndPhrases(
-      @NonNull Collection<String> ids, @NonNull Collection<String> phrases, Integer page) {
-    throw new NotImplementedException();
-    //    return documentRepository
-    //      .findDocumentEntitiesByIdInAndDocumentTextIn(ids, phrases, pageRequestOf(page))
-    //      .map(DocumentEntity::toApiModel);
+  public Page<Document> getDocumentsByIdsAndTerms(
+      @NonNull Collection<String> ids, @NonNull Collection<String> terms, Integer page) throws IOException {
+    return getDocumentsByIdsAndTerms(ids, terms, TermConcatenationTypes.AND, page);
   }
 
-//  public Page<Document> getDocumentsByTerms(String[] terms, String[] fields) {
-//    throw new NotImplementedException();
-//    //    return documentRepository.getESDocumentsByTerms(terms, fields).stream()
-//    //      .map(DocumentEntity::toApiModel)
-//    //      .collect(Collectors.toList());
-//  }
+  @Override
+  public Page<Document> getDocumentsByIdsAndTerms(
+      @NonNull Collection<String> ids, @NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page) throws IOException {
+    int batchSize = prepareBatchSize(config.getBatchSize());
+    String queryString = queryStringByConcatenationType(terms, concatenationTypes);
 
-  // ### method calls for the custom ES repository
+    SearchResponse<DocumentEntity> response =
+        esClient.search(
+            s -> {
+              if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
+              return addIdSearchToBuilder(
+                  s.query(SimpleQueryStringQuery.of(q -> q.query(queryString))._toQuery()),
+                  ids
+              );
+            },
+            DocumentEntity.class);
+    return toPage(response, page);
+  }
 
-//  public Page<Document> getDocumentsByTermsBoolean(
-//      String[] mustTerms, String[] shouldTerms, String[] notTerms, String[] fields) {
-//    throw new NotImplementedException();
-//    //    return documentRepository
-//    //      .getESDocumentsByTermsBoolean(shouldTerms, mustTerms, notTerms, fields)
-//    //      .stream()
-//    //      .map(DocumentEntity::toApiModel)
-//    //      .collect(Collectors.toList());
-//  }
+  private String queryStringByConcatenationType(
+      @NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes) {
+    if (concatenationTypes == null) concatenationTypes = TermConcatenationTypes.AND;
+    String queryString;
+    if (concatenationTypes.equals(TermConcatenationTypes.AND)) {
+      queryString = terms.stream()
+          .map(s -> String.format("+%s", s))
+          .collect(Collectors.joining(" "));
+    } else {
+      queryString = String.join(" | ", terms);
+    }
+    return queryString;
+  }
 
-//  public Page<Document> getDocumentsByPhrases(String[] phrases, String[] fields) {
-//    throw new NotImplementedException();
-//    //    return documentRepository.getESDocumentsByPhrases(phrases, fields).stream()
-//    //      .map(DocumentEntity::toApiModel)
-//    //      .collect(Collectors.toList());
-//  }
-
-//  public Page<Document> getDocumentsByPhrasesBoolean(
-//      String[] mustPhrases, String[] shouldPhrases, String[] notPhrases, String[] fields) {
-//    throw new NotImplementedException();
-//    //    return documentRepository
-//    //      .getESDocumentsByPhrasesBoolean(shouldPhrases, mustPhrases, notPhrases, fields)
-//    //      .stream()
-//    //      .map(DocumentEntity::toApiModel)
-//    //      .collect(Collectors.toList());
-//  }
+  private SearchRequest.Builder addIdSearchToBuilder(SearchRequest.Builder builder, Collection<String> ids) {
+    return builder.query(q -> q.ids(new IdsQuery.Builder().values(new ArrayList<>(ids)).build()));
+  }
 
   private int prepareBatchSize(Integer batchSize) {
     return batchSize == null || batchSize <= 0 ? DEFAULT_BATCH_SIZE : batchSize;
