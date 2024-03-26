@@ -140,7 +140,11 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   @Test
   void getDocumentsByIdsAndTerms() throws IOException {
     Page<Document> result1 = adapter.getDocumentsByIdsAndTerms(List.of("d1", "d2", "d3"), List.of("test", "document"), TermConcatenationTypes.AND, null);
+    Page<Document> result2 = adapter.getDocumentsByIdsAndTerms(List.of("d1", "d2", "d3"), List.of("test", "document"), TermConcatenationTypes.OR, null);
+    Page<Document> result3 = adapter.getDocumentsByIdsAndTerms(List.of("d1", "d2"), List.of("test", "document"), TermConcatenationTypes.OR, null);
 
     assertEquals(Set.of(document1, document3), result1.toSet());
+    assertEquals(allTestDocuments, result2.toSet());
+    assertEquals(Set.of(document1, document2), result3.toSet());
   }
 }
