@@ -22,15 +22,15 @@ public abstract class AbstractElasticTest {
       new DocumentElasticsearchContainer();
   protected static ElasticsearchClient esClient;
   protected static ElasticsearchAdapter adapter;
-  protected static Document document1 = new Document().id("01").name("test01")
+  protected static Document document1 = new Document().id("d1").name("test01")
       .text("What do we have here? A test document. With an entity. Nice.")
       .highlightedText("What do we have here? A test document. With an entity. Nice.");
-  protected static Document document2 = new Document().id("02").name("test02")
+  protected static Document document2 = new Document().id("d2").name("test02")
       .text("Another document is here. It has two entities.")
       .highlightedText("Another document is here. It has two entities.");
-  protected static Document document3 = new Document().id("03").name("test03")
-      .text("And a third document; but this one features nothing")
-      .highlightedText("And a third document; but this one features nothing");
+  protected static Document document3 = new Document().id("d3").name("test03")
+      .text("And a third document; but this one features nothing. No test.")
+      .highlightedText("And a third document; but this one features nothing. No test.");
   protected static Set<Document> allTestDocuments = Set.of(document1, document2, document3);
 
   protected static void setUpESIndex() {

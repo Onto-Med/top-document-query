@@ -5,6 +5,13 @@ public enum DocumentFields {
   TEXT("text"),
   ID("id");
 
+  private final String value;
+
   DocumentFields(String value) {
+    this.value = value;
+  }
+
+  public String getValue() {
+    return this.value;
   }
 }

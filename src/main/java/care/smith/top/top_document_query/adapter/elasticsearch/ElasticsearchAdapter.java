@@ -12,11 +12,8 @@ import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.query_dsl.IdsQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.SimpleQueryStringQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.WildcardQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.GetResponse;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
@@ -40,6 +37,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.NonNull;
 
 public class ElasticsearchAdapter extends TextAdapter {
+  //ToDo: right now the adapter config allows for multiple index values (as an array), but only the first index value will be used here
+  // (e.g. GetResponse needs an index name as parameter)
+
+  //ToDo: fuzzy matching for terms
   private static final int DEFAULT_BATCH_SIZE = 20;
   private final Logger LOGGER = Logger.getLogger(ElasticsearchAdapter.class.getName());
   private ElasticsearchClient esClient;
@@ -150,7 +151,7 @@ public class ElasticsearchAdapter extends TextAdapter {
    */
   public Optional<Document> getDocumentById(@NonNull String documentId) throws IOException {
     GetResponse<DocumentEntity> response =
-        esClient.get(g -> g.id(documentId), DocumentEntity.class);
+        esClient.get(g -> g.id(documentId).index(config.getIndex()[0]), DocumentEntity.class);
     if (response.found() && response.source() != null) {
       return Optional.of(response.source().getId() == null ? response.source().toApiModel(response.id()) : response.source().toApiModel());
     } else {
@@ -173,8 +174,8 @@ public class ElasticsearchAdapter extends TextAdapter {
                   q ->
                       q.wildcard(
                           new WildcardQuery.Builder()
-                              .field(DocumentFields.TITLE.name())
-                              .wildcard(finalDocumentName)
+                              .field(DocumentFields.TITLE.getValue())
+                              .wildcard(finalDocumentName + "*")
                               .caseInsensitive(true)
                               .build()));
             },
@@ -189,7 +190,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              return addIdSearchToBuilder(s, ids);
+              return s.query(queryForIds(ids));
             },
             DocumentEntity.class);
     return toPage(response, page);
@@ -210,8 +211,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              return s.query(
-                  SimpleQueryStringQuery.of(q -> q.query(queryString))._toQuery());
+              return s.query(queryForQueryString(queryString));
             },
             DocumentEntity.class);
     return toPage(response, page);
@@ -232,10 +232,9 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              return addIdSearchToBuilder(
-                  s.query(SimpleQueryStringQuery.of(q -> q.query(queryString))._toQuery()),
-                  ids
-              );
+              return s.query(q -> q.bool(BoolQuery.of(
+                  qb -> qb.filter(queryForQueryString(queryString), queryForIds(ids))
+              )));
             },
             DocumentEntity.class);
     return toPage(response, page);
@@ -255,9 +254,13 @@ public class ElasticsearchAdapter extends TextAdapter {
     return queryString;
   }
 
-  private SearchRequest.Builder addIdSearchToBuilder(SearchRequest.Builder builder, Collection<String> ids) {
-    return builder.query(q -> q.ids(new IdsQuery.Builder().values(new ArrayList<>(ids)).build()));
+  private Query queryForIds(Collection<String> ids) {
+    return IdsQuery.of(iq -> iq.values(new ArrayList<>(ids)))._toQuery();
   }
+
+  private Query queryForQueryString(String queryString) {
+      return SimpleQueryStringQuery.of(sq -> sq.query(queryString))._toQuery();
+    }
 
   private int prepareBatchSize(Integer batchSize) {
     return batchSize == null || batchSize <= 0 ? DEFAULT_BATCH_SIZE : batchSize;
