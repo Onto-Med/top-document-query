@@ -30,6 +30,18 @@ public class DocumentEntity {
                 .collect(Collectors.joining()));
   }
 
+  public Document toApiModel(String eid) {
+    return new Document()
+        .id(eid)
+        .name(name)
+        .text(
+            Arrays.stream(text.split("\\s+")).limit(wordEllipsis).collect(Collectors.joining(" ")))
+        .highlightedText(
+            this.getHighlights().values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.joining()));
+  }
+
   public static Document nullDocument() {
     return new Document().id("null").name("null").text("null").highlightedText("null");
   }

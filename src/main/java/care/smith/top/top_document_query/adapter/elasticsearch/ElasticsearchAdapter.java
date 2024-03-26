@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -112,15 +113,11 @@ public class ElasticsearchAdapter extends TextAdapter {
               public List<Document> get() {
                 try {
                   int bs = prepareBatchSize(batchSize);
-                  return esClient
+                  List<Document> content = new ArrayList<>();
+                  esClient
                       .search(s -> s.from(page++ * bs).size(bs), DocumentEntity.class)
-                      .hits()
-                      .hits()
-                      .stream()
-                      .map(Hit::source)
-                      .filter(Objects::nonNull)
-                      .map(DocumentEntity::toApiModel)
-                      .collect(Collectors.toList());
+                      .hits().hits().forEach(documentCollector(content));
+                  return content;
                 } catch (IOException e) {
                   return List.of();
                 }
@@ -155,7 +152,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     GetResponse<DocumentEntity> response =
         esClient.get(g -> g.id(documentId), DocumentEntity.class);
     if (response.found() && response.source() != null) {
-      return Optional.of(response.source().toApiModel());
+      return Optional.of(response.source().getId() == null ? response.source().toApiModel(response.id()) : response.source().toApiModel());
     } else {
       return Optional.empty();
     }
@@ -266,13 +263,20 @@ public class ElasticsearchAdapter extends TextAdapter {
     return batchSize == null || batchSize <= 0 ? DEFAULT_BATCH_SIZE : batchSize;
   }
 
+  private Consumer<Hit<DocumentEntity>> documentCollector(Collection<Document> content) {
+    return r -> {
+      if (r.source() == null) return;
+      Document document =
+          r.source().getId() == null
+              ? r.source().toApiModel(r.id())
+              : r.source().toApiModel();
+      content.add(document);
+    };
+  }
+
   private Page<Document> toPage(SearchResponse<DocumentEntity> response, Integer page) {
-    List<Document> content =
-        response.hits().hits().stream()
-            .map(Hit::source)
-            .filter(Objects::nonNull)
-            .map(DocumentEntity::toApiModel)
-            .collect(Collectors.toList());
+    List<Document> content = new ArrayList<>();
+    response.hits().hits().forEach(documentCollector(content));
     PageRequest pageRequest =
         page == null || page < 1
             ? PageRequest.ofSize(prepareBatchSize(config.getBatchSize()))

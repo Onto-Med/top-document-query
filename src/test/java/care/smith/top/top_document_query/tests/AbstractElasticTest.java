@@ -11,7 +11,6 @@ import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.http.HttpHost;
@@ -24,11 +23,14 @@ public abstract class AbstractElasticTest {
   protected static ElasticsearchClient esClient;
   protected static ElasticsearchAdapter adapter;
   protected static Document document1 = new Document().id("01").name("test01")
-      .text("What do we have here? A test document. With an entity. Nice.");
+      .text("What do we have here? A test document. With an entity. Nice.")
+      .highlightedText("What do we have here? A test document. With an entity. Nice.");
   protected static Document document2 = new Document().id("02").name("test02")
-      .text("Another document is here. It has two entities.");
+      .text("Another document is here. It has two entities.")
+      .highlightedText("Another document is here. It has two entities.");
   protected static Document document3 = new Document().id("03").name("test03")
-      .text("And a third document; but this one features nothing");
+      .text("And a third document; but this one features nothing")
+      .highlightedText("And a third document; but this one features nothing");
   protected static Set<Document> allTestDocuments = Set.of(document1, document2, document3);
 
   protected static void setUpESIndex() {
