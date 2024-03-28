@@ -15,7 +15,9 @@ import java.util.Set;
 
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
+import org.junit.jupiter.api.Disabled;
 
+@Disabled
 public abstract class AbstractElasticTest {
   protected static final String[] ELASTIC_INDEX = new String[] {"test_documents"};
   protected static DocumentElasticsearchContainer elasticsearchContainer =

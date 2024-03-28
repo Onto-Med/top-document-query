@@ -5,6 +5,7 @@ import care.smith.top.top_document_query.concept_cluster.model.*;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiGraphMethod;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiPipelineMethod;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiProcessMethod;
+import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiStatus;
 import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineFailEntity;
 import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineFailWithExplicit;
 import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineResponseEntity;
@@ -216,6 +217,31 @@ public class ConceptPipelineManager {
                           .build())
               .retrieve()
               .bodyToMono(ConceptGraphStatisticsEntity.class)
+              .block());
+    } catch (WebClientResponseException e) {
+      LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
+      return Optional.empty();
+    }
+  }
+
+  /**
+   *
+   * @param processName
+   * @return
+   */
+  public Optional<PipelineStatusEntity> getStatusOfProcess(String processName) {
+    try {
+      return Optional.ofNullable(
+          conceptGraphsApi
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path(ApiStatus.SELF.getEndpoint())
+                          .queryParam("process", processName)
+                          .build())
+              .retrieve()
+              .bodyToMono(PipelineStatusEntity.class)
               .block());
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());

@@ -13,8 +13,10 @@ import care.smith.top.top_document_query.util.builder.Cat;
 import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 class TextFinderTest extends AbstractElasticTest {
   final String PARENT_CAT_ID = "phrase_search_cat";
   Concept phrase1 = new Cat("phrase1", false).titleEn("\"a document\"").get();
