@@ -202,7 +202,7 @@ public class ConceptPipelineManager {
    * Get statistics about the graphs that where constructed by a process.
    *
    * @param processName Name of the process.
-   * @return {@link Optional} containing the graph statistics, of a process with the given name exists.
+   * @return {@link Optional} containing the graph statistics of a process with the given name if exists.
    */
   public Optional<ConceptGraphStatisticsEntity> getGraphStatisticsForProcess(String processName) {
     try {
@@ -225,9 +225,10 @@ public class ConceptPipelineManager {
   }
 
   /**
+   * Gets the status of a specific pipeline and its sub steps
    *
    * @param processName Name of the process
-   * @return {@link Optional} containing the statistics, of a process with the given name exists.
+   * @return {@link Optional} containing the status of a pipeline with the given name if exists.
    */
   public Optional<PipelineStatusEntity> getStatusOfProcess(String processName) {
     try {
