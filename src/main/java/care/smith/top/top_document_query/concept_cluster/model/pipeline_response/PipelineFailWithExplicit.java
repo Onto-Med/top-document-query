@@ -2,24 +2,23 @@ package care.smith.top.top_document_query.concept_cluster.model.pipeline_respons
 
 import care.smith.top.model.PipelineResponse;
 import care.smith.top.model.PipelineResponseStatus;
-import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineFailEntity;
 
 public class PipelineFailWithExplicit extends PipelineFailEntity {
-  private String status;
+  private String error;
 
-  public String getStatus() {
-    return status;
+  public String getError() {
+    return error;
   }
 
-  public void setStatus(String status) {
-    this.status = status;
+  public void setError(String error) {
+    this.error = error;
   }
 
   @Override
   public PipelineResponse getSpecificResponse() {
     return new PipelineResponse()
         .pipelineId(this.getName())
-        .response(this.getStatus())
+        .response(this.getError())
         .status(PipelineResponseStatus.FAILED);
   }
 }

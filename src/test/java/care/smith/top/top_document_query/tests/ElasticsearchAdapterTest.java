@@ -28,7 +28,6 @@ import org.springframework.data.domain.Page;
 
 import javax.print.Doc;
 
-@Disabled
 class ElasticsearchAdapterTest extends AbstractElasticTest {
   Concept documentEntity = new Cat("document", false).titleEn("document").get();
   Concept entityEntity = new Cat("entity", false).titleEn("entity").synonymEn("entities").get();
