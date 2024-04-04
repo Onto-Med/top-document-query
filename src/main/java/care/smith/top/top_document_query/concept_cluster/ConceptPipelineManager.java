@@ -1,6 +1,6 @@
 package care.smith.top.top_document_query.concept_cluster;
 
-import care.smith.top.model.ConceptGraphPipeline;
+import care.smith.top.model.*;
 import care.smith.top.top_document_query.concept_cluster.model.*;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiGraphMethod;
 import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiPipelineMethod;
@@ -168,7 +168,24 @@ public class ConceptPipelineManager {
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
     }
-    return processOverviewEntity != null ? processOverviewEntity.toApiModel() : new ArrayList<>();
+    List<ConceptGraphPipeline> conceptGraphPipelines = (processOverviewEntity != null ?
+        processOverviewEntity.toApiModel() : new ArrayList<>());
+    conceptGraphPipelines.forEach(conceptGraphPipeline -> {
+          conceptGraphPipeline.getSteps().stream()
+              .filter(step -> step.getName().equals(ConceptGraphPipelineStepsEnum.GRAPH))
+              .forEach(step -> {
+                    if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.FINISHED)) {
+                      conceptGraphPipeline.setStatus(PipelineResponseStatus.SUCCESSFUL);
+                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.RUNNING) ||
+                        step.getStatus().equals(ConceptGraphPipelineStatusEnum.STARTED)) {
+                      conceptGraphPipeline.setStatus(PipelineResponseStatus.RUNNING);
+                    } else {
+                      conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
+                    }
+              });
+        }
+    );
+    return conceptGraphPipelines;
   }
 
   /**
