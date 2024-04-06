@@ -68,7 +68,9 @@ public class DocumentCSV {
               document.getDocumentId(),
               String.valueOf(document.getScore()),
               document.getDocument().getName(),
-              document.getDocument().getText().substring(0, excerptLength)));
+              //ToDo: encoding is wrong
+              //ToDo: more meaningful excerpt (right now, only the first excerptLength characters are used)
+              document.getDocument().getText().substring(0, excerptLength).replace("\n", " ")));
     }
     writer.flush();
   }
