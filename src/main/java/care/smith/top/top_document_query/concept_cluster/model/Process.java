@@ -3,6 +3,7 @@ package care.smith.top.top_document_query.concept_cluster.model;
 import care.smith.top.model.ConceptGraphPipeline;
 import care.smith.top.model.ConceptGraphPipelineFinishedSteps;
 import care.smith.top.model.ConceptGraphPipelineStatus;
+import care.smith.top.model.PipelineResponseStatus;
 
 public class Process {
   private String name;
@@ -33,9 +34,13 @@ public class Process {
         step.setName(processStep.getName());
         step.setRank(processStep.getRank());
         step.setStatus(processStep.getStatus());
-        process.addStatusItem(step);
+        process.addStepsItem(step);
       }
     }
     return process;
+  }
+
+  public ConceptGraphPipeline toApiModel(PipelineResponseStatus status) {
+    return toApiModel().status(status);
   }
 }
