@@ -172,6 +172,26 @@ public class ConceptPipelineManager {
   }
 
   /**
+   * Deletes a process by its id; can't delete a process that is running.
+   *
+   * @param processId The id of the process.
+   * @return The server message as {@link String}.
+   */
+  public String deleteProcess(String processId) {
+    try {
+      return conceptGraphsApi
+          .delete()
+          .uri(uriBuilder -> uriBuilder.path(ApiProcessMethod.DELETE.getEndpoint(processId)).build())
+          .retrieve()
+          .bodyToMono(String.class)
+          .block();
+    } catch (WebClientResponseException e) {
+      LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
+    }
+    return "Something went wrong; check the logs.";
+  }
+
+  /**
    * Get a single graph from a process with the specified {@code graphId}
    *
    * @param graphId Graph ID to filter by.

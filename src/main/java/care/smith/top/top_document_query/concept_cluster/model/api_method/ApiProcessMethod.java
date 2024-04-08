@@ -1,7 +1,8 @@
 package care.smith.top.top_document_query.concept_cluster.model.api_method;
 
 public enum ApiProcessMethod {
-  ALL("/processes");
+  ALL("/processes"),
+  DELETE("/delete");
 
   private String endpoint;
 
@@ -10,6 +11,11 @@ public enum ApiProcessMethod {
   }
 
   public String getEndpoint() {
+    return endpoint;
+  }
+
+  public String getEndpoint(String processId){
+    if (endpoint.equals(DELETE.endpoint)) return String.format("%s/%s%s", ALL.endpoint, processId, DELETE.endpoint);
     return endpoint;
   }
 

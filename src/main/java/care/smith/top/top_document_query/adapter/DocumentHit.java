@@ -1,27 +1,29 @@
 package care.smith.top.top_document_query.adapter;
 
+import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
+
 public class DocumentHit {
-  private AbstractDocument document;
+  private DocumentEntity document;
   private String documentId;
   private double score;
 
-  public DocumentHit(String documentId, AbstractDocument document) {
+  public DocumentHit(String documentId, DocumentEntity document) {
     this.setDocumentId(documentId);
     this.setDocument(document);
     this.setScore(0.0);
   }
 
-  public DocumentHit(String documentId, AbstractDocument document, Double score) {
+  public DocumentHit(String documentId, DocumentEntity document, Double score) {
     this.setDocumentId(documentId);
     this.setDocument(document);
     this.setScore(score);
   }
 
-  public AbstractDocument getDocument() {
+  public DocumentEntity getDocument() {
     return document;
   }
 
-  public DocumentHit setDocument(AbstractDocument document) {
+  public DocumentHit setDocument(DocumentEntity document) {
     this.document = document;
     return this;
   }

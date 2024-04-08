@@ -9,6 +9,7 @@ field:
   - text
 batchSize: 30
 replaceFields: {'text': 'content'}
+labelKey: label
 conceptGraph:
   connection:
     url: http://localhost

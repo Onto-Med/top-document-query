@@ -36,6 +36,9 @@ public class TextAdapterConfig {
   private Integer batchSize = 30;
 
   @JsonSetter(nulls = Nulls.SKIP)
+  private String labelKey = "label";
+
+  @JsonSetter(nulls = Nulls.SKIP)
   private Map<String, String> replaceFields =
       new HashMap<>() {
         {
@@ -72,6 +75,14 @@ public class TextAdapterConfig {
     return replaceFields.keySet().stream()
         .map(key -> key + ": " + replaceFields.get(key))
         .collect(Collectors.joining(", ", "{", "}"));
+  }
+
+  public String getLabelKey() {
+    return labelKey;
+  }
+
+  public void setLabelKey(String labelKey) {
+    this.labelKey = labelKey;
   }
 
   public void setReplaceFields(Map<String, String> replaceFields) {

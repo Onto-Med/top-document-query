@@ -3,7 +3,6 @@ package care.smith.top.top_document_query.adapter.elasticsearch;
 import care.smith.top.model.ConceptQuery;
 import care.smith.top.model.Document;
 import care.smith.top.top_document_query.adapter.DocumentHit;
-import care.smith.top.top_document_query.adapter.ElasticDocument;
 import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
@@ -68,7 +67,7 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   @Override
   public List<DocumentHit> execute(String queryString) {
-    SearchResponse<ElasticDocument> searchResponse;
+    SearchResponse<DocumentEntity> searchResponse;
     try {
       searchResponse =
           esClient.search(
@@ -80,7 +79,7 @@ public class ElasticsearchAdapter extends TextAdapter {
                                   qs ->
                                       qs.query(queryString)
                                           .fields(Arrays.asList(config.getField())))),
-              ElasticDocument.class);
+              DocumentEntity.class);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

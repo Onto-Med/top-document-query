@@ -16,6 +16,8 @@ public class DocumentEntity {
 
   private String text;
 
+  private String label;
+
   private Map<String, List<String>> highlights;
 
   public Document toApiModel() {
