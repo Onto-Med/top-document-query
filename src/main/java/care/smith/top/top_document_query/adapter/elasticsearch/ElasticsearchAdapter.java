@@ -116,7 +116,7 @@ public class ElasticsearchAdapter extends TextAdapter {
                   List<Document> content = new ArrayList<>();
                   esClient
                       .search(s -> s.from(page++ * bs).size(bs), DocumentEntity.class)
-                      .hits().hits().forEach(documentCollector(content));
+                      .hits().hits().forEach(documentCollector(content, true));
                   return content;
                 } catch (IOException e) {
                   return List.of();
@@ -138,7 +138,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> (page == null || page < 0) ? s : s.from(page * batchSize).size(batchSize),
             DocumentEntity.class);
-    return toPage(response, page);
+    return toPage(response, page, true);
   }
 
   /**
@@ -179,7 +179,7 @@ public class ElasticsearchAdapter extends TextAdapter {
                               .build()));
             },
             DocumentEntity.class);
-    return toPage(response, page);
+    return toPage(response, page, true);
   }
 
   public Page<Document> getDocumentsByIds(@NonNull Collection<String> ids, Integer page)
@@ -192,7 +192,7 @@ public class ElasticsearchAdapter extends TextAdapter {
               return s.query(queryForIds(ids));
             },
             DocumentEntity.class);
-    return toPage(response, page);
+    return toPage(response, page, true);
   }
 
   @Override
@@ -213,7 +213,7 @@ public class ElasticsearchAdapter extends TextAdapter {
               return s.query(queryForQueryString(queryString));
             },
             DocumentEntity.class);
-    return toPage(response, page);
+    return toPage(response, page, true);
   }
 
   public Page<Document> getDocumentsByIdsAndTerms(
@@ -236,7 +236,7 @@ public class ElasticsearchAdapter extends TextAdapter {
               )));
             },
             DocumentEntity.class);
-    return toPage(response, page);
+    return toPage(response, page, true);
   }
 
   private String queryStringByConcatenationType(
@@ -265,20 +265,20 @@ public class ElasticsearchAdapter extends TextAdapter {
     return batchSize == null || batchSize <= 0 ? DEFAULT_BATCH_SIZE : batchSize;
   }
 
-  private Consumer<Hit<DocumentEntity>> documentCollector(Collection<Document> content) {
+  private Consumer<Hit<DocumentEntity>> documentCollector(Collection<Document> content, Boolean simplified) {
     return r -> {
       if (r.source() == null) return;
       Document document =
           r.source().getId() == null
-              ? r.source().toApiModel(r.id())
-              : r.source().toApiModel();
+              ? (simplified ? r.source().toSimplifiedApiModel(r.id()) : r.source().toApiModel(r.id()))
+              : (simplified ? r.source().toSimplifiedApiModel() : r.source().toApiModel());
       content.add(document);
     };
   }
 
-  private Page<Document> toPage(SearchResponse<DocumentEntity> response, Integer page) {
+  private Page<Document> toPage(SearchResponse<DocumentEntity> response, Integer page, Boolean simplified) {
     List<Document> content = new ArrayList<>();
-    response.hits().hits().forEach(documentCollector(content));
+    response.hits().hits().forEach(documentCollector(content, simplified));
     PageRequest pageRequest =
         page == null || page < 1
             ? PageRequest.ofSize(prepareBatchSize(config.getBatchSize()))
