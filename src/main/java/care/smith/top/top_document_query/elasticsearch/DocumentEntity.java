@@ -24,8 +24,7 @@ public class DocumentEntity {
     return new Document()
         .id(id)
         .name(name)
-        .text(
-            Arrays.stream(text.split("\\s+")).limit(wordEllipsis).collect(Collectors.joining(" ")))
+        .text(documentText(wordEllipsis))
         .highlightedText(
             this.getHighlights().values().stream()
                 .flatMap(Collection::stream)
@@ -36,12 +35,46 @@ public class DocumentEntity {
     return new Document()
         .id(eid)
         .name(name)
-        .text(
-            Arrays.stream(text.split("\\s+")).limit(wordEllipsis).collect(Collectors.joining(" ")))
+        .text(documentText(wordEllipsis))
         .highlightedText(
             this.getHighlights().values().stream()
                 .flatMap(Collection::stream)
                 .collect(Collectors.joining()));
+  }
+
+  public Document toApiModel(String eid, Integer ellipsis) {
+    return new Document()
+        .id(eid)
+        .name(name)
+        .text(documentText(ellipsis))
+        .highlightedText(
+            this.getHighlights().values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.joining()));
+  }
+  public Document toApiModel(Integer ellipsis) {
+    return new Document()
+        .id(id)
+        .name(name)
+        .text(documentText(ellipsis))
+        .highlightedText(
+            this.getHighlights().values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.joining()));
+  }
+
+  public Document toSimplifiedApiModel() {
+    return new Document()
+        .id(id)
+        .name(name)
+        .text(documentText(wordEllipsis));
+  }
+
+  public Document toSimplifiedApiModel(String eid) {
+    return new Document()
+        .id(eid)
+        .name(name)
+        .text(documentText(wordEllipsis));
   }
 
   public static Document nullDocument() {
@@ -85,5 +118,9 @@ public class DocumentEntity {
 
   public void setHighlights(Map<String, List<String>> highlights) {
     this.highlights = highlights;
+  }
+
+  private String documentText(Integer ellipsis) {
+    return (ellipsis != null && ellipsis > 0) ? Arrays.stream(text.split("\\s+")).limit(ellipsis).collect(Collectors.joining(" ")) : text;
   }
 }
