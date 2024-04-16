@@ -36,9 +36,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.NonNull;
 
 public class ElasticsearchAdapter extends TextAdapter {
-  //ToDo: right now the adapter config allows for multiple index values (as an array), but only the first index value will be used here
-  // (e.g. GetResponse needs an index name as parameter)
-
   //ToDo: fuzzy matching for terms
   private static final int DEFAULT_BATCH_SIZE = 20;
   private final Logger LOGGER = Logger.getLogger(ElasticsearchAdapter.class.getName());
@@ -91,7 +88,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public long count() {
     try {
-      return esClient.count().count();
+      return esClient.count(s -> s.index(Arrays.asList(config.getIndex()))).count();
     } catch (IOException e) {
       LOGGER.warning(e.getMessage());
       return 0;
@@ -115,7 +112,12 @@ public class ElasticsearchAdapter extends TextAdapter {
                   int bs = prepareBatchSize(batchSize);
                   List<Document> content = new ArrayList<>();
                   esClient
-                      .search(s -> s.from(page++ * bs).size(bs), DocumentEntity.class)
+                      .search(s -> s
+                          .index(Arrays.asList(config.getIndex()))
+                          .from(page++ * bs)
+                          .size(bs),
+                          DocumentEntity.class
+                      )
                       .hits().hits().forEach(documentCollector(content, true));
                   return content;
                 } catch (IOException e) {
@@ -136,7 +138,11 @@ public class ElasticsearchAdapter extends TextAdapter {
     int batchSize = prepareBatchSize(config.getBatchSize());
     SearchResponse<DocumentEntity> response =
         esClient.search(
-            s -> (page == null || page < 0) ? s : s.from(page * batchSize).size(batchSize),
+            s -> (page == null || page < 0) ?
+                s.index(Arrays.asList(config.getIndex())) :
+                s.index(Arrays.asList(config.getIndex()))
+                    .from(page * batchSize)
+                    .size(batchSize),
             DocumentEntity.class);
     return toPage(response, page, true);
   }
@@ -149,6 +155,9 @@ public class ElasticsearchAdapter extends TextAdapter {
    * @throws IOException If request to ES failed.
    */
   public Optional<Document> getDocumentById(@NonNull String documentId) throws IOException {
+    //ToDo: right now the adapter config allows for multiple index values (as an array),
+    // but only the first index value will be used here (e.g. GetResponse needs an index name as parameter)
+    // the .search method allows for List of indices however
     GetResponse<DocumentEntity> response =
         esClient.get(g -> g.id(documentId).index(config.getIndex()[0]), DocumentEntity.class);
     if (response.found() && response.source() != null) {
@@ -169,8 +178,9 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              return s.query(
-                  q ->
+              return s
+                  .index(Arrays.asList(config.getIndex()))
+                  .query(q ->
                       q.wildcard(
                           new WildcardQuery.Builder()
                               .field(DocumentFields.TITLE.getValue())
@@ -189,7 +199,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              return s.query(queryForIds(ids));
+              return s.index(Arrays.asList(config.getIndex())).query(queryForIds(ids));
             },
             DocumentEntity.class);
     return toPage(response, page, true);
@@ -210,7 +220,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              return s.query(queryForQueryString(queryString));
+              return s.index(Arrays.asList(config.getIndex())).query(queryForQueryString(queryString));
             },
             DocumentEntity.class);
     return toPage(response, page, true);
@@ -231,7 +241,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
-              return s.query(q -> q.bool(BoolQuery.of(
+              return s.index(Arrays.asList(config.getIndex())).query(q -> q.bool(BoolQuery.of(
                   qb -> qb.filter(queryForQueryString(queryString), queryForIds(ids))
               )));
             },
