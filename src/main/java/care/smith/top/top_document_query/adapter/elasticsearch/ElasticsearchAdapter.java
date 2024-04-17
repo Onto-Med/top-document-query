@@ -36,6 +36,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.NonNull;
 
 public class ElasticsearchAdapter extends TextAdapter {
+  //ToDo: bug: es server returns by default (if no size is given) only the first ten hits.
+  // And even if size is given 10.000 documents is max and not very efficient.
+  // ES Client should have something like search_after which should do the trick -> adapt code accordingly
   //ToDo: fuzzy matching for terms
   private static final int DEFAULT_BATCH_SIZE = 20;
   private final Logger LOGGER = Logger.getLogger(ElasticsearchAdapter.class.getName());
