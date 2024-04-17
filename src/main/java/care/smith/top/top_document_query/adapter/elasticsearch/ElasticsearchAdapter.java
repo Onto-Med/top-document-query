@@ -11,8 +11,12 @@ import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOptions;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.GetResponse;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
@@ -139,14 +143,24 @@ public class ElasticsearchAdapter extends TextAdapter {
    */
   public Page<Document> getAllDocuments(Integer page) throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
-    SearchResponse<DocumentEntity> response =
-        esClient.search(
-            s -> (page == null || page < 0) ?
-                s.index(Arrays.asList(config.getIndex())) :
-                s.index(Arrays.asList(config.getIndex()))
-                    .from(page * batchSize)
-                    .size(batchSize),
-            DocumentEntity.class);
+    SearchRequest.Builder sb = new SearchRequest.Builder()
+        .index(Arrays.asList(config.getIndex()));
+
+    SearchResponse<DocumentEntity> response;
+    if (page != null && page >= 0) {
+      response = esClient.search(s -> sb.from(page * batchSize).size(batchSize), DocumentEntity.class);
+    } else {
+      response = esClient.search(s -> sb, DocumentEntity.class);
+    }
+//
+//    SearchResponse<DocumentEntity> response =
+//        esClient.search(
+//            s -> (page == null || page < 0) ?
+//                s.index(Arrays.asList(config.getIndex())) :
+//                s.index(Arrays.asList(config.getIndex()))
+//                    .from(page * batchSize)
+//                    .size(batchSize),
+//            DocumentEntity.class);
     return toPage(response, page, true);
   }
 
@@ -208,6 +222,11 @@ public class ElasticsearchAdapter extends TextAdapter {
     return toPage(response, page, true);
   }
 
+  public Stream<Document> getDocumentsByIds(@NonNull Collection<String> ids)
+      throws IOException {
+    return null;
+  }
+
   @Override
   public Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, Integer page)
       throws IOException {
@@ -264,6 +283,12 @@ public class ElasticsearchAdapter extends TextAdapter {
       queryString = String.join(" | ", terms);
     }
     return queryString;
+  }
+
+  private SortOptions defaultSort() {
+    return SortOptions.of(sob -> sob.field(fb ->
+        fb.field("id").order(SortOrder.Asc).field("name").order(SortOrder.Asc))
+    );
   }
 
   private Query queryForIds(Collection<String> ids) {

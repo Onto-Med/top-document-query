@@ -87,7 +87,7 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   @Test
   void getAllDocuments() throws IOException {
     assertEquals(
-        allTestDocuments,
+        allTestDocuments.stream().map(d -> new Document().id(d.getId()).name(d.getName()).text(d.getText())).collect(Collectors.toSet()),
         adapter.getAllDocuments(null).toSet());
   }
 
@@ -108,11 +108,15 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   void getDocumentsByIds() throws IOException {
     Page<Document> result1 = adapter.getDocumentsByIds(List.of("d2"), null);
     assertNotNull(result1.getContent());
+    assertEquals(
+        allTestDocuments,
+        adapter.getDocumentsByIds(List.of("d1", "d2", "d3")).collect(Collectors.toSet()));
 
     assertEquals(document2, result1.getContent().get(0));
     assertEquals(
         allTestDocuments,
         adapter.getDocumentsByIds(List.of("d1", "d2", "d3"), null).toSet());
+
   }
 
   @Test
