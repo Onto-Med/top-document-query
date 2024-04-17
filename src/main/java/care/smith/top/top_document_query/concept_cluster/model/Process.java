@@ -4,6 +4,8 @@ import care.smith.top.model.ConceptGraphPipeline;
 import care.smith.top.model.ConceptGraphPipelineStatus;
 import care.smith.top.model.PipelineResponseStatus;
 
+import java.util.ArrayList;
+
 public class Process {
   private String name;
   private ProcessStep[] status;
@@ -27,6 +29,7 @@ public class Process {
   public ConceptGraphPipeline toApiModel() {
     ConceptGraphPipeline process = new ConceptGraphPipeline();
     process.setPipelineId(getName());
+    process.setSteps(new ArrayList<>());
     if (status != null) {
       for (ProcessStep processStep : getStatus()) {
         ConceptGraphPipelineStatus step = new ConceptGraphPipelineStatus();
