@@ -35,7 +35,9 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   @BeforeAll
   static void setUp() throws InstantiationException {
     setUpESIndex();
+//    setUpLocalESIndex();
     initAdaper();
+//    initLocalAdaper();
     assertNotNull(adapter);
   }
 
@@ -75,12 +77,13 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   @Test
   void getAllDocumentsBatched() {
     AtomicInteger count = new AtomicInteger();
-    adapter.getAllDocumentsBatched(1).forEach(
-        result -> {
-          assertEquals(1, result.size());
-          count.getAndIncrement();
-        }
-    );
+    adapter
+        .getAllDocumentsBatched(1)
+        .forEach(
+            result -> {
+              assertEquals(1, result.size());
+              count.getAndIncrement();
+            });
     assertEquals(3, count.get());
   }
 

@@ -11,9 +11,7 @@ import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.SortOptions;
-import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -38,6 +36,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.NonNull;
+
+
+import javax.print.Doc;
 
 public class ElasticsearchAdapter extends TextAdapter {
   //ToDo: bug: es server returns by default (if no size is given) only the first ten hits.
@@ -109,24 +110,30 @@ public class ElasticsearchAdapter extends TextAdapter {
    * @return A stream consisting of lists with size 'batchSize'.
    */
   public Stream<List<Document>> getAllDocumentsBatched(Integer batchSize) {
+    int bs = prepareBatchSize(batchSize);
     return Stream.generate(
             new Supplier<List<Document>>() {
-              int page = 0;
-
+              List<FieldValue> sortValues = List.of(FieldValue.FALSE);
               @Override
               public List<Document> get() {
                 try {
-                  int bs = prepareBatchSize(batchSize);
-                  List<Document> content = new ArrayList<>();
-                  esClient
-                      .search(s -> s
-                          .index(Arrays.asList(config.getIndex()))
-                          .from(page++ * bs)
-                          .size(bs),
-                          DocumentEntity.class
-                      )
-                      .hits().hits().forEach(documentCollector(content, true));
-                  return content;
+                  FieldSort fs = new FieldSort.Builder().field("name").order(SortOrder.Asc).build();
+                  SearchResponse<DocumentEntity> response =
+                      esClient.search(
+                          s ->
+                              s.index(Arrays.asList(config.getIndex()))
+                                  .query(matchAllQuery())
+                                  .sort(sb -> sb.field(fs))
+                                  .size(bs)
+                                  .searchAfter(sortValues),
+                          DocumentEntity.class);
+                  List<Hit<DocumentEntity>> hits = response.hits().hits();
+                  sortValues = getLastSortValues(hits);
+                  return hits.stream()
+                      .map(Hit::source)
+                      .filter(Objects::nonNull)
+                      .map(DocumentEntity::toApiModel)
+                      .collect(Collectors.toList());
                 } catch (IOException e) {
                   return List.of();
                 }
@@ -152,15 +159,6 @@ public class ElasticsearchAdapter extends TextAdapter {
     } else {
       response = esClient.search(s -> sb, DocumentEntity.class);
     }
-//
-//    SearchResponse<DocumentEntity> response =
-//        esClient.search(
-//            s -> (page == null || page < 0) ?
-//                s.index(Arrays.asList(config.getIndex())) :
-//                s.index(Arrays.asList(config.getIndex()))
-//                    .from(page * batchSize)
-//                    .size(batchSize),
-//            DocumentEntity.class);
     return toPage(response, page, true);
   }
 
@@ -194,7 +192,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     SearchResponse<DocumentEntity> response =
         esClient.search(
             s -> {
-              if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
+              if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
               return s
                   .index(Arrays.asList(config.getIndex()))
                   .query(q ->
@@ -215,7 +213,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     SearchResponse<DocumentEntity> response =
         esClient.search(
             s -> {
-              if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
+              if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
               return s.index(Arrays.asList(config.getIndex())).query(queryForIds(ids));
             },
             DocumentEntity.class);
@@ -241,7 +239,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     SearchResponse<DocumentEntity> response =
         esClient.search(
             s -> {
-              if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
+              if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
               return s.index(Arrays.asList(config.getIndex())).query(queryForQueryString(queryString));
             },
             DocumentEntity.class);
@@ -262,7 +260,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     SearchResponse<DocumentEntity> response =
         esClient.search(
             s -> {
-              if (page != null && page > 0) s.from(page * batchSize).size(batchSize);
+              if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
               return s.index(Arrays.asList(config.getIndex())).query(q -> q.bool(BoolQuery.of(
                   qb -> qb.filter(queryForQueryString(queryString), queryForIds(ids))
               )));
@@ -285,10 +283,23 @@ public class ElasticsearchAdapter extends TextAdapter {
     return queryString;
   }
 
+  private List<FieldValue> getLastSortValues(List<Hit<DocumentEntity>> hits) {
+    if (hits.isEmpty()) return List.of(FieldValue.FALSE);
+    Hit<DocumentEntity> lastHit = hits.get(hits.size() - 1);
+//    FieldValue documentId = (lastHit.source() != null) ? FieldValue.of(lastHit.source().getId()) : FieldValue.NULL;
+    FieldValue documentName = (lastHit.source() != null) ? FieldValue.of(lastHit.source().getName()) : FieldValue.NULL;
+//    return List.of(documentId, documentName);
+    return List.of(documentName);
+  }
+
   private SortOptions defaultSort() {
     return SortOptions.of(sob -> sob.field(fb ->
         fb.field("id").order(SortOrder.Asc).field("name").order(SortOrder.Asc))
     );
+  }
+
+  private Query matchAllQuery() {
+    return MatchAllQuery.of(mq -> mq)._toQuery();
   }
 
   private Query queryForIds(Collection<String> ids) {
