@@ -58,27 +58,33 @@ public abstract class TextAdapter {
     return config;
   }
 
-  public abstract Stream<List<Document>> getAllDocumentsBatched(Integer batchSize);
+  public abstract Stream<List<Document>> getAllDocumentsBatched(Integer batchSize, Boolean simplified);
 
-  public abstract Page<Document> getAllDocuments(Integer page) throws IOException;
+  public abstract Page<Document> getAllDocumentsPaged(Integer page, Boolean simplified) throws IOException;
 
-  public abstract Optional<Document> getDocumentById(@NonNull String documentId) throws IOException;
-
-  public abstract Page<Document> getDocumentsByName(@NonNull String documentName, Integer page)
+  public abstract Page<Document> getDocumentsByNamePaged(@NonNull String documentName, Integer page, Boolean simplified)
           throws IOException;
 
-  public abstract Page<Document> getDocumentsByIds(@NonNull Collection<String> ids, Integer page)
+  public abstract Stream<List<Document>> getDocumentsByNameBatched(@NonNull String documentName, Integer batchSize, Boolean simplified)
+            throws IOException;
+
+  public abstract Optional<Document> getDocumentById(@NonNull String documentId, Boolean simplified) throws IOException;
+
+  public abstract Page<Document> getDocumentsByIdsPaged(@NonNull Collection<String> ids, Integer page, Boolean simplified)
           throws IOException;
 
-  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, Integer page)
+  public abstract Stream<List<Document>> getDocumentsByIdsBatched(@NonNull Collection<String> ids, Integer batchSize, Boolean simplified)
+            throws IOException;
+
+  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, Integer page, Boolean simplified)
           throws IOException;
 
-  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page)
+  public abstract Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page, Boolean simplified)
           throws IOException;
 
   public abstract Page<Document> getDocumentsByIdsAndTerms(
-          @NonNull Collection<String> ids, @NonNull Collection<String> terms, Integer page) throws IOException;
+          @NonNull Collection<String> ids, @NonNull Collection<String> terms, Integer page, Boolean simplified) throws IOException;
 
   public abstract Page<Document> getDocumentsByIdsAndTerms(
-          @NonNull Collection<String> ids, @NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page) throws IOException;
+          @NonNull Collection<String> ids, @NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page, Boolean simplified) throws IOException;
 }
