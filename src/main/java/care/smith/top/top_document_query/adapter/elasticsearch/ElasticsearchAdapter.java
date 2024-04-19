@@ -260,8 +260,9 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   private Supplier<List<Document>> documentSupplier(Query query, Integer batchSize, Boolean simplified) {
     return new Supplier<>() {
-      List<FieldValue> sortValues = List.of(FieldValue.FALSE);
-      final FieldSort fs = new FieldSort.Builder().field("name").order(SortOrder.Asc).build();
+      List<FieldValue> sortValues = List.of(FieldValue.of(""));
+      final FieldSort fs =
+          new FieldSort.Builder().field("name.keyword").order(SortOrder.Asc).build();
       final int bs = prepareBatchSize(batchSize);
 
       @Override
@@ -317,6 +318,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
   private List<FieldValue> getLastSortValues(List<Hit<DocumentEntity>> hits) {
+    // ToDo: I honestly have no idea for what FieldValue NULL, FALSE or TRUE are
     if (hits.isEmpty()) return List.of(FieldValue.FALSE);
     Hit<DocumentEntity> lastHit = hits.get(hits.size() - 1);
 //    FieldValue documentId = (lastHit.source() != null) ? FieldValue.of(lastHit.source().getId()) : FieldValue.NULL;
