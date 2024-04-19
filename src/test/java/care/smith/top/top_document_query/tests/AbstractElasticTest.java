@@ -6,6 +6,8 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import care.smith.top.model.Document;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.AcknowledgedResponse;
+import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -42,6 +44,12 @@ public abstract class AbstractElasticTest {
     esClient = new ElasticsearchClient(transport);
   }
 
+  protected static void deleteIndex() throws IOException {
+    AcknowledgedResponse deleteIndexResponse =
+        esClient.indices().delete(new DeleteIndexRequest.Builder().index(Arrays.asList(ELASTIC_INDEX)).build());
+    await().until(deleteIndexResponse::acknowledged);
+  }
+
   protected static void setUpESIndex() {
     elasticsearchContainer.start();
     RestClient restClient =
@@ -54,10 +62,7 @@ public abstract class AbstractElasticTest {
     assertNotNull(esClient);
 
     try {
-      esClient.indices().create(ti -> {
-        Arrays.stream(ELASTIC_INDEX).forEach(ti::index);
-        return ti;
-      });
+      esClient.indices().create(ti -> ti.index(ELASTIC_INDEX[0]));
       esClient.indices()
           .putMapping(pm ->
               pm
@@ -68,17 +73,17 @@ public abstract class AbstractElasticTest {
           i ->
               i.id(document1.getId())
                   .index(ELASTIC_INDEX[0])
-                  .document(new TextDocument(document1.getName(), document1.getText())));
+                  .document(new TextDocument(document1.getId(), document1.getName(), document1.getText())));
       esClient.index(
           i ->
               i.id(document2.getId())
                   .index(ELASTIC_INDEX[0])
-                  .document(new TextDocument(document2.getName(), document2.getText())));
+                  .document(new TextDocument(document2.getId(), document2.getName(), document2.getText())));
       esClient.index(
           i ->
               i.id(document3.getId())
                   .index(ELASTIC_INDEX[0])
-                  .document(new TextDocument(document3.getName(), document3.getText())));
+                  .document(new TextDocument(document3.getId(), document3.getName(), document3.getText())));
       await().until(() -> esClient.count().count() == 3);
     } catch (IOException e) {
       throw new RuntimeException(e);
