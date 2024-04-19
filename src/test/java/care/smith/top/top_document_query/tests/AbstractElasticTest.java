@@ -63,12 +63,12 @@ public abstract class AbstractElasticTest {
 
     try {
       esClient.indices().create(ti -> ti.index(ELASTIC_INDEX[0]));
-      esClient.indices()
-          .putMapping(pm ->
-              pm
-                .index(Arrays.asList(ELASTIC_INDEX))
-                .properties("name", p -> p.text(tp -> tp))
-                .properties("name", p -> p.keyword(kp -> kp)));
+//      esClient.indices()
+//          .putMapping(pm ->
+//              pm
+//                .index(Arrays.asList(ELASTIC_INDEX))
+//                .properties("name", p -> p.text(tp -> tp))
+//                .properties("name", p -> p.keyword(kp -> kp)));
       esClient.index(
           i ->
               i.id(document1.getId())
