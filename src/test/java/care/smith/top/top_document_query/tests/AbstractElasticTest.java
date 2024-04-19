@@ -62,7 +62,7 @@ public abstract class AbstractElasticTest {
     assertNotNull(esClient);
 
     try {
-      esClient.indices().create(ti -> ti.index(ELASTIC_INDEX[0]));
+//      esClient.indices().create(ti -> ti.index(ELASTIC_INDEX[0]));
 //      esClient.indices()
 //          .putMapping(pm ->
 //              pm
