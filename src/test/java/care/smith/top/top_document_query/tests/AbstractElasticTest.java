@@ -11,6 +11,7 @@ import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Set;
 
 import org.apache.http.HttpHost;
@@ -34,6 +35,13 @@ public abstract class AbstractElasticTest {
       .highlightedText("And a third document; but this one features nothing. No test.");
   protected static Set<Document> allTestDocuments = Set.of(document1, document2, document3);
 
+  protected static void setUpLocalESIndex() {
+    RestClient restClient = RestClient.builder(HttpHost.create("http://localhost:9008")).build();
+    ElasticsearchTransport transport =
+        new RestClientTransport(restClient, new JacksonJsonpMapper());
+    esClient = new ElasticsearchClient(transport);
+  }
+
   protected static void setUpESIndex() {
     elasticsearchContainer.start();
     RestClient restClient =
@@ -46,6 +54,16 @@ public abstract class AbstractElasticTest {
     assertNotNull(esClient);
 
     try {
+      esClient.indices().create(ti -> {
+        Arrays.stream(ELASTIC_INDEX).forEach(ti::index);
+        return ti;
+      });
+      esClient.indices()
+          .putMapping(pm ->
+              pm
+                .index(Arrays.asList(ELASTIC_INDEX))
+                .properties("name", p -> p.text(tp -> tp))
+                .properties("name", p -> p.keyword(kp -> kp)));
       esClient.index(
           i ->
               i.id(document1.getId())
@@ -65,6 +83,15 @@ public abstract class AbstractElasticTest {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected static void initLocalAdaper() throws InstantiationException {
+    URL configFile =
+        Thread.currentThread().getContextClassLoader().getResource("config/Example_Adapter_Local.yml");
+    assertNotNull(configFile);
+
+    adapter = (ElasticsearchAdapter) ElasticsearchAdapter.getInstance(configFile.getPath());
+    assertNotNull(adapter);
   }
 
   protected static void initAdaper() throws InstantiationException {

@@ -1,0 +1,16 @@
+id: Lucene Data Source
+adapter: care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter
+connection:
+  url: http://localhost
+  port: 9008
+index:
+  - documents
+field:
+  - text
+batchSize: 30
+replaceFields: {'text': 'content'}
+labelKey: label
+conceptGraph:
+  connection:
+    url: http://localhost
+    port: 5000
