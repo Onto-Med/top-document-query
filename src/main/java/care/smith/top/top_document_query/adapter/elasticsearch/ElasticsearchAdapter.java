@@ -16,6 +16,9 @@ import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Highlight;
+import co.elastic.clients.elasticsearch.core.search.HighlightField;
+import co.elastic.clients.elasticsearch.core.search.HighlighterType;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
@@ -69,23 +72,29 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public List<DocumentHit> execute(String queryString) {
     SearchResponse<DocumentEntity> searchResponse;
+    //ToDo: shall the highlighting be hard-coded? Or in adapter config?
+    Highlight highlight = Highlight.of(
+        h -> h.type(HighlighterType.Unified)
+            .fields(
+                Arrays.stream(config.getField())
+                    .map(f -> new HashMap<String, HighlightField>(){{put(f, HighlightField.of(hf -> hf.numberOfFragments(100).fragmentSize(30)));}})
+                    .reduce((firstMap, secondMap) -> {
+              firstMap.putAll(secondMap);
+              return firstMap;
+            }).orElseThrow()));
     try {
       searchResponse =
           esClient.search(
-              s ->
-                  s.index(Arrays.asList(config.getIndex()))
-                      .query(
-                          q ->
-                              q.queryString(
-                                  qs ->
-                                      qs.query(queryString)
-                                          .fields(Arrays.asList(config.getField())))),
+              s -> s
+                  .index(Arrays.asList(config.getIndex()))
+                  .query(q -> q.queryString( qs -> qs.query(queryString).fields(Arrays.asList(config.getField()))))
+                  .highlight(highlight),
               DocumentEntity.class);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
     return searchResponse.hits().hits().stream()
-        .map(hit -> new DocumentHit(hit.id(), hit.source(), hit.score()))
+        .map(hit -> new DocumentHit(hit.id(), hit.source(), hit.highlight(), hit.score()))
         .collect(Collectors.toList());
   }
 
