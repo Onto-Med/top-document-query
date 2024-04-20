@@ -198,9 +198,17 @@ public class ConceptPipelineManager {
     try {
       return conceptGraphsApi
           .delete()
-          .uri(uriBuilder -> uriBuilder.path(ApiProcessMethod.DELETE.getEndpoint(processId)).build())
-          .retrieve()
-          .bodyToMono(String.class)
+          .uri(
+              uriBuilder -> uriBuilder.path(ApiProcessMethod.DELETE.getEndpoint(processId)).build())
+          .exchangeToMono(
+              response -> {
+                if (ArrayUtils.contains(
+                    new int[] {HttpStatus.OK.value(), HttpStatus.NOT_FOUND.value()},
+                    response.statusCode().value())) {
+                  return response.bodyToMono(String.class);
+                }
+                return response.bodyToMono(String.class);
+              })
           .block();
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
