@@ -3,7 +3,6 @@ package care.smith.top.top_document_query.concept_cluster.model;
 import care.smith.top.model.ConceptGraphPipeline;
 import care.smith.top.model.ConceptGraphPipelineStatus;
 import care.smith.top.model.PipelineResponseStatus;
-
 import java.util.ArrayList;
 
 public class Process {

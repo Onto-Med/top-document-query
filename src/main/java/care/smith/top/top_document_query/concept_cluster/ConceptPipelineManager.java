@@ -168,23 +168,24 @@ public class ConceptPipelineManager {
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
     }
-    List<ConceptGraphPipeline> conceptGraphPipelines = (processOverviewEntity != null ?
-        processOverviewEntity.toApiModel() : new ArrayList<>());
-    conceptGraphPipelines.forEach(conceptGraphPipeline -> {
+    List<ConceptGraphPipeline> conceptGraphPipelines =
+        (processOverviewEntity != null ? processOverviewEntity.toApiModel() : new ArrayList<>());
+    conceptGraphPipelines.forEach(
+        conceptGraphPipeline -> {
           conceptGraphPipeline.getSteps().stream()
               .filter(step -> step.getName().equals(ConceptGraphPipelineStepsEnum.GRAPH))
-              .forEach(step -> {
+              .forEach(
+                  step -> {
                     if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.FINISHED)) {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.SUCCESSFUL);
-                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.RUNNING) ||
-                        step.getStatus().equals(ConceptGraphPipelineStatusEnum.STARTED)) {
+                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.RUNNING)
+                        || step.getStatus().equals(ConceptGraphPipelineStatusEnum.STARTED)) {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.RUNNING);
                     } else {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
                     }
-              });
-        }
-    );
+                  });
+        });
     return conceptGraphPipelines;
   }
 
@@ -247,7 +248,8 @@ public class ConceptPipelineManager {
    * Get statistics about the graphs that where constructed by a process.
    *
    * @param processName Name of the process.
-   * @return {@link Optional} containing the graph statistics of a process with the given name if exists.
+   * @return {@link Optional} containing the graph statistics of a process with the given name if
+   *     exists.
    */
   public Optional<ConceptGraphStatisticsEntity> getGraphStatisticsForProcess(String processName) {
     try {

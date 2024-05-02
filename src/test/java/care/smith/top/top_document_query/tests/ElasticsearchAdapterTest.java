@@ -1,6 +1,5 @@
 package care.smith.top.top_document_query.tests;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
@@ -12,7 +11,6 @@ import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import care.smith.top.top_document_query.util.builder.Cat;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -20,8 +18,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 
 class ElasticsearchAdapterTest extends AbstractElasticTest {
@@ -31,21 +30,20 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   @BeforeAll
   static void setUp() throws InstantiationException {
     setUpESIndex();
-//    setUpLocalESIndex();
+    //    setUpLocalESIndex();
     initAdaper();
-//    initLocalAdaper();
+    //    initLocalAdaper();
     assertNotNull(adapter);
   }
 
-//  @AfterEach
-//  void tearDown() throws IOException {
-//    deleteIndex();
-//  }
+  //  @AfterEach
+  //  void tearDown() throws IOException {
+  //    deleteIndex();
+  //  }
 
   @Test
   void count() {
-    assertEquals(
-        Long.valueOf(3), adapter.count());
+    assertEquals(Long.valueOf(3), adapter.count());
   }
 
   @Test
@@ -92,21 +90,17 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   @Disabled
   void getAllDocuments() throws IOException {
     assertEquals(
-        allTestDocuments.stream().map(d -> new Document().id(d.getId()).name(d.getName()).text(d.getText())).collect(Collectors.toSet()),
+        allTestDocuments.stream()
+            .map(d -> new Document().id(d.getId()).name(d.getName()).text(d.getText()))
+            .collect(Collectors.toSet()),
         adapter.getAllDocumentsPaged(null, false).toSet());
   }
 
   @Test
   void getDocumentById() throws IOException {
-    assertEquals(
-        document1,
-        adapter.getDocumentById("d1", false).orElseThrow());
-    assertEquals(
-        document2,
-        adapter.getDocumentById("d2", false).orElseThrow());
-    assertEquals(
-        document3,
-        adapter.getDocumentById("d3", false).orElseThrow());
+    assertEquals(document1, adapter.getDocumentById("d1", false).orElseThrow());
+    assertEquals(document2, adapter.getDocumentById("d2", false).orElseThrow());
+    assertEquals(document3, adapter.getDocumentById("d3", false).orElseThrow());
   }
 
   @Test
@@ -115,13 +109,15 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
     assertNotNull(result1.getContent());
     assertEquals(
         allTestDocuments,
-        adapter.getDocumentsByIdsBatched(List.of("d1", "d2", "d3"), 1, false).map(d -> d.get(0)).collect(Collectors.toSet()));
+        adapter
+            .getDocumentsByIdsBatched(List.of("d1", "d2", "d3"), 1, false)
+            .map(d -> d.get(0))
+            .collect(Collectors.toSet()));
 
     assertEquals(document2, result1.getContent().get(0));
     assertEquals(
         allTestDocuments,
         adapter.getDocumentsByIdsPaged(List.of("d1", "d2", "d3"), null, false).toSet());
-
   }
 
   @Test
@@ -137,9 +133,14 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
 
   @Test
   void getDocumentsByTerms() throws IOException {
-    Page<Document> result1 = adapter.getDocumentsByTerms(List.of("document", "here"), TermConcatenationTypes.AND, null, false);
-    Page<Document> result2 = adapter.getDocumentsByTerms(List.of("entity", "entities", "third"), TermConcatenationTypes.OR, null, false);
-    Page<Document> result3 = adapter.getDocumentsByTerms(List.of("document", "features", "but"), null, false);
+    Page<Document> result1 =
+        adapter.getDocumentsByTerms(
+            List.of("document", "here"), TermConcatenationTypes.AND, null, false);
+    Page<Document> result2 =
+        adapter.getDocumentsByTerms(
+            List.of("entity", "entities", "third"), TermConcatenationTypes.OR, null, false);
+    Page<Document> result3 =
+        adapter.getDocumentsByTerms(List.of("document", "features", "but"), null, false);
 
     assertEquals(Set.of(document1, document2), result1.toSet());
     assertEquals(allTestDocuments, result2.toSet());
@@ -149,9 +150,27 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
 
   @Test
   void getDocumentsByIdsAndTerms() throws IOException {
-    Page<Document> result1 = adapter.getDocumentsByIdsAndTerms(List.of("d1", "d2", "d3"), List.of("test", "document"), TermConcatenationTypes.AND, null, false);
-    Page<Document> result2 = adapter.getDocumentsByIdsAndTerms(List.of("d1", "d2", "d3"), List.of("test", "document"), TermConcatenationTypes.OR, null, false);
-    Page<Document> result3 = adapter.getDocumentsByIdsAndTerms(List.of("d1", "d2"), List.of("test", "document"), TermConcatenationTypes.OR, null, false);
+    Page<Document> result1 =
+        adapter.getDocumentsByIdsAndTerms(
+            List.of("d1", "d2", "d3"),
+            List.of("test", "document"),
+            TermConcatenationTypes.AND,
+            null,
+            false);
+    Page<Document> result2 =
+        adapter.getDocumentsByIdsAndTerms(
+            List.of("d1", "d2", "d3"),
+            List.of("test", "document"),
+            TermConcatenationTypes.OR,
+            null,
+            false);
+    Page<Document> result3 =
+        adapter.getDocumentsByIdsAndTerms(
+            List.of("d1", "d2"),
+            List.of("test", "document"),
+            TermConcatenationTypes.OR,
+            null,
+            false);
 
     assertEquals(Set.of(document1, document3), result1.toSet());
     assertEquals(allTestDocuments, result2.toSet());

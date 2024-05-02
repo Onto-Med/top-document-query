@@ -169,6 +169,7 @@ public class Entities {
 
   public static Set<String> getTerms(Entity e, String lang, boolean includeSubTree) {
     Set<String> terms = getTitlesAndSynonyms(e, lang);
+    terms.addAll(getCodeTitle(e, lang));
     if (!includeSubTree) return terms;
     if (!(e instanceof SingleConcept)) return terms;
 

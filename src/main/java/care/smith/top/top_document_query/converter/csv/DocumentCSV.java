@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class DocumentCSV {
 
@@ -82,8 +81,9 @@ public class DocumentCSV {
               document.getDocumentId(),
               String.valueOf(document.getScore()),
               document.getDocument().getName(),
-              //ToDo: encoding is wrong
-              //ToDo: more meaningful excerpt (right now, only the first excerptLength characters are used)
+              // ToDo: encoding is wrong
+              // ToDo: more meaningful excerpt (right now, only the first excerptLength characters
+              // are used)
               excerpt));
     }
     writer.flush();

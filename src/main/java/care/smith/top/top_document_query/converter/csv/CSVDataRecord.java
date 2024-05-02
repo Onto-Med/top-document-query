@@ -1,6 +1,5 @@
 package care.smith.top.top_document_query.converter.csv;
 
-
 import java.util.List;
 
 public class CSVDataRecord extends CSVRecord {

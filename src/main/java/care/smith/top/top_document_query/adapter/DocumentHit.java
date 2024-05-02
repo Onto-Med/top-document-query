@@ -1,9 +1,6 @@
 package care.smith.top.top_document_query.adapter;
 
 import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
-
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +17,11 @@ public class DocumentHit {
     this.setHighlights(null);
   }
 
-  public DocumentHit(String documentId, DocumentEntity document, Map<String, List<String>> highlights, Double score) {
+  public DocumentHit(
+      String documentId,
+      DocumentEntity document,
+      Map<String, List<String>> highlights,
+      Double score) {
     this.setDocumentId(documentId);
     this.setDocument(document);
     this.setScore(score);

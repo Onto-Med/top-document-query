@@ -1,8 +1,6 @@
 package care.smith.top.top_document_query.concept_cluster.model;
 
 import care.smith.top.model.ConceptGraphPipeline;
-import care.smith.top.model.PipelineResponseStatus;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
