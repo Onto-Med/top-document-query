@@ -32,7 +32,6 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.springframework.data.domain.Page;
@@ -41,7 +40,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.NonNull;
 
 public class ElasticsearchAdapter extends TextAdapter {
-  //ToDo: fuzzy matching for terms
+  // ToDo: fuzzy matching for terms
   private final int DEFAULT_BATCH_SIZE;
   private final Logger LOGGER = Logger.getLogger(ElasticsearchAdapter.class.getName());
   private ElasticsearchClient esClient;
@@ -72,23 +71,41 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public List<DocumentHit> execute(String queryString) {
     SearchResponse<DocumentEntity> searchResponse;
-    //ToDo: shall the highlighting be hard-coded? Or in adapter config?
-    Highlight highlight = Highlight.of(
-        h -> h.type(HighlighterType.Unified)
-            .fields(
-                Arrays.stream(config.getField())
-                    .map(f -> new HashMap<String, HighlightField>(){{put(f, HighlightField.of(hf -> hf.numberOfFragments(100).fragmentSize(30)));}})
-                    .reduce((firstMap, secondMap) -> {
-              firstMap.putAll(secondMap);
-              return firstMap;
-            }).orElseThrow()));
+    // ToDo: shall the highlighting be hard-coded? Or in adapter config?
+    Highlight highlight =
+        Highlight.of(
+            h ->
+                h.type(HighlighterType.Unified)
+                    .fields(
+                        Arrays.stream(config.getField())
+                            .map(
+                                f ->
+                                    new HashMap<String, HighlightField>() {
+                                      {
+                                        put(
+                                            f,
+                                            HighlightField.of(
+                                                hf -> hf.numberOfFragments(100).fragmentSize(30)));
+                                      }
+                                    })
+                            .reduce(
+                                (firstMap, secondMap) -> {
+                                  firstMap.putAll(secondMap);
+                                  return firstMap;
+                                })
+                            .orElseThrow()));
     try {
       searchResponse =
           esClient.search(
-              s -> s
-                  .index(Arrays.asList(config.getIndex()))
-                  .query(q -> q.queryString( qs -> qs.query(queryString).fields(Arrays.asList(config.getField()))))
-                  .highlight(highlight),
+              s ->
+                  s.index(Arrays.asList(config.getIndex()))
+                      .query(
+                          q ->
+                              q.queryString(
+                                  qs ->
+                                      qs.query(queryString)
+                                          .fields(Arrays.asList(config.getField()))))
+                      .highlight(highlight),
               DocumentEntity.class);
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -116,7 +133,8 @@ public class ElasticsearchAdapter extends TextAdapter {
    */
   @Override
   public Stream<List<Document>> getAllDocumentsBatched(Integer batchSize, Boolean simplified) {
-    return Stream.generate(documentSupplier(matchAllQuery(), batchSize, simplified)).takeWhile(list -> !list.isEmpty());
+    return Stream.generate(documentSupplier(matchAllQuery(), batchSize, simplified))
+        .takeWhile(list -> !list.isEmpty());
   }
 
   /**
@@ -128,12 +146,12 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public Page<Document> getAllDocumentsPaged(Integer page, Boolean simplified) throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
-    SearchRequest.Builder sb = new SearchRequest.Builder()
-        .index(Arrays.asList(config.getIndex()));
+    SearchRequest.Builder sb = new SearchRequest.Builder().index(Arrays.asList(config.getIndex()));
 
     SearchResponse<DocumentEntity> response;
     if (page != null && page >= 0) {
-      response = esClient.search(s -> sb.from(page * batchSize).size(batchSize), DocumentEntity.class);
+      response =
+          esClient.search(s -> sb.from(page * batchSize).size(batchSize), DocumentEntity.class);
     } else {
       response = esClient.search(s -> sb, DocumentEntity.class);
     }
@@ -141,8 +159,8 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
   @Override
-  public Page<Document> getDocumentsByNamePaged(@NonNull String documentName, Integer page, Boolean simplified)
-      throws IOException {
+  public Page<Document> getDocumentsByNamePaged(
+      @NonNull String documentName, Integer page, Boolean simplified) throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
     final String finalDocumentName = documentName.trim();
     if (finalDocumentName.isEmpty()) {
@@ -152,31 +170,36 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
-              return s
-                  .index(Arrays.asList(config.getIndex()))
-                  .query(q ->
-                      q.wildcard(
-                          new WildcardQuery.Builder()
-                              .field(DocumentFields.TITLE.getValue())
-                              .wildcard(finalDocumentName + "*")
-                              .caseInsensitive(true)
-                              .build()));
+              return s.index(Arrays.asList(config.getIndex()))
+                  .query(
+                      q ->
+                          q.wildcard(
+                              new WildcardQuery.Builder()
+                                  .field(DocumentFields.TITLE.getValue())
+                                  .wildcard(finalDocumentName + "*")
+                                  .caseInsensitive(true)
+                                  .build()));
             },
             DocumentEntity.class);
     return toPage(response, page, simplified);
   }
 
   @Override
-  public Stream<List<Document>> getDocumentsByNameBatched(@NonNull String documentName, Integer batchSize, Boolean simplified) {
+  public Stream<List<Document>> getDocumentsByNameBatched(
+      @NonNull String documentName, Integer batchSize, Boolean simplified) {
     final String finalDocumentName = documentName.trim();
     if (finalDocumentName.isEmpty()) {
       return getAllDocumentsBatched(batchSize, simplified);
     }
-    Query wcq = WildcardQuery.of(q -> q
-            .field(DocumentFields.TITLE.getValue())
-            .wildcard(finalDocumentName + "*")
-            .caseInsensitive(true))._toQuery();
-    return Stream.generate(documentSupplier(wcq, batchSize, simplified)).takeWhile(list -> !list.isEmpty());
+    Query wcq =
+        WildcardQuery.of(
+                q ->
+                    q.field(DocumentFields.TITLE.getValue())
+                        .wildcard(finalDocumentName + "*")
+                        .caseInsensitive(true))
+            ._toQuery();
+    return Stream.generate(documentSupplier(wcq, batchSize, simplified))
+        .takeWhile(list -> !list.isEmpty());
   }
 
   /**
@@ -187,23 +210,32 @@ public class ElasticsearchAdapter extends TextAdapter {
    * @throws IOException If request to ES failed.
    */
   @Override
-  public Optional<Document> getDocumentById(@NonNull String documentId, Boolean simplified) throws IOException {
-    //ToDo: right now the adapter config allows for multiple index values (as an array),
-    // but only the first index value will be used here (e.g. GetResponse needs an index name as parameter)
+  public Optional<Document> getDocumentById(@NonNull String documentId, Boolean simplified)
+      throws IOException {
+    // ToDo: right now the adapter config allows for multiple index values (as an array),
+    // but only the first index value will be used here (e.g. GetResponse needs an index name as
+    // parameter)
     // the .search method allows for List of indices however
     GetResponse<DocumentEntity> response =
         esClient.get(g -> g.id(documentId).index(config.getIndex()[0]), DocumentEntity.class);
     if (response.found() && response.source() != null) {
-      if (!simplified) return Optional.of(response.source().getId() == null ? response.source().toApiModel(response.id()) : response.source().toApiModel());
-      return Optional.of(response.source().getId() == null ? response.source().toSimplifiedApiModel(response.id()) : response.source().toSimplifiedApiModel());
+      if (!simplified)
+        return Optional.of(
+            response.source().getId() == null
+                ? response.source().toApiModel(response.id())
+                : response.source().toApiModel());
+      return Optional.of(
+          response.source().getId() == null
+              ? response.source().toSimplifiedApiModel(response.id())
+              : response.source().toSimplifiedApiModel());
     } else {
       return Optional.empty();
     }
   }
 
   @Override
-  public Page<Document> getDocumentsByIdsPaged(@NonNull Collection<String> ids, Integer page, Boolean simplified)
-      throws IOException {
+  public Page<Document> getDocumentsByIdsPaged(
+      @NonNull Collection<String> ids, Integer page, Boolean simplified) throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
     SearchResponse<DocumentEntity> response =
         esClient.search(
@@ -216,19 +248,24 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
   @Override
-  public Stream<List<Document>> getDocumentsByIdsBatched(@NonNull Collection<String> ids, Integer batchSize, Boolean simplified)
-      throws IOException {
-    return Stream.generate(documentSupplier(queryForIds(ids), batchSize, simplified)).takeWhile(list -> !list.isEmpty());
+  public Stream<List<Document>> getDocumentsByIdsBatched(
+      @NonNull Collection<String> ids, Integer batchSize, Boolean simplified) throws IOException {
+    return Stream.generate(documentSupplier(queryForIds(ids), batchSize, simplified))
+        .takeWhile(list -> !list.isEmpty());
   }
 
   @Override
-  public Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, Integer page, Boolean simplified)
-      throws IOException {
+  public Page<Document> getDocumentsByTerms(
+      @NonNull Collection<String> terms, Integer page, Boolean simplified) throws IOException {
     return getDocumentsByTerms(terms, TermConcatenationTypes.AND, page, simplified);
   }
 
   @Override
-  public Page<Document> getDocumentsByTerms(@NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page, Boolean simplified)
+  public Page<Document> getDocumentsByTerms(
+      @NonNull Collection<String> terms,
+      TermConcatenationTypes concatenationTypes,
+      Integer page,
+      Boolean simplified)
       throws IOException {
     String queryString = queryStringByConcatenationType(terms, concatenationTypes);
     int batchSize = prepareBatchSize(config.getBatchSize());
@@ -237,7 +274,8 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
-              return s.index(Arrays.asList(config.getIndex())).query(queryForQueryString(queryString));
+              return s.index(Arrays.asList(config.getIndex()))
+                  .query(queryForQueryString(queryString));
             },
             DocumentEntity.class);
     return toPage(response, page, simplified);
@@ -245,13 +283,22 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   @Override
   public Page<Document> getDocumentsByIdsAndTerms(
-      @NonNull Collection<String> ids, @NonNull Collection<String> terms, Integer page, Boolean simplified) throws IOException {
+      @NonNull Collection<String> ids,
+      @NonNull Collection<String> terms,
+      Integer page,
+      Boolean simplified)
+      throws IOException {
     return getDocumentsByIdsAndTerms(ids, terms, TermConcatenationTypes.AND, page, simplified);
   }
 
   @Override
   public Page<Document> getDocumentsByIdsAndTerms(
-      @NonNull Collection<String> ids, @NonNull Collection<String> terms, TermConcatenationTypes concatenationTypes, Integer page, Boolean simplified) throws IOException {
+      @NonNull Collection<String> ids,
+      @NonNull Collection<String> terms,
+      TermConcatenationTypes concatenationTypes,
+      Integer page,
+      Boolean simplified)
+      throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
     String queryString = queryStringByConcatenationType(terms, concatenationTypes);
 
@@ -259,15 +306,21 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
-              return s.index(Arrays.asList(config.getIndex())).query(q -> q.bool(BoolQuery.of(
-                  qb -> qb.filter(queryForQueryString(queryString), queryForIds(ids))
-              )));
+              return s.index(Arrays.asList(config.getIndex()))
+                  .query(
+                      q ->
+                          q.bool(
+                              BoolQuery.of(
+                                  qb ->
+                                      qb.filter(
+                                          queryForQueryString(queryString), queryForIds(ids)))));
             },
             DocumentEntity.class);
     return toPage(response, page, simplified);
   }
 
-  private Supplier<List<Document>> documentSupplier(Query query, Integer batchSize, Boolean simplified) {
+  private Supplier<List<Document>> documentSupplier(
+      Query query, Integer batchSize, Boolean simplified) {
     return new Supplier<>() {
       List<FieldValue> sortValues = List.of(FieldValue.of(""));
       final FieldSort fs =
@@ -317,9 +370,8 @@ public class ElasticsearchAdapter extends TextAdapter {
     if (concatenationTypes == null) concatenationTypes = TermConcatenationTypes.AND;
     String queryString;
     if (concatenationTypes.equals(TermConcatenationTypes.AND)) {
-      queryString = terms.stream()
-          .map(s -> String.format("+%s", s))
-          .collect(Collectors.joining(" "));
+      queryString =
+          terms.stream().map(s -> String.format("+%s", s)).collect(Collectors.joining(" "));
     } else {
       queryString = String.join(" | ", terms);
     }
@@ -330,16 +382,19 @@ public class ElasticsearchAdapter extends TextAdapter {
     // ToDo: I honestly have no idea for what FieldValue NULL, FALSE or TRUE are
     if (hits.isEmpty()) return List.of(FieldValue.FALSE);
     Hit<DocumentEntity> lastHit = hits.get(hits.size() - 1);
-//    FieldValue documentId = (lastHit.source() != null) ? FieldValue.of(lastHit.source().getId()) : FieldValue.NULL;
-    FieldValue documentName = (lastHit.source() != null) ? FieldValue.of(lastHit.source().getName()) : FieldValue.NULL;
-//    return List.of(documentId, documentName);
+    //    FieldValue documentId = (lastHit.source() != null) ?
+    // FieldValue.of(lastHit.source().getId()) : FieldValue.NULL;
+    FieldValue documentName =
+        (lastHit.source() != null) ? FieldValue.of(lastHit.source().getName()) : FieldValue.NULL;
+    //    return List.of(documentId, documentName);
     return List.of(documentName);
   }
 
   private SortOptions defaultSort() {
-    return SortOptions.of(sob -> sob.field(fb ->
-        fb.field("id").order(SortOrder.Asc).field("name").order(SortOrder.Asc))
-    );
+    return SortOptions.of(
+        sob ->
+            sob.field(
+                fb -> fb.field("id").order(SortOrder.Asc).field("name").order(SortOrder.Asc)));
   }
 
   private Query matchAllQuery() {
@@ -351,25 +406,29 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
   private Query queryForQueryString(String queryString) {
-      return SimpleQueryStringQuery.of(sq -> sq.query(queryString))._toQuery();
-    }
+    return SimpleQueryStringQuery.of(sq -> sq.query(queryString))._toQuery();
+  }
 
   private int prepareBatchSize(Integer batchSize) {
     return batchSize == null || batchSize <= 0 ? DEFAULT_BATCH_SIZE : batchSize;
   }
 
-  private Consumer<Hit<DocumentEntity>> documentCollector(Collection<Document> content, Boolean simplified) {
+  private Consumer<Hit<DocumentEntity>> documentCollector(
+      Collection<Document> content, Boolean simplified) {
     return r -> {
       if (r.source() == null) return;
       Document document =
           r.source().getId() == null
-              ? (simplified ? r.source().toSimplifiedApiModel(r.id()) : r.source().toApiModel(r.id()))
+              ? (simplified
+                  ? r.source().toSimplifiedApiModel(r.id())
+                  : r.source().toApiModel(r.id()))
               : (simplified ? r.source().toSimplifiedApiModel() : r.source().toApiModel());
       content.add(document);
     };
   }
 
-  private Page<Document> toPage(SearchResponse<DocumentEntity> response, Integer page, Boolean simplified) {
+  private Page<Document> toPage(
+      SearchResponse<DocumentEntity> response, Integer page, Boolean simplified) {
     List<Document> content = new ArrayList<>();
     response.hits().hits().forEach(documentCollector(content, simplified));
     PageRequest pageRequest =

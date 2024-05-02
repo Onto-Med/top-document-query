@@ -13,7 +13,6 @@ import care.smith.top.top_document_query.util.builder.Cat;
 import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class TextFinderTest extends AbstractElasticTest {

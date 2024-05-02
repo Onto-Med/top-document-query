@@ -14,8 +14,9 @@ public enum ApiProcessMethod {
     return endpoint;
   }
 
-  public String getEndpoint(String processId){
-    if (endpoint.equals(DELETE.endpoint)) return String.format("%s/%s%s", ALL.endpoint, processId, DELETE.endpoint);
+  public String getEndpoint(String processId) {
+    if (endpoint.equals(DELETE.endpoint))
+      return String.format("%s/%s%s", ALL.endpoint, processId, DELETE.endpoint);
     return endpoint;
   }
 

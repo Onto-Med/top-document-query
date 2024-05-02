@@ -103,7 +103,8 @@ public class SongTest {
     log.debug("===== Test 1 =====");
     Expression exp = And.of(Or.of(a, b), Not.of(c));
     String query =
-        Expressions.getStringValue(ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "(((\"a- de\" OR \"a1- de\" OR \"a2- de\") OR (b-de OR b1-de OR b2-de)) AND NOT (c-de OR"
             + " c1-de OR c2-de))",
@@ -115,7 +116,8 @@ public class SongTest {
     log.debug("===== Test 2 =====");
     Expression exp = And.of(Or.of(a, b), Not.of(SubTree.of(c)));
     String query =
-        Expressions.getStringValue(ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "(((\"a- de\" OR \"a1- de\" OR \"a2- de\") OR (b-de OR b1-de OR b2-de)) AND NOT (c-de OR"
             + " c1-de OR c2-de OR d-de OR d1-de OR d2-de OR e-de OR e1-de OR \"e2- de\"))",
@@ -127,7 +129,8 @@ public class SongTest {
     log.debug("===== Test 3 =====");
     Expression exp = And.of(Or.of(Dist.of(a, 5), Exp.of(b)), Not.of(c));
     String query =
-        Expressions.getStringValue(ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "(((\"a- de\"~5 OR \"a1- de\"~5 OR \"a2- de\"~5) OR (b-de OR b1-de OR b2-de)) AND NOT (c-de"
             + " OR c1-de OR c2-de))",
@@ -139,7 +142,8 @@ public class SongTest {
     log.debug("===== Test 4 =====");
     Expression exp = And.of(XProd.of(a, b), Not.of(c));
     String query =
-        Expressions.getStringValue(ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "((\"a- de b-de\" OR \"a- de b1-de\" OR \"a- de b2-de\" OR \"a1- de b-de\" OR \"a1- de"
             + " b1-de\" OR \"a1- de b2-de\" OR \"a2- de b-de\" OR \"a2- de b1-de\" OR \"a2- de"
@@ -152,7 +156,8 @@ public class SongTest {
     log.debug("===== Test 5 =====");
     Expression exp = And.of(Dist.of(XProd.of(a, b), 2), Not.of(c));
     String query =
-        Expressions.getStringValue(ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "((\"a- de b-de\"~2 OR \"a- de b1-de\"~2 OR \"a- de b2-de\"~2 OR \"a1- de b-de\"~2 OR \"a1-"
             + " de b1-de\"~2 OR \"a1- de b2-de\"~2 OR \"a2- de b-de\"~2 OR \"a2- de b1-de\"~2 OR"
@@ -165,7 +170,8 @@ public class SongTest {
     log.debug("===== Test 6 =====");
     Expression exp = And.of(Or.of(a, b), Not.of(And.of(c, f)));
     String query =
-        Expressions.getStringValue(ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "(((\"a- de\" OR \"a1- de\" OR \"a2- de\") OR (b-de OR b1-de OR b2-de)) AND NOT ((c-de OR"
             + " c1-de OR c2-de) AND (f-de OR f1-de OR \"f2- de\")))",

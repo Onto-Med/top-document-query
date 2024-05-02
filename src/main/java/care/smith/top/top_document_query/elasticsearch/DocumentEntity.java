@@ -52,6 +52,7 @@ public class DocumentEntity {
                 .flatMap(Collection::stream)
                 .collect(Collectors.joining()));
   }
+
   public Document toApiModel(Integer ellipsis) {
     return new Document()
         .id(id)
@@ -64,17 +65,11 @@ public class DocumentEntity {
   }
 
   public Document toSimplifiedApiModel() {
-    return new Document()
-        .id(id)
-        .name(name)
-        .text(documentText(wordEllipsis));
+    return new Document().id(id).name(name).text(documentText(wordEllipsis));
   }
 
   public Document toSimplifiedApiModel(String eid) {
-    return new Document()
-        .id(eid)
-        .name(name)
-        .text(documentText(wordEllipsis));
+    return new Document().id(eid).name(name).text(documentText(wordEllipsis));
   }
 
   public static Document nullDocument() {
@@ -121,6 +116,8 @@ public class DocumentEntity {
   }
 
   private String documentText(Integer ellipsis) {
-    return (ellipsis != null && ellipsis > 0) ? Arrays.stream(text.split("\\s+")).limit(ellipsis).collect(Collectors.joining(" ")) : text;
+    return (ellipsis != null && ellipsis > 0)
+        ? Arrays.stream(text.split("\\s+")).limit(ellipsis).collect(Collectors.joining(" "))
+        : text;
   }
 }
