@@ -4,7 +4,7 @@ import care.smith.top.model.CompositeConcept;
 import care.smith.top.model.Concept;
 import care.smith.top.model.Entity;
 import care.smith.top.model.EntityType;
-import care.smith.top.top_document_query.adapter.lucene.LuceneSong;
+import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import java.util.List;
@@ -53,7 +53,7 @@ public class CSVMetadataRecord extends CSVRecordCompositeEntries {
       if (con instanceof CompositeConcept) {
         add(
             Expressions.getStringValue(
-                LuceneSong.get()
+                ElasticsearchSong.get()
                     .concepts(Entities.of(concepts))
                     .lang(lang)
                     .generate(((CompositeConcept) con).getExpression())));

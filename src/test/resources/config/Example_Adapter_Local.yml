@@ -2,9 +2,9 @@ id: Lucene Data Source
 adapter: care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter
 connection:
   url: http://localhost
-  port: 9201
+  port: 9008
 index:
-  - test_documents
+  - documents
 field:
   - text
 batchSize: 30

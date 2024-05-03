@@ -156,8 +156,20 @@ public class Entities {
     return terms;
   }
 
+  public static Set<String> getCodeTitle(Entity e, String lang) {
+    Set<String> codeRepr = new LinkedHashSet<>();
+    if (e.getCodes() != null && !e.getCodes().isEmpty()) {
+      for (Code c : e.getCodes()) {
+        codeRepr.add(c.getName());
+        codeRepr.addAll(c.getSynonyms());
+      }
+    }
+    return codeRepr;
+  }
+
   public static Set<String> getTerms(Entity e, String lang, boolean includeSubTree) {
     Set<String> terms = getTitlesAndSynonyms(e, lang);
+    terms.addAll(getCodeTitle(e, lang));
     if (!includeSubTree) return terms;
     if (!(e instanceof SingleConcept)) return terms;
 

@@ -1,4 +1,4 @@
-package care.smith.top.top_document_query.adapter.lucene;
+package care.smith.top.top_document_query.adapter.elasticsearch;
 
 import care.smith.top.model.Expression;
 import care.smith.top.model.Value;
@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
-public class LuceneDist extends Dist {
+public class ElasticsearchDist extends Dist {
 
-  private static LuceneDist INSTANCE = new LuceneDist();
+  private static final ElasticsearchDist INSTANCE = new ElasticsearchDist();
 
-  private LuceneDist() {}
+  private ElasticsearchDist() {}
 
-  public static LuceneDist get() {
+  public static ElasticsearchDist get() {
     return INSTANCE;
   }
 
