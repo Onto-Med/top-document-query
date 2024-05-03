@@ -2,6 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>care.smith.top</groupId>
 	<artifactId>top-document-query</artifactId>
+	<name>TOP Document Query</name>
 	<version>0.8.0</version>
 
     <properties>
