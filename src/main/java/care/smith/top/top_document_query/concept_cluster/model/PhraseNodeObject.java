@@ -1,0 +1,31 @@
+package care.smith.top.top_document_query.concept_cluster.model;
+
+public class PhraseNodeObject {
+  private String id;
+  private String label;
+  private String[] documents;
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public String getLabel() {
+    return label;
+  }
+
+  public void setLabel(String label) {
+    this.label = label;
+  }
+
+  public String[] getDocuments() {
+    return documents;
+  }
+
+  public void setDocuments(String[] documents) {
+    this.documents = documents;
+  }
+}

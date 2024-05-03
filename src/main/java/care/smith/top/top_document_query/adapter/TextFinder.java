@@ -3,20 +3,17 @@ package care.smith.top.top_document_query.adapter;
 import care.smith.top.model.ConceptQuery;
 import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.util.Entities;
-
 import java.util.List;
 
 public class TextFinder {
 
-  private ConceptQuery query;
-  private Entities entities;
-  private TextAdapter adapter;
-  private TextAdapterConfig config;
+  private final ConceptQuery query;
+  private final Entities entities;
+  private final TextAdapter adapter;
 
   public TextFinder(ConceptQuery query, Entity[] entities, TextAdapter adapter) {
     this.query = query;
     this.adapter = adapter;
-    this.config = adapter.getConfig();
     this.entities = Entities.of(entities);
   }
 
@@ -25,6 +22,6 @@ public class TextFinder {
   }
 
   public List<DocumentHit> execute() {
-    return (List<DocumentHit>) adapter.execute(query, entities);
+    return adapter.execute(query, entities);
   }
 }

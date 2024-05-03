@@ -1,0 +1,83 @@
+{
+  "$id": "https://github.com/Onto-Med/top-document-query/blob/main/src/main/resources/text_adapter_config_schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TOP Text Adapter Configuration Schema",
+  "description": "Schema of TOP text adapter configurations",
+  "definitions": {
+    "authentication": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "required": ["username"]
+    },
+    "conceptGraph": {
+      "type": "object",
+      "properties": {
+        "connection": {
+          "$ref": "#/definitions/connection"
+        }
+      },
+      "required": ["connection"]
+    },
+    "connection": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "IP or hostname to connect to"
+        },
+        "port": {
+          "type": "integer",
+          "description": "Port to connect to"
+        }
+      },
+      "required": ["url"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "adapter": {
+      "type": "string"
+    },
+    "connection": {
+      "$ref": "#/definitions/connection"
+    },
+    "dateFiled": {
+      "type": "string"
+    },
+    "index": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "field": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "batchSize": {
+      "type": "integer"
+    },
+    "replaceFields": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "conceptGraph": {
+      "$ref": "#/definitions/conceptGraph"
+    }
+  },
+  "required": ["id", "adapter", "connection"]
+}

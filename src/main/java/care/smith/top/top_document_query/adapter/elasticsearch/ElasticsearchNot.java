@@ -1,4 +1,4 @@
-package care.smith.top.top_document_query.adapter.lucene;
+package care.smith.top.top_document_query.adapter.elasticsearch;
 
 import care.smith.top.model.Expression;
 import care.smith.top.top_document_query.SONG;
@@ -6,13 +6,13 @@ import care.smith.top.top_document_query.functions.Not;
 import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
 
-public class LuceneNot extends Not {
+public class ElasticsearchNot extends Not {
 
-  private static LuceneNot INSTANCE = new LuceneNot();
+  private static final ElasticsearchNot INSTANCE = new ElasticsearchNot();
 
-  private LuceneNot() {}
+  private ElasticsearchNot() {}
 
-  public static LuceneNot get() {
+  public static ElasticsearchNot get() {
     return INSTANCE;
   }
 

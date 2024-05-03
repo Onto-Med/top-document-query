@@ -3,8 +3,8 @@ package care.smith.top.top_document_query.util.builder;
 import care.smith.top.model.ConceptQuery;
 import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.adapter.TextAdapter;
-import care.smith.top.top_document_query.adapter.TextAdapterConfig;
 import care.smith.top.top_document_query.adapter.TextFinder;
+import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 
 public class CQue {
 
@@ -14,7 +14,11 @@ public class CQue {
   private Entity[] entities;
 
   public CQue(
-      TextAdapter adapter, TextAdapterConfig config, Entity[] entities, String parentCatId, String lang) {
+      TextAdapter adapter,
+      TextAdapterConfig config,
+      Entity[] entities,
+      String parentCatId,
+      String lang) {
     this.adapter = adapter;
     this.config = config;
     this.query = new ConceptQuery().entityId(parentCatId).language(lang);

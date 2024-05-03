@@ -1,24 +1,23 @@
 package care.smith.top.top_document_query.converter.csv;
 
-
 import care.smith.top.model.Concept;
 import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.util.Entities;
-
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class DocumentCSV {
 
   private Charset charset = StandardCharsets.UTF_8;
-  private String entriesDelimiter = ";";
-  private String entryPartsDelimiter = ",";
+  private String entriesDelimiter = "‖";
+  private String entryPartsDelimiter = ";";
   private String language = null;
   private int excerptLength = 100;
 
@@ -64,13 +63,28 @@ public class DocumentCSV {
   public void write(List<DocumentHit> documents, OutputStream outputStream) {
     CSVWriter writer = new CSVWriter(outputStream, entriesDelimiter, charset);
     writer.write(CSVDataRecord.FIELDS);
-    for (DocumentHit document : documents){
-      writer.write(new CSVDataRecord(
-          document.getDocumentId(),
-          String.valueOf(document.getScore()),
-          document.getDocument().getName(),
-          document.getDocument().getText().substring(0, excerptLength))
-      );
+    for (DocumentHit document : documents) {
+      Map<String, List<String>> highlights = document.getHighlights();
+      String excerpt;
+      if (highlights == null || highlights.isEmpty()) {
+        excerpt = document.getDocument().getText().substring(0, excerptLength).replace("\n", " ");
+      } else {
+        StringBuilder sb = new StringBuilder();
+        for (List<String> hl : highlights.values()) {
+          sb.append(String.join(String.format(" %s ", entryPartsDelimiter), hl).replace("\n", " "));
+          sb.append(String.format(" %s ", entryPartsDelimiter));
+        }
+        excerpt = sb.substring(0, sb.length() - 2);
+      }
+      writer.write(
+          new CSVDataRecord(
+              document.getDocumentId(),
+              String.valueOf(document.getScore()),
+              document.getDocument().getName(),
+              // ToDo: encoding is wrong
+              // ToDo: more meaningful excerpt (right now, only the first excerptLength characters
+              // are used)
+              excerpt));
     }
     writer.flush();
   }
@@ -91,8 +105,7 @@ public class DocumentCSV {
               break;
             } else if (currentPos == position) {
               String item = rowScanner.next();
-              if (!CSVDataRecord.FIELDS.contains(item))
-                records.add(item);
+              if (!CSVDataRecord.FIELDS.contains(item)) records.add(item);
             }
             currentPos++;
           }

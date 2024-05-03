@@ -3,15 +3,14 @@ package care.smith.top.top_document_query.tests;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import care.smith.top.model.Concept;
-import care.smith.top.top_document_query.adapter.AbstractDocument;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.TextFinder;
 import care.smith.top.top_document_query.functions.And;
 import care.smith.top.top_document_query.functions.Dist;
 import care.smith.top.top_document_query.util.Entities;
-import care.smith.top.top_document_query.util.builder.Exp;
 import care.smith.top.top_document_query.util.builder.CQue;
 import care.smith.top.top_document_query.util.builder.Cat;
+import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

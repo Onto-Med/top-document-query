@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import care.smith.top.model.Concept;
 import care.smith.top.model.Expression;
-import care.smith.top.top_document_query.adapter.lucene.LuceneSong;
+import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
 import care.smith.top.top_document_query.functions.And;
 import care.smith.top.top_document_query.functions.Dist;
 import care.smith.top.top_document_query.functions.Not;
@@ -13,8 +13,8 @@ import care.smith.top.top_document_query.functions.SubTree;
 import care.smith.top.top_document_query.functions.XProd;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
-import care.smith.top.top_document_query.util.builder.Exp;
 import care.smith.top.top_document_query.util.builder.Cat;
+import care.smith.top.top_document_query.util.builder.Exp;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,11 +85,7 @@ public class SongTest {
           .synonymEn("f2-en")
           .get();
 
-  Concept de_only =
-      new Cat("de_only", false)
-          .titleDe("de_only")
-          .synonymDe("de_only_syn")
-          .get();
+  Concept de_only = new Cat("de_only", false).titleDe("de_only").synonymDe("de_only_syn").get();
 
   Concept en_and_de =
       new Cat("en_and_de", false)
@@ -107,7 +103,8 @@ public class SongTest {
     log.debug("===== Test 1 =====");
     Expression exp = And.of(Or.of(a, b), Not.of(c));
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "(((\"a- de\" OR \"a1- de\" OR \"a2- de\") OR (b-de OR b1-de OR b2-de)) AND NOT (c-de OR"
             + " c1-de OR c2-de))",
@@ -119,7 +116,8 @@ public class SongTest {
     log.debug("===== Test 2 =====");
     Expression exp = And.of(Or.of(a, b), Not.of(SubTree.of(c)));
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "(((\"a- de\" OR \"a1- de\" OR \"a2- de\") OR (b-de OR b1-de OR b2-de)) AND NOT (c-de OR"
             + " c1-de OR c2-de OR d-de OR d1-de OR d2-de OR e-de OR e1-de OR \"e2- de\"))",
@@ -131,7 +129,8 @@ public class SongTest {
     log.debug("===== Test 3 =====");
     Expression exp = And.of(Or.of(Dist.of(a, 5), Exp.of(b)), Not.of(c));
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "(((\"a- de\"~5 OR \"a1- de\"~5 OR \"a2- de\"~5) OR (b-de OR b1-de OR b2-de)) AND NOT (c-de"
             + " OR c1-de OR c2-de))",
@@ -143,7 +142,8 @@ public class SongTest {
     log.debug("===== Test 4 =====");
     Expression exp = And.of(XProd.of(a, b), Not.of(c));
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "((\"a- de b-de\" OR \"a- de b1-de\" OR \"a- de b2-de\" OR \"a1- de b-de\" OR \"a1- de"
             + " b1-de\" OR \"a1- de b2-de\" OR \"a2- de b-de\" OR \"a2- de b1-de\" OR \"a2- de"
@@ -156,7 +156,8 @@ public class SongTest {
     log.debug("===== Test 5 =====");
     Expression exp = And.of(Dist.of(XProd.of(a, b), 2), Not.of(c));
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "((\"a- de b-de\"~2 OR \"a- de b1-de\"~2 OR \"a- de b2-de\"~2 OR \"a1- de b-de\"~2 OR \"a1-"
             + " de b1-de\"~2 OR \"a1- de b2-de\"~2 OR \"a2- de b-de\"~2 OR \"a2- de b1-de\"~2 OR"
@@ -169,7 +170,8 @@ public class SongTest {
     log.debug("===== Test 6 =====");
     Expression exp = And.of(Or.of(a, b), Not.of(And.of(c, f)));
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts).lang("de").generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
     assertEquals(
         "(((\"a- de\" OR \"a1- de\" OR \"a2- de\") OR (b-de OR b1-de OR b2-de)) AND NOT ((c-de OR"
             + " c1-de OR c2-de) AND (f-de OR f1-de OR \"f2- de\")))",
@@ -181,30 +183,27 @@ public class SongTest {
     // if no language is set, it should take all languages
     Expression exp = And.of(de_only, en_and_de);
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang(null).generate(exp));
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts_for_lang).lang(null).generate(exp));
     assertEquals(
-        "((de_only OR de_only_syn) AND (de_title OR en_title OR de_syn OR en_syn))",
-        query);
+        "((de_only OR de_only_syn) AND (de_title OR en_title OR de_syn OR en_syn))", query);
   }
 
   @Test
   public void test_set_specific_language_accessible() {
     Expression exp = And.of(de_only, en_and_de);
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang("de").generate(exp));
-    assertEquals(
-        "((de_only OR de_only_syn) AND (de_title OR de_syn))",
-        query);
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts_for_lang).lang("de").generate(exp));
+    assertEquals("((de_only OR de_only_syn) AND (de_title OR de_syn))", query);
   }
 
   @Test
   public void test_set_specific_language_not_accessible() {
     Expression exp = And.of(de_only, en_and_de);
     String query =
-        Expressions.getStringValue(LuceneSong.get().concepts(concepts_for_lang).lang("en").generate(exp));
-    assertEquals(
-        "((en_title OR en_syn))",
-        query);
+        Expressions.getStringValue(
+            ElasticsearchSong.get().concepts(concepts_for_lang).lang("en").generate(exp));
+    assertEquals("((en_title OR en_syn))", query);
   }
 }
-

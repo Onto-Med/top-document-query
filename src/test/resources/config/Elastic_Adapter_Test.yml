@@ -1,9 +1,0 @@
-id: Generic_Elasticsearch_Adapter
-adapter: care.smith.top.top_document_query.adapter.lucene.LuceneAdapter
-connection:
-  url: http://localhost
-  port: 9201
-index:
-  - test_documents
-field:
-  - text
