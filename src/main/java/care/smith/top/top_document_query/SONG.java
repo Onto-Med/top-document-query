@@ -169,7 +169,8 @@ public class SONG {
             && exp.getEntityId() == null
             && exp.getConstantId() == null
             && (exp.getArguments() == null || exp.getArguments().isEmpty())
-            && exp.getType() == null)) return "null";
+            && exp.getType() == null
+            && (exp.getValues() == null || exp.getValues().isEmpty()))) return "null";
     if (exp.getEntityId() != null) return exp.getEntityId();
     if (exp.getValues() != null) return Values.toString(exp.getValues());
     return operatorToString(exp);
