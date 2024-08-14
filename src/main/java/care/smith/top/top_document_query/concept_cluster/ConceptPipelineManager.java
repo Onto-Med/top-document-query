@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.ArrayUtils;
+import org.json.JSONObject;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -118,6 +119,31 @@ public class ConceptPipelineManager {
       parts.add("data", new FileSystemResource(data));
     }
     return callApi(labels, processName, language, skipPresent, returnStatistics, configs, parts);
+  }
+
+  /**
+   * Start a new concept pipeline with the given {@code jsonBody}. 'name' and 'language' values provided therein
+   * take precedence over {@code processName} and {@code language}.
+   *
+   * @param processName Name of the process scheduled with the pipeline.
+   * @param language Determines the pretrained text modules that will be used to process the text
+   *     documents (available languages are 'de' and 'en').
+   * @param skipPresent If a process with the given name already exists, the completed steps will be
+   *     skipped and the pipeline will pick up where it left off.
+   * @param returnStatistics Whether the function should return statistics about the pipeline.
+   *     Setting this parameter to {@code true} forces the function to wait for the pipeline to
+   *     finish.
+   * @return A {@link PipelineResponseEntity} containing minimal information about the pipeline or
+   *     detailed statistics.
+   */
+  public PipelineResponseEntity startPipeline(
+      @Nonnull String processName,
+      @Nullable String language,
+      @Nullable Boolean skipPresent,
+      @Nullable Boolean returnStatistics,
+      @Nonnull JSONObject jsonBody
+  ) {
+    return callApiWithJson(processName, language, skipPresent, returnStatistics, jsonBody);
   }
 
   /**
@@ -323,6 +349,53 @@ public class ConceptPipelineManager {
                               "return_statistics", returnStatistics != null && returnStatistics)
                           .build())
               .body(BodyInserters.fromMultipartData(parts))
+              .exchangeToMono(
+                  response -> {
+                    if (response.statusCode().equals(HttpStatus.OK)) {
+                      return response.bodyToMono(ConceptGraphStatisticsEntity.class);
+                    } else if (response.statusCode().equals(HttpStatus.ACCEPTED)) {
+                      return response.bodyToMono(PipelineStatusEntity.class);
+                    } else if (ArrayUtils.contains(
+                        new int[] {
+                          HttpStatus.FORBIDDEN.value(),
+                          HttpStatus.NOT_FOUND.value(),
+                          HttpStatus.BAD_REQUEST.value()
+                        },
+                        response.statusCode().value())) {
+                      return response.bodyToMono(PipelineFailWithExplicit.class);
+                    } else {
+                      return response.bodyToMono(PipelineFailEntity.class);
+                    }
+                  });
+      return apiResponse.block();
+    } catch (WebClientResponseException e) {
+      LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
+      return null;
+    }
+  }
+
+  private PipelineResponseEntity callApiWithJson(
+      String processName,
+      String language,
+      Boolean skipPresent,
+      Boolean returnStatistics,
+      JSONObject jsonBody) {
+    try {
+      Mono<PipelineResponseEntity> apiResponse =
+          conceptGraphsApi
+              .post()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path(ApiPipelineMethod.INITIALIZE.getEndpoint())
+                          .queryParam("process", processName)
+                          .queryParam("lang", language == null ? "en" : language)
+                          .queryParam("skip_present", skipPresent == null || skipPresent)
+                          .queryParam(
+                              "return_statistics", returnStatistics != null && returnStatistics)
+                          .build())
+              .contentType(MediaType.APPLICATION_JSON)
+              .bodyValue(jsonBody.toString())
               .exchangeToMono(
                   response -> {
                     if (response.statusCode().equals(HttpStatus.OK)) {
