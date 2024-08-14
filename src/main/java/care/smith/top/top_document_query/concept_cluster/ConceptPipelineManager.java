@@ -147,6 +147,43 @@ public class ConceptPipelineManager {
   }
 
   /**
+   *
+   * @param processName Name of the pipeline/process for which the configuration should be gotten;
+*        if null a default configuration will be returned (if there is one declared in the concept-graphs-api).
+   * @return An optional {@link JSONObject}.
+   */
+  public Optional<String> getPipelineConfiguration(@Nullable String processName) {
+    boolean defaultConfig;
+    if (processName != null) {
+      processName = processName.trim();
+      defaultConfig = false;
+    } else {
+      processName = "default";
+      defaultConfig = true;
+    }
+
+    try {
+      String finalProcessName = processName;
+      return Optional.ofNullable(
+          conceptGraphsApi
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path(ApiPipelineMethod.CONFIG.getEndpoint())
+                          .queryParam("process", finalProcessName)
+                          .queryParam("default", defaultConfig)
+                          .build())
+              .retrieve()
+              .bodyToMono(String.class)
+              .block());
+    } catch (WebClientResponseException e) {
+      LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
+      return Optional.empty();
+    }
+  }
+
+  /**
    * Get graphs that were constructed by the specified pipeline. You can optionally filter the
    * graphs by their ID.
    *

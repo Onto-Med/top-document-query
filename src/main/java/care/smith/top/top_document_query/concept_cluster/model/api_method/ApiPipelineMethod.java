@@ -1,7 +1,8 @@
 package care.smith.top.top_document_query.concept_cluster.model.api_method;
 
 public enum ApiPipelineMethod {
-  INITIALIZE("/pipeline");
+  INITIALIZE("/pipeline"),
+  CONFIG("/pipeline/configuration");
 
   private String endpoint;
 
