@@ -152,8 +152,9 @@ public class ConceptPipelineManager {
 *        if null a default configuration will be returned (if there is one declared in the concept-graphs-api).
    * @return An optional {@link JSONObject}.
    */
-  public Optional<String> getPipelineConfiguration(@Nullable String processName) {
+  public Optional<String> getPipelineConfiguration(@Nullable String processName, @Nullable String language) {
     boolean defaultConfig;
+    String lang = Objects.requireNonNullElse(language, "en");
     if (processName != null) {
       processName = processName.trim();
       defaultConfig = false;
@@ -173,6 +174,7 @@ public class ConceptPipelineManager {
                           .path(ApiPipelineMethod.CONFIG.getEndpoint())
                           .queryParam("process", finalProcessName)
                           .queryParam("default", defaultConfig)
+                          .queryParam("language", lang)
                           .build())
               .retrieve()
               .bodyToMono(String.class)
