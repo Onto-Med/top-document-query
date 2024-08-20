@@ -260,7 +260,7 @@ public class ConceptPipelineManager {
    * @param processId The id of the process.
    * @return The server message as {@link String}.
    */
-  public String stopProcess(String processId) {
+  public String stopPipeline(String processId) {
     try {
       return conceptGraphsApi
           .get()
