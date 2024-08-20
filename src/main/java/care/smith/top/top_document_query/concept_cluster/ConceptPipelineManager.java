@@ -255,6 +255,34 @@ public class ConceptPipelineManager {
   }
 
   /**
+   * Stops a process by its id; can only stop a process after its currently running step is finished.
+   *
+   * @param processId The id of the process.
+   * @return The server message as {@link String}.
+   */
+  public String stopProcess(String processId) {
+    try {
+      return conceptGraphsApi
+          .get()
+          .uri(
+              uriBuilder -> uriBuilder.path(ApiProcessMethod.STOP.getEndpoint(processId)).build())
+          .exchangeToMono(
+              response -> {
+                if (ArrayUtils.contains(
+                    new int[] {HttpStatus.OK.value(), HttpStatus.NOT_FOUND.value()},
+                    response.statusCode().value())) {
+                  return response.bodyToMono(String.class);
+                }
+                return response.bodyToMono(String.class);
+              })
+          .block();
+    } catch (WebClientResponseException e) {
+      LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
+    }
+    return "Something went wrong; check the logs.";
+  }
+
+  /**
    * Deletes a process by its id; can't delete a process that is running.
    *
    * @param processId The id of the process.
