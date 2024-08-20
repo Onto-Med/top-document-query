@@ -246,6 +246,9 @@ public class ConceptPipelineManager {
                     } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.RUNNING)
                         || step.getStatus().equals(ConceptGraphPipelineStatusEnum.STARTED)) {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.RUNNING);
+                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED)
+                        || step.getStatus().equals(ConceptGraphPipelineStatusEnum.ABORTED)) {
+                      conceptGraphPipeline.setStatus(PipelineResponseStatus.STOPPED);
                     } else {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
                     }
@@ -264,22 +267,13 @@ public class ConceptPipelineManager {
     try {
       return conceptGraphsApi
           .get()
-          .uri(
-              uriBuilder -> uriBuilder.path(ApiProcessMethod.STOP.getEndpoint(processId)).build())
-          .exchangeToMono(
-              response -> {
-                if (ArrayUtils.contains(
-                    new int[] {HttpStatus.OK.value(), HttpStatus.NOT_FOUND.value()},
-                    response.statusCode().value())) {
-                  return response.bodyToMono(String.class);
-                }
-                return response.bodyToMono(String.class);
-              })
+          .uri(uriBuilder -> uriBuilder.path(ApiProcessMethod.STOP.getEndpoint(processId)).build())
+          .exchangeToMono(response -> response.bodyToMono(String.class))
           .block();
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
     }
-    return "Something went wrong; check the logs.";
+    return "Something went wrong; check the `concept-graphs-api` logs.";
   }
 
   /**
@@ -307,7 +301,7 @@ public class ConceptPipelineManager {
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
     }
-    return "Something went wrong; check the logs.";
+    return "Something went wrong; check the `concept-graphs-api` logs.";
   }
 
   /**
