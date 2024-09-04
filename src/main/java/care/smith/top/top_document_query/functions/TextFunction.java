@@ -6,9 +6,12 @@ import care.smith.top.model.Value;
 import care.smith.top.top_document_query.SONG;
 import care.smith.top.top_document_query.util.Values;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public abstract class TextFunction {
+
+  protected final Logger LOGGER = Logger.getLogger(TextFunction.class.getName());
 
   private String id;
   private String title;

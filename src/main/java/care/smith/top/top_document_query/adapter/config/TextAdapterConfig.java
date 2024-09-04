@@ -39,6 +39,9 @@ public class TextAdapterConfig {
   private String labelKey = "label";
 
   @JsonSetter(nulls = Nulls.SKIP)
+  private String otherId = "id";
+
+  @JsonSetter(nulls = Nulls.SKIP)
   private Map<String, String> replaceFields =
       new HashMap<>() {
         {
@@ -103,6 +106,14 @@ public class TextAdapterConfig {
 
   public void setId(String id) {
     this.id = id;
+  }
+
+  public String getOtherId() {
+    return otherId;
+  }
+
+  public void setOtherId(String otherId) {
+    this.otherId = otherId;
   }
 
   public Connection getConnection() {

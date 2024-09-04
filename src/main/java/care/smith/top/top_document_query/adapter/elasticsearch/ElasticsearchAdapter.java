@@ -68,6 +68,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     return execute(queryString);
   }
 
+  // ToDo: should not return List but rather batched/paged like the other methods
   @Override
   public List<DocumentHit> execute(String queryString) {
     SearchResponse<DocumentEntity> searchResponse;
@@ -249,7 +250,7 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   @Override
   public Stream<List<Document>> getDocumentsByIdsBatched(
-      @NonNull Collection<String> ids, Integer batchSize, Boolean simplified) throws IOException {
+      @NonNull Collection<String> ids, Integer batchSize, Boolean simplified) {
     return Stream.generate(documentSupplier(queryForIds(ids), batchSize, simplified))
         .takeWhile(list -> !list.isEmpty());
   }
@@ -359,6 +360,7 @@ public class ElasticsearchAdapter extends TextAdapter {
               });
           return documents;
         } catch (IOException e) {
+          LOGGER.fine(String.format("Could not retrieve documents for query:\n'%s'", query));
           return List.of();
         }
       }

@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.ArrayUtils;
+import org.json.JSONObject;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -121,6 +122,70 @@ public class ConceptPipelineManager {
   }
 
   /**
+   * Start a new concept pipeline with the given {@code jsonBody}. 'name' and 'language' values
+   * provided therein take precedence over {@code processName} and {@code language}.
+   *
+   * @param processName Name of the process scheduled with the pipeline.
+   * @param language Determines the pretrained text modules that will be used to process the text
+   *     documents (available languages are 'de' and 'en').
+   * @param skipPresent If a process with the given name already exists, the completed steps will be
+   *     skipped and the pipeline will pick up where it left off.
+   * @param returnStatistics Whether the function should return statistics about the pipeline.
+   *     Setting this parameter to {@code true} forces the function to wait for the pipeline to
+   *     finish.
+   * @return A {@link PipelineResponseEntity} containing minimal information about the pipeline or
+   *     detailed statistics.
+   */
+  public PipelineResponseEntity startPipeline(
+      @Nonnull String processName,
+      @Nullable String language,
+      @Nullable Boolean skipPresent,
+      @Nullable Boolean returnStatistics,
+      @Nonnull JSONObject jsonBody) {
+    return callApiWithJson(processName, language, skipPresent, returnStatistics, jsonBody);
+  }
+
+  /**
+   * @param processName Name of the pipeline/process for which the configuration should be gotten;
+   *     if null a default configuration will be returned (if there is one declared in the
+   *     concept-graphs-api).
+   * @return An optional {@link JSONObject}.
+   */
+  public Optional<String> getPipelineConfiguration(
+      @Nullable String processName, @Nullable String language) {
+    boolean defaultConfig;
+    String lang = Objects.requireNonNullElse(language, "en");
+    if (processName != null) {
+      processName = processName.trim();
+      defaultConfig = false;
+    } else {
+      processName = "default";
+      defaultConfig = true;
+    }
+
+    try {
+      String finalProcessName = processName;
+      return Optional.ofNullable(
+          conceptGraphsApi
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path(ApiPipelineMethod.CONFIG.getEndpoint())
+                          .queryParam("process", finalProcessName)
+                          .queryParam("default", defaultConfig)
+                          .queryParam("language", lang)
+                          .build())
+              .retrieve()
+              .bodyToMono(String.class)
+              .block());
+    } catch (WebClientResponseException e) {
+      LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
+      return Optional.empty();
+    }
+  }
+
+  /**
    * Get graphs that were constructed by the specified pipeline. You can optionally filter the
    * graphs by their ID.
    *
@@ -181,12 +246,35 @@ public class ConceptPipelineManager {
                     } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.RUNNING)
                         || step.getStatus().equals(ConceptGraphPipelineStatusEnum.STARTED)) {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.RUNNING);
+                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED)
+                        || step.getStatus().equals(ConceptGraphPipelineStatusEnum.ABORTED)) {
+                      conceptGraphPipeline.setStatus(PipelineResponseStatus.STOPPED);
                     } else {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
                     }
                   });
         });
     return conceptGraphPipelines;
+  }
+
+  /**
+   * Stops a process by its id; can only stop a process after its currently running step is
+   * finished.
+   *
+   * @param processId The id of the process.
+   * @return The server message as {@link String}.
+   */
+  public String stopPipeline(String processId) {
+    try {
+      return conceptGraphsApi
+          .get()
+          .uri(uriBuilder -> uriBuilder.path(ApiProcessMethod.STOP.getEndpoint(processId)).build())
+          .exchangeToMono(response -> response.bodyToMono(String.class))
+          .block();
+    } catch (WebClientResponseException e) {
+      LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
+    }
+    return "Something went wrong; check the `concept-graphs-api` logs.";
   }
 
   /**
@@ -214,7 +302,7 @@ public class ConceptPipelineManager {
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
     }
-    return "Something went wrong; check the logs.";
+    return "Something went wrong; check the `concept-graphs-api` logs.";
   }
 
   /**
@@ -323,6 +411,53 @@ public class ConceptPipelineManager {
                               "return_statistics", returnStatistics != null && returnStatistics)
                           .build())
               .body(BodyInserters.fromMultipartData(parts))
+              .exchangeToMono(
+                  response -> {
+                    if (response.statusCode().equals(HttpStatus.OK)) {
+                      return response.bodyToMono(ConceptGraphStatisticsEntity.class);
+                    } else if (response.statusCode().equals(HttpStatus.ACCEPTED)) {
+                      return response.bodyToMono(PipelineStatusEntity.class);
+                    } else if (ArrayUtils.contains(
+                        new int[] {
+                          HttpStatus.FORBIDDEN.value(),
+                          HttpStatus.NOT_FOUND.value(),
+                          HttpStatus.BAD_REQUEST.value()
+                        },
+                        response.statusCode().value())) {
+                      return response.bodyToMono(PipelineFailWithExplicit.class);
+                    } else {
+                      return response.bodyToMono(PipelineFailEntity.class);
+                    }
+                  });
+      return apiResponse.block();
+    } catch (WebClientResponseException e) {
+      LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
+      return null;
+    }
+  }
+
+  private PipelineResponseEntity callApiWithJson(
+      String processName,
+      String language,
+      Boolean skipPresent,
+      Boolean returnStatistics,
+      JSONObject jsonBody) {
+    try {
+      Mono<PipelineResponseEntity> apiResponse =
+          conceptGraphsApi
+              .post()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path(ApiPipelineMethod.INITIALIZE.getEndpoint())
+                          .queryParam("process", processName)
+                          .queryParam("lang", language == null ? "en" : language)
+                          .queryParam("skip_present", skipPresent == null || skipPresent)
+                          .queryParam(
+                              "return_statistics", returnStatistics != null && returnStatistics)
+                          .build())
+              .contentType(MediaType.APPLICATION_JSON)
+              .bodyValue(jsonBody.toString())
               .exchangeToMono(
                   response -> {
                     if (response.statusCode().equals(HttpStatus.OK)) {
