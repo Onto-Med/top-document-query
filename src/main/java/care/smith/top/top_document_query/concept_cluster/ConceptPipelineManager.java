@@ -122,8 +122,8 @@ public class ConceptPipelineManager {
   }
 
   /**
-   * Start a new concept pipeline with the given {@code jsonBody}. 'name' and 'language' values provided therein
-   * take precedence over {@code processName} and {@code language}.
+   * Start a new concept pipeline with the given {@code jsonBody}. 'name' and 'language' values
+   * provided therein take precedence over {@code processName} and {@code language}.
    *
    * @param processName Name of the process scheduled with the pipeline.
    * @param language Determines the pretrained text modules that will be used to process the text
@@ -141,18 +141,18 @@ public class ConceptPipelineManager {
       @Nullable String language,
       @Nullable Boolean skipPresent,
       @Nullable Boolean returnStatistics,
-      @Nonnull JSONObject jsonBody
-  ) {
+      @Nonnull JSONObject jsonBody) {
     return callApiWithJson(processName, language, skipPresent, returnStatistics, jsonBody);
   }
 
   /**
-   *
    * @param processName Name of the pipeline/process for which the configuration should be gotten;
-*        if null a default configuration will be returned (if there is one declared in the concept-graphs-api).
+   *     if null a default configuration will be returned (if there is one declared in the
+   *     concept-graphs-api).
    * @return An optional {@link JSONObject}.
    */
-  public Optional<String> getPipelineConfiguration(@Nullable String processName, @Nullable String language) {
+  public Optional<String> getPipelineConfiguration(
+      @Nullable String processName, @Nullable String language) {
     boolean defaultConfig;
     String lang = Objects.requireNonNullElse(language, "en");
     if (processName != null) {
@@ -258,7 +258,8 @@ public class ConceptPipelineManager {
   }
 
   /**
-   * Stops a process by its id; can only stop a process after its currently running step is finished.
+   * Stops a process by its id; can only stop a process after its currently running step is
+   * finished.
    *
    * @param processId The id of the process.
    * @return The server message as {@link String}.

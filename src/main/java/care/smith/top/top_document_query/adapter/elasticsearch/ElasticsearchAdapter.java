@@ -68,7 +68,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     return execute(queryString);
   }
 
-  //ToDo: should not return List but rather batched/paged like the other methods
+  // ToDo: should not return List but rather batched/paged like the other methods
   @Override
   public List<DocumentHit> execute(String queryString) {
     SearchResponse<DocumentEntity> searchResponse;

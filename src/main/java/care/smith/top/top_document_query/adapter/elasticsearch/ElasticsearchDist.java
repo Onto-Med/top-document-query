@@ -32,7 +32,10 @@ public class ElasticsearchDist extends Dist {
     try {
       dist.set(Expressions.getNumberValue(args.get(1)).intValue());
     } catch (Exception e) {
-      LOGGER.warning(String.format("Encountered error when getting NumberValue for '%s'. Using 1 as distance", args.get(1)));
+      LOGGER.warning(
+          String.format(
+              "Encountered error when getting NumberValue for '%s'. Using 1 as distance",
+              args.get(1)));
     }
     List<Value> valsWithDist =
         arg.getValues().stream().map(v -> getDist(arg, v, dist.get())).collect(Collectors.toList());
