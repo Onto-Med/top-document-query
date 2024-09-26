@@ -161,7 +161,7 @@ public class Entities {
     if (e.getCodes() != null && !e.getCodes().isEmpty()) {
       for (Code c : e.getCodes()) {
         codeRepr.add(c.getName());
-        codeRepr.addAll(c.getSynonyms());
+        Optional.ofNullable(c.getSynonyms()).ifPresent(codeRepr::addAll);
       }
     }
     return codeRepr;
