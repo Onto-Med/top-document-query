@@ -2,6 +2,7 @@ package care.smith.top.top_document_query.adapter.elasticsearch;
 
 import care.smith.top.model.ConceptQuery;
 import care.smith.top.model.Document;
+import care.smith.top.model.Expression;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
@@ -10,6 +11,7 @@ import care.smith.top.top_document_query.elasticsearch.DocumentFields;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
+import care.smith.top.top_document_query.util.builder.Exp;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
@@ -59,12 +61,18 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   @Override
   public List<DocumentHit> execute(ConceptQuery query, Entities entities) {
-    String queryString =
-        Expressions.getStringValue(
-            ElasticsearchSong.get()
-                .concepts(entities)
-                .lang(query.getLanguage())
-                .generate(query.getEntityId()));
+    Expression esExp = ElasticsearchSong.get()
+        .concepts(entities)
+        .lang(query.getLanguage())
+        .generate(query.getEntityId());
+
+    String queryString;
+    if (esExp.getValues().size() > 1) {
+      queryString = Expressions.getStringValue(
+          ElasticsearchOr.get().generate(esExp.getArguments(), ElasticsearchSong.get()));
+    } else {
+      queryString = Expressions.getStringValue(esExp);
+    }
     return execute(queryString);
   }
 
