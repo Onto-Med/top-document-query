@@ -68,8 +68,10 @@ public class ElasticsearchAdapter extends TextAdapter {
 
     String queryString;
     if (esExp.getValues().size() > 1) {
-      queryString = Expressions.getStringValue(
-          ElasticsearchOr.get().generate(esExp.getArguments(), ElasticsearchSong.get()));
+      queryString = Expressions.getStringValues(esExp)
+              .stream()
+              .map(s -> String.format("\"%s\"", s))
+              .collect(Collectors.joining(" OR "));
     } else {
       queryString = Expressions.getStringValue(esExp);
     }
