@@ -11,7 +11,6 @@ import care.smith.top.top_document_query.elasticsearch.DocumentFields;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
-import care.smith.top.top_document_query.util.builder.Exp;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
@@ -61,15 +60,16 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   @Override
   public List<DocumentHit> execute(ConceptQuery query, Entities entities) {
-    Expression esExp = ElasticsearchSong.get()
-        .concepts(entities)
-        .lang(query.getLanguage())
-        .generate(query.getEntityId());
+    Expression esExp =
+        ElasticsearchSong.get()
+            .concepts(entities)
+            .lang(query.getLanguage())
+            .generate(query.getEntityId());
 
     String queryString;
     if (esExp.getValues().size() > 1) {
-      queryString = Expressions.getStringValues(esExp)
-              .stream()
+      queryString =
+          Expressions.getStringValues(esExp).stream()
               .map(s -> String.format("\"%s\"", s))
               .collect(Collectors.joining(" OR "));
     } else {
