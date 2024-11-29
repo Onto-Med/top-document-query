@@ -160,7 +160,7 @@ public class Entities {
     Set<String> codeRepr = new LinkedHashSet<>();
     if (e.getCodes() != null && !e.getCodes().isEmpty()) {
       for (Code c : e.getCodes()) {
-        codeRepr.add(c.getName());
+        if (c.getName() != null) codeRepr.add(c.getName());
         Optional.ofNullable(c.getSynonyms()).ifPresent(codeRepr::addAll);
       }
     }
