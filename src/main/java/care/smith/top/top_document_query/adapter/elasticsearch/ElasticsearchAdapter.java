@@ -2,13 +2,13 @@ package care.smith.top.top_document_query.adapter.elasticsearch;
 
 import care.smith.top.model.ConceptQuery;
 import care.smith.top.model.Document;
+import care.smith.top.model.Entity;
 import care.smith.top.model.Expression;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
 import care.smith.top.top_document_query.elasticsearch.DocumentFields;
-import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -59,10 +59,11 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
   @Override
-  public List<DocumentHit> execute(ConceptQuery query, Entities entities) {
+  public List<DocumentHit> execute(
+      ConceptQuery query, Map<String, Entity> entities, Map<String, Set<String>> dependencies) {
     Expression esExp =
         ElasticsearchSong.get()
-            .concepts(entities)
+            .concepts(buildConceptHierarchy(entities, dependencies))
             .lang(query.getLanguage())
             .generate(query.getEntityId());
 
