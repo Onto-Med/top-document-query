@@ -28,7 +28,8 @@ class TextFinderTest extends AbstractElasticTest {
           .expression(And.of(Dist.of(phrase1, 1), Exp.of(phrase2)))
           .get();
   Map<String, Set<String>> dependencies = new HashMap<>();
-  Map<String, Entity> concepts = Map.of("phrase1", phrase1, "phrase2", phrase2);
+  Map<String, Entity> concepts =
+      Map.of("phrase1", phrase1, "phrase2", phrase2, PARENT_CAT_ID, parentCat);
 
   @BeforeAll
   static void setUp() {
