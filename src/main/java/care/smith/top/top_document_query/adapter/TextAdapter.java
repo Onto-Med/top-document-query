@@ -1,15 +1,13 @@
 package care.smith.top.top_document_query.adapter;
 
-import care.smith.top.model.ConceptQuery;
-import care.smith.top.model.Document;
+import care.smith.top.model.*;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.NonNull;
@@ -47,7 +45,32 @@ public abstract class TextAdapter {
     return getInstance(TextAdapterConfig.getInstance(configFile));
   }
 
-  public abstract List<DocumentHit> execute(ConceptQuery query, Entities entities);
+  /**
+   * Builds the flattened hierarchy back to model sub dependencies of Concepts.
+   *
+   * @param entities A {@link Map} that features all potential concept instances of a query.
+   * @param dependencies A {@link Map} holds all dependencies as a {@link Set} of ids of a concept
+   *     (as id).
+   * @return An instance of {@link Entities}.
+   */
+  protected Entities buildConceptHierarchy(
+      Map<String, Entity> entities, Map<String, Set<String>> dependencies) {
+    for (Map.Entry<String, Set<String>> entry : dependencies.entrySet()) {
+      Entity eEntity = entities.get(entry.getKey());
+      if (eEntity instanceof SingleConcept) {
+        ((SingleConcept) eEntity)
+            .setSubConcepts(
+                entry.getValue().stream()
+                    .map(e -> ((SingleConcept) entities.get(e)))
+                    .collect(Collectors.toList()));
+      }
+    }
+    return Entities.of(entities.values().toArray(new Entity[0]));
+  }
+  ;
+
+  public abstract List<DocumentHit> execute(
+      ConceptQuery query, Map<String, Entity> entities, Map<String, Set<String>> dependencies);
 
   public abstract List<DocumentHit> execute(String queryString);
 

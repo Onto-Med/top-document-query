@@ -5,24 +5,29 @@ import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.TextFinder;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
+import java.util.Map;
+import java.util.Set;
 
 public class CQue {
 
   private TextAdapter adapter;
   private TextAdapterConfig config;
   private ConceptQuery query;
-  private Entity[] entities;
+  private Map<String, Entity> entities;
+  private Map<String, Set<String>> dependencies;
 
   public CQue(
       TextAdapter adapter,
       TextAdapterConfig config,
-      Entity[] entities,
+      Map<String, Entity> entities,
+      Map<String, Set<String>> dependencies,
       String parentCatId,
       String lang) {
     this.adapter = adapter;
     this.config = config;
     this.query = new ConceptQuery().entityId(parentCatId).language(lang);
     this.entities = entities;
+    this.dependencies = dependencies;
   }
 
   public static TextAdapter getAdapter(String configFilePath) throws InstantiationException {
@@ -50,6 +55,6 @@ public class CQue {
   }
 
   public TextFinder getFinder() {
-    return new TextFinder(query, entities, adapter);
+    return new TextFinder(query, entities, dependencies, adapter);
   }
 }
