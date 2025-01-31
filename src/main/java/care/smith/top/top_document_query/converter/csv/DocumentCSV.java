@@ -4,6 +4,8 @@ import care.smith.top.model.Concept;
 import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.util.Entities;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -62,15 +64,17 @@ public class DocumentCSV {
 
   public void write(List<DocumentHit> documents, OutputStream outputStream) {
     CSVWriter writer = new CSVWriter(outputStream, entriesDelimiter, charset);
-    writer.write(CSVDataRecord.FIELDS);
+    writer.write(CSVDataRecord.FIELDS); //ToDo: need to change field names
     for (DocumentHit document : documents) {
-      Map<String, List<String>> highlights = document.getHighlights();
+      Map<String, List<Pair<Integer, Integer>>> highlights = document.getHighlights();
+      //ToDo: fix with new highlights!
+      // DocumentID;FIELDNAME ‖ Score ‖ Title ‖ Begin1-End1;Begin2-End2
       String excerpt;
       if (highlights == null || highlights.isEmpty()) {
         excerpt = document.getDocument().getText().substring(0, excerptLength).replace("\n", " ");
       } else {
         StringBuilder sb = new StringBuilder();
-        for (List<String> hl : highlights.values()) {
+        for (List<Pair<Integer, Integer>> hl : highlights.values()) {
           sb.append(String.join(String.format(" %s ", entryPartsDelimiter), hl).replace("\n", " "));
           sb.append(String.format(" %s ", entryPartsDelimiter));
         }

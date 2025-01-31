@@ -61,6 +61,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public List<DocumentHit> execute(
       ConceptQuery query, Map<String, Entity> entities, Map<String, Set<String>> dependencies) {
+    // ToDo: somehow need to check how large a query becomes and split it up (or reject it)
     Expression esExp =
         ElasticsearchSong.get()
             .concepts(buildConceptHierarchy(entities, dependencies))
@@ -97,7 +98,7 @@ public class ElasticsearchAdapter extends TextAdapter {
                                         put(
                                             f,
                                             HighlightField.of(
-                                                hf -> hf.numberOfFragments(100).fragmentSize(30)));
+                                                hf -> hf.numberOfFragments(0).fragmentSize(30)));
                                       }
                                     })
                             .reduce(
