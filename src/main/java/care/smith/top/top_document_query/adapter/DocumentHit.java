@@ -61,14 +61,18 @@ public class DocumentHit {
   }
 
   /**
-   * @return A {@link Map} that contains a {@link List} of offsets for highlighted terms as {@link Pair} by fields.
+   * @return A {@link Map} that contains a {@link List} of offsets for highlighted terms as {@link
+   *     Pair} by fields.
    */
   public Map<String, List<Pair<Integer, Integer>>> getHighlights() {
     return highlights;
   }
 
   public DocumentHit setHighlights(Map<String, List<String>> highlights) {
-    this.highlights = (highlights != null && !highlights.isEmpty()) ? calculateHighlightOffsets(highlights) : null;
+    this.highlights =
+        (highlights != null && !highlights.isEmpty())
+            ? calculateHighlightOffsets(highlights)
+            : null;
     return this;
   }
 
@@ -77,7 +81,8 @@ public class DocumentHit {
    *
    * @param highlights
    */
-  private Map<String, List<Pair<Integer, Integer>>> calculateHighlightOffsets(Map<String, List<String>> highlights) {
+  private Map<String, List<Pair<Integer, Integer>>> calculateHighlightOffsets(
+      Map<String, List<String>> highlights) {
     return calculateHighlightOffsets(highlights, "em");
   }
 
@@ -87,13 +92,15 @@ public class DocumentHit {
    * @param highlights
    * @param tag
    */
-  private Map<String, List<Pair<Integer, Integer>>> calculateHighlightOffsets(Map<String, List<String>> highlights, String tag) {
-    return calculateHighlightOffsets(highlights, String.format("<%s>", tag), String.format("</%s>", tag));
+  private Map<String, List<Pair<Integer, Integer>>> calculateHighlightOffsets(
+      Map<String, List<String>> highlights, String tag) {
+    return calculateHighlightOffsets(
+        highlights, String.format("<%s>", tag), String.format("</%s>", tag));
   }
 
   /**
    * Highlights will be searched by looking for terms between {@literal <preTag>TERM<postTag>} Be
-   * aware that this method uses Regex and some characters have a special meaning.
+   * aware that this method uses Regex and some characters might have a special meaning.
    *
    * @param highlights
    * @param preTag
