@@ -9,13 +9,12 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
 import org.apache.commons.lang3.tuple.Pair;
 
 public class DocumentCSV {
 
   private Charset charset = StandardCharsets.UTF_8;
-  private String entriesDelimiter = "‖";
+  private String entriesDelimiter = "\t";
   private String entryPartsDelimiter = ";";
   private String language = null;
   private int excerptLength = 100;
@@ -72,7 +71,6 @@ public class DocumentCSV {
                 document.getDocumentId(),
                 String.valueOf(document.getScore()),
                 document.getDocument().getName(),
-                // ToDo: encoding is wrong?
                 nullValueString));
       } else {
         for (Map.Entry<String, List<Pair<Integer, Integer>>> hl : highlights.entrySet()) {
@@ -82,7 +80,6 @@ public class DocumentCSV {
                       "%s%s%s", document.getDocumentId(), entryPartsDelimiter, hl.getKey()),
                   String.valueOf(document.getScore()),
                   document.getDocument().getName(),
-                  // ToDo: encoding is wrong?
                   String.join(
                       entryPartsDelimiter,
                       hl.getValue().stream()
@@ -111,7 +108,8 @@ public class DocumentCSV {
               break;
             } else if (currentPos == position) {
               String item = rowScanner.next();
-              if (!CSVDataRecord.FIELDS.contains(item)) Arrays.stream(item.split(entryPartsDelimiter)).findFirst().ifPresent(records::add);
+              if (!CSVDataRecord.FIELDS.contains(item))
+                Arrays.stream(item.split(entryPartsDelimiter)).findFirst().ifPresent(records::add);
             }
             currentPos++;
           }

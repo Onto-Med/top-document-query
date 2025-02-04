@@ -20,7 +20,7 @@ class DocumentHitTest {
   static Map<String, List<Pair<Integer, Integer>>> testOffsets;
   static Map<String, List<String>> testHighlights;
   static DocumentHit documentHit;
-  final String entriesDelimiter = "‖";
+  final String entriesDelimiter = "\t";
   final String entryPartsDelimiter = ";";
   static final String fieldName = "text";
   static final String documentId = "documentId";
@@ -79,13 +79,33 @@ class DocumentHitTest {
   @Test
   void csvGetIds() {
     String header = String.join(entriesDelimiter, CSVDataRecord.FIELDS);
-    String row1 = String.join(entriesDelimiter, List.of("id1", "0.1", "doc1", String.join(entryPartsDelimiter, List.of("0-1", "4-10"))));
-    String row2 = String.join(entriesDelimiter, List.of("id2;field1", "0.5", "doc2", String.join(entryPartsDelimiter, List.of("0-1", "4-10"))));
-    String row3 = String.join(entriesDelimiter, List.of("id2;field2", "0.4", "doc2", String.join(entryPartsDelimiter, List.of("2-4", "10-15"))));
+    String row1 =
+        String.join(
+            entriesDelimiter,
+            List.of(
+                "id1", "0.1", "doc1", String.join(entryPartsDelimiter, List.of("0-1", "4-10"))));
+    String row2 =
+        String.join(
+            entriesDelimiter,
+            List.of(
+                "id2;field1",
+                "0.5",
+                "doc2",
+                String.join(entryPartsDelimiter, List.of("0-1", "4-10"))));
+    String row3 =
+        String.join(
+            entriesDelimiter,
+            List.of(
+                "id2;field2",
+                "0.4",
+                "doc2",
+                String.join(entryPartsDelimiter, List.of("2-4", "10-15"))));
     String row4 = String.join(entriesDelimiter, List.of("id3", "0.2", "doc3", "NA"));
     Set<String> expectedIds = Set.of("id1", "id2", "id3");
 
-    InputStream in = new ByteArrayInputStream(String.join("\n", List.of(header, row1, row2, row3, row4)).getBytes());
+    InputStream in =
+        new ByteArrayInputStream(
+            String.join("\n", List.of(header, row1, row2, row3, row4)).getBytes());
     DocumentCSV csv = new DocumentCSV();
     csv.entriesDelimiter(entriesDelimiter);
     csv.entryPartsDelimiter(entryPartsDelimiter);
