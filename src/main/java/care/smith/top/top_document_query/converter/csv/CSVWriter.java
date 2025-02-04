@@ -16,6 +16,7 @@ public class CSVWriter {
       throw new IllegalArgumentException("The pipe symbol '|' must not be used as delimiter!");
     this.entriesDelimiter = entriesDelimiter;
     this.writer = new OutputStreamWriter(out, charset);
+    this.write(List.of(String.format("sep=%s", entriesDelimiter)));
   }
 
   public void write(List<String> record) {

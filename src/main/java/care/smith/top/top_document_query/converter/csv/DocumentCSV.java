@@ -8,18 +8,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class DocumentCSV {
 
   private Charset charset = StandardCharsets.UTF_8;
-  private String entriesDelimiter = "‖";
+  private String entriesDelimiter = "\t";
   private String entryPartsDelimiter = ";";
   private String language = null;
   private int excerptLength = 100;
+  private final String nullValueString = "NA";
 
   public DocumentCSV() {}
 
@@ -64,27 +63,30 @@ public class DocumentCSV {
     CSVWriter writer = new CSVWriter(outputStream, entriesDelimiter, charset);
     writer.write(CSVDataRecord.FIELDS);
     for (DocumentHit document : documents) {
-      Map<String, List<String>> highlights = document.getHighlights();
-      String excerpt;
+      Map<String, List<Pair<Integer, Integer>>> highlights = document.getHighlights();
+      // DocumentID;FIELDNAME ‖ Score ‖ Title ‖ Begin1-End1;Begin2-End2
       if (highlights == null || highlights.isEmpty()) {
-        excerpt = document.getDocument().getText().substring(0, excerptLength).replace("\n", " ");
+        writer.write(
+            new CSVDataRecord(
+                document.getDocumentId(),
+                String.valueOf(document.getScore()),
+                document.getDocument().getName(),
+                nullValueString));
       } else {
-        StringBuilder sb = new StringBuilder();
-        for (List<String> hl : highlights.values()) {
-          sb.append(String.join(String.format(" %s ", entryPartsDelimiter), hl).replace("\n", " "));
-          sb.append(String.format(" %s ", entryPartsDelimiter));
+        for (Map.Entry<String, List<Pair<Integer, Integer>>> hl : highlights.entrySet()) {
+          writer.write(
+              new CSVDataRecord(
+                  String.format(
+                      "%s%s%s", document.getDocumentId(), entryPartsDelimiter, hl.getKey()),
+                  String.valueOf(document.getScore()),
+                  document.getDocument().getName(),
+                  String.join(
+                      entryPartsDelimiter,
+                      hl.getValue().stream()
+                          .map(p -> String.format("%s-%s", p.getLeft(), p.getRight()))
+                          .toList())));
         }
-        excerpt = sb.substring(0, sb.length() - 2);
       }
-      writer.write(
-          new CSVDataRecord(
-              document.getDocumentId(),
-              String.valueOf(document.getScore()),
-              document.getDocument().getName(),
-              // ToDo: encoding is wrong
-              // ToDo: more meaningful excerpt (right now, only the first excerptLength characters
-              // are used)
-              excerpt));
     }
     writer.flush();
   }
@@ -94,7 +96,8 @@ public class DocumentCSV {
   }
 
   public List<String> readColumn(InputStream inputStream, int position) {
-    List<String> records = new ArrayList<>();
+    Set<String> records = new HashSet<>();
+
     try (Scanner scanner = new Scanner(inputStream, charset)) {
       while (scanner.hasNextLine()) {
         try (Scanner rowScanner = new Scanner(scanner.nextLine())) {
@@ -105,13 +108,14 @@ public class DocumentCSV {
               break;
             } else if (currentPos == position) {
               String item = rowScanner.next();
-              if (!CSVDataRecord.FIELDS.contains(item)) records.add(item);
+              if (!CSVDataRecord.FIELDS.contains(item))
+                Arrays.stream(item.split(entryPartsDelimiter)).findFirst().ifPresent(records::add);
             }
             currentPos++;
           }
         }
       }
     }
-    return records;
+    return List.copyOf(records);
   }
 }

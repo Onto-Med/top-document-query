@@ -80,28 +80,36 @@ public class DocumentEntity {
     return id;
   }
 
+  public DocumentEntity setId(String id) {
+    this.id = id;
+    return this;
+  }
+
   public Integer getWordEllipsis() {
     return wordEllipsis;
   }
 
-  public void setWordEllipsis(Integer wordEllipsis) {
+  public DocumentEntity setWordEllipsis(Integer wordEllipsis) {
     this.wordEllipsis = wordEllipsis;
+    return this;
   }
 
   public String getName() {
     return name;
   }
 
-  public void setName(String name) {
+  public DocumentEntity setName(String name) {
     this.name = name;
+    return this;
   }
 
   public String getText() {
     return text;
   }
 
-  public void setText(String text) {
+  public DocumentEntity setText(String text) {
     this.text = text;
+    return this;
   }
 
   public Map<String, List<String>> getHighlights() {
@@ -111,8 +119,9 @@ public class DocumentEntity {
     return highlights;
   }
 
-  public void setHighlights(Map<String, List<String>> highlights) {
+  public DocumentEntity setHighlights(Map<String, List<String>> highlights) {
     this.highlights = highlights;
+    return this;
   }
 
   private String documentText(Integer ellipsis) {
