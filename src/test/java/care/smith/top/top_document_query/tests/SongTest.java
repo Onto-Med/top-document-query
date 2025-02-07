@@ -169,13 +169,21 @@ public class SongTest {
   public void test6() {
     log.debug("===== Test 6 =====");
     Expression exp = And.of(Or.of(a, b), Not.of(And.of(c, f)));
-    String query =
-        Expressions.getStringValue(
-            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
+    Expression genExp = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp);
+    String query = Expressions.getStringValue(genExp);
     assertEquals(
         "(((\"a- de\" OR \"a1- de\" OR \"a2- de\") OR (b-de OR b1-de OR b2-de)) AND NOT ((c-de OR"
             + " c1-de OR c2-de) AND (f-de OR f1-de OR \"f2- de\")))",
         query);
+  }
+
+  @Test
+  public void test7() {
+    log.debug("===== Test 7 =====");
+    Expression exp = SubTree.of(c, 1);
+    Expression genExp = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp);
+    String query = Expressions.getStringValue(genExp);
+    assertEquals("c-de OR c1-de OR c2-de OR d-de OR d1-de OR d2-de", query);
   }
 
   @Test

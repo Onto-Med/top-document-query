@@ -90,7 +90,7 @@ public class SONG {
       return res;
     }
 
-    Expression res = getTermsExpression(con, EXPRESSION_TYPE_TERMS_INITIAL, false);
+    Expression res = getTermsExpression(con, EXPRESSION_TYPE_TERMS_INITIAL, null);
     log.debug("end generating query for concept: {} = {}", con.getId(), toString(res));
     return res;
   }
@@ -130,12 +130,26 @@ public class SONG {
     return getTermsQuery(exp);
   }
 
-  public Expression getTermsExpression(String conId, String type, boolean includeSubTree) {
-    return getTermsExpression(getConcept(conId), type, includeSubTree);
+  /**
+   *
+   * @param conId
+   * @param type
+   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be resolved; otherwise SubTree will be resolved up until ``subTreeLevel``
+   * @return
+   */
+  public Expression getTermsExpression(String conId, String type, Integer subTreeLevel) {
+    return getTermsExpression(getConcept(conId), type, subTreeLevel);
   }
 
-  public Expression getTermsExpression(Entity con, String type, boolean includeSubTree) {
-    Set<String> terms = Entities.getTerms(con, lang, includeSubTree);
+  /**
+   *
+   * @param con
+   * @param type
+   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be resolved; otherwise SubTree will be resolved up until and including ``subTreeLevel``
+   * @return
+   */
+  public Expression getTermsExpression(Entity con, String type, Integer subTreeLevel) {
+    Set<String> terms = Entities.getTerms(con, lang, subTreeLevel);
     if (terms.isEmpty()) return new Expression();
     return Exp.of(terms.stream().map(Val::of).collect(Collectors.toList())).type(type);
   }
