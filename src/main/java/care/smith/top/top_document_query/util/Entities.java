@@ -168,10 +168,10 @@ public class Entities {
   }
 
   /**
-   *
    * @param e
    * @param lang
-   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be resolved; otherwise SubTree will be resolved up until ``subTreeLevel``
+   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be
+   *     resolved; otherwise SubTree will be resolved up until ``subTreeLevel``
    * @return
    */
   public static Set<String> getTerms(Entity e, String lang, Integer subTreeLevel) {

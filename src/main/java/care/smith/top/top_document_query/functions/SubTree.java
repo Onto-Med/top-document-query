@@ -8,7 +8,7 @@ import care.smith.top.top_document_query.SONG;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class SubTree extends TextFunction {
 
@@ -63,14 +63,21 @@ public class SubTree extends TextFunction {
     Expression arg = args.get(0);
     int subTreeLevel = -1;
     try {
-      subTreeLevel =  args.size() == 2 ? Expressions.getNumberValue(args.get(1)).intValue() : -1;
+      subTreeLevel = args.size() == 2 ? Expressions.getNumberValue(args.get(1)).intValue() : -1;
     } catch (Exception e) {
       LOGGER.warning(
-              String.format(
-                      "Encountered error when getting NumberValue for '%s'. Using -1 as distance",
-                      args.get(1)));
+          String.format(
+              "Encountered error when getting NumberValue for '%s'. Using -1 as distance",
+              args.get(1)));
     }
     if (arg.getEntityId() == null) return new Expression();
-    return song.getTermsExpression(arg.getEntityId(), SONG.EXPRESSION_TYPE_TERMS_INITIAL, subTreeLevel);
+    String query =
+        Expressions.getStringValues(
+                song.getTermsExpression(
+                    arg.getEntityId(), SONG.EXPRESSION_TYPE_TERMS_INITIAL, subTreeLevel))
+            .stream()
+            .map(s -> s.split("\\s+").length > 1 ? String.format("\"%s\"", s) : s)
+            .collect(Collectors.joining(" OR "));
+    return Exp.of("(" + query + ")").type(SONG.EXPRESSION_TYPE_QUERY);
   }
 }

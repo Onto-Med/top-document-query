@@ -131,10 +131,10 @@ public class SONG {
   }
 
   /**
-   *
    * @param conId
    * @param type
-   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be resolved; otherwise SubTree will be resolved up until ``subTreeLevel``
+   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be
+   *     resolved; otherwise SubTree will be resolved up until ``subTreeLevel``
    * @return
    */
   public Expression getTermsExpression(String conId, String type, Integer subTreeLevel) {
@@ -142,10 +142,10 @@ public class SONG {
   }
 
   /**
-   *
    * @param con
    * @param type
-   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be resolved; otherwise SubTree will be resolved up until and including ``subTreeLevel``
+   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be
+   *     resolved; otherwise SubTree will be resolved up until and including ``subTreeLevel``
    * @return
    */
   public Expression getTermsExpression(Entity con, String type, Integer subTreeLevel) {

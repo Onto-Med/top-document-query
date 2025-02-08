@@ -180,10 +180,22 @@ public class SongTest {
   @Test
   public void test7() {
     log.debug("===== Test 7 =====");
-    Expression exp = SubTree.of(c, 1);
-    Expression genExp = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp);
-    String query = Expressions.getStringValue(genExp);
-    assertEquals("c-de OR c1-de OR c2-de OR d-de OR d1-de OR d2-de", query);
+    Expression exp1 = SubTree.of(c, 1);
+    Expression genExp1 = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp1);
+    String query1 = Expressions.getStringValue(genExp1);
+    assertEquals("(c-de OR c1-de OR c2-de OR d-de OR d1-de OR d2-de)", query1);
+
+    Expression exp2 = SubTree.of(c, 0);
+    Expression genExp2 = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp2);
+    String query2 = Expressions.getStringValue(genExp2);
+    assertEquals("(c-de OR c1-de OR c2-de)", query2);
+
+    Expression exp3 = SubTree.of(c, -1);
+    Expression genExp3 = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp3);
+    String query3 = Expressions.getStringValue(genExp3);
+    assertEquals(
+        "(c-de OR c1-de OR c2-de OR d-de OR d1-de OR d2-de OR e-de OR e1-de OR \"e2- de\")",
+        query3);
   }
 
   @Test
