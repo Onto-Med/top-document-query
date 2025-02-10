@@ -226,9 +226,9 @@ public class ElasticsearchAdapter extends TextAdapter {
   public Optional<Document> getDocumentById(@NonNull String documentId, Boolean simplified)
       throws IOException {
     // ToDo: right now the adapter config allows for multiple index values (as an array),
-    // but only the first index value will be used here (e.g. GetResponse needs an index name as
-    // parameter)
-    // the .search method allows for List of indices however
+    //  but only the first index value will be used here (e.g. GetResponse needs an index name as
+    //  parameter)
+    //  the .search method allows for List of indices however
     GetResponse<DocumentEntity> response =
         esClient.get(g -> g.id(documentId).index(config.getIndex()[0]), DocumentEntity.class);
     if (response.found() && response.source() != null) {
