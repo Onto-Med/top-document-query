@@ -62,8 +62,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public int getSubconceptDepth(ConceptQuery query, Entities concepts) {
     boolean subdep = ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(query.getEntityId());
-    System.out.println(subdep);
-    return 0;
+    return subdep ? 1 : 0;
   }
 
   @Override
