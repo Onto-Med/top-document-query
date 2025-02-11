@@ -13,12 +13,11 @@ import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.Values;
 import care.smith.top.top_document_query.util.builder.Exp;
 import care.smith.top.top_document_query.util.builder.Val;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +28,7 @@ public class SONG {
 
   private Entities concepts;
   private String lang;
+  private final List<TextFunction> functionsWithSubconceptResolution = new ArrayList<>();
 
   public static final String EXPRESSION_TYPE_QUERY = "query";
   public static final String EXPRESSION_TYPE_TERMS_INITIAL = "terms_initial";
@@ -41,6 +41,44 @@ public class SONG {
     addFunction(dist);
     addFunction(SubTree.get());
     addFunction(XProd.get());
+    addFunctionWithSubconceptResolution(SubTree.get());
+  }
+
+  /**
+   * If another Function in the implementation is one, that cares about subconcepts, the implementing class
+   * needs to call this method with the respective function.
+   *
+   * @param function a {@link TextFunction} that needs subconcepts to work properly (like e.g. {@link SubTree}).
+   * @return this instance
+   */
+  protected SONG addFunctionWithSubconceptResolution(TextFunction function) {
+    functionsWithSubconceptResolution.add(function);
+    return this;
+  }
+
+  public Stream<TextFunction> getFunctionsWithSubconceptResolution() {
+    return functionsWithSubconceptResolution.stream();
+  }
+
+  public boolean checkForSubconceptResolution(String con) {
+    return checkForSubconceptResolution(getConcept(con));
+  }
+
+  public boolean checkForSubconceptResolution(Concept con) {
+    if (con instanceof CompositeConcept) return checkForSubconceptResolution(((CompositeConcept) con).getExpression());
+    return false;
+  }
+
+  public boolean checkForSubconceptResolution(Expression expression) {
+    if (expression.getFunctionId() == null) return false;
+    if (getFunctionsWithSubconceptResolution().anyMatch(func -> func.getId().equals(expression.getFunctionId()))) return true;
+    if (!expression.getArguments().isEmpty()) {
+      for (Expression arg : expression.getArguments()) {
+        if (arg.getFunctionId() != null && checkForSubconceptResolution(arg)) return true;
+        if (arg.getEntityId() != null && checkForSubconceptResolution(getConcept(arg.getEntityId()))) return true;
+      }
+    }
+    return false;
   }
 
   public Entities getConcepts() {
@@ -105,6 +143,13 @@ public class SONG {
     return generate(getConcept(conId));
   }
 
+  public List<Expression> generate(List<Expression> args) {
+    return args.stream()
+            .map(this::generate)
+            .filter(a -> !Expressions.isEmpty(a))
+            .collect(Collectors.toList());
+  }
+
   public Expression generateFunction(Expression exp) {
     String expStr = toString(exp);
     log.debug("start generating query for function '{}': {} ...", exp.getFunctionId(), expStr);
@@ -116,13 +161,6 @@ public class SONG {
         expStr,
         toString(res));
     return res;
-  }
-
-  public List<Expression> generate(List<Expression> args) {
-    return args.stream()
-        .map(this::generate)
-        .filter(a -> !Expressions.isEmpty(a))
-        .collect(Collectors.toList());
   }
 
   public String getQuery(Expression exp) {

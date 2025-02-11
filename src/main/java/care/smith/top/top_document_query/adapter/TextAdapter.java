@@ -67,7 +67,8 @@ public abstract class TextAdapter {
     }
     return Entities.of(entities.values().toArray(new Entity[0]));
   }
-  ;
+
+  public abstract int getSubconceptDepth(ConceptQuery query, Entities concepts);
 
   public abstract List<DocumentHit> execute(
       ConceptQuery query, Map<String, Entity> entities, Map<String, Set<String>> dependencies);

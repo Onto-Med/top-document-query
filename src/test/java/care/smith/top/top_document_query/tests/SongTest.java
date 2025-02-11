@@ -1,7 +1,5 @@
 package care.smith.top.top_document_query.tests;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import care.smith.top.model.Concept;
 import care.smith.top.model.Expression;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
@@ -18,6 +16,8 @@ import care.smith.top.top_document_query.util.builder.Exp;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SongTest {
 
@@ -225,5 +225,14 @@ public class SongTest {
         Expressions.getStringValue(
             ElasticsearchSong.get().concepts(concepts_for_lang).lang("en").generate(exp));
     assertEquals("((en_title OR en_syn))", query);
+  }
+
+  @Test
+  public void test_get_subdepth() {
+    Expression exp1 = And.of(c, d);
+    assertFalse(ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp1));
+
+    Expression exp2 = And.of(Or.of(a, b), Not.of(SubTree.of(c)));
+    assertTrue(ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp2));
   }
 }

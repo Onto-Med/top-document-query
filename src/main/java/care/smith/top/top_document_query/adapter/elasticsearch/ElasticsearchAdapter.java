@@ -9,6 +9,7 @@ import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
 import care.smith.top.top_document_query.elasticsearch.DocumentFields;
+import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -56,6 +57,13 @@ public class ElasticsearchAdapter extends TextAdapter {
     super(configFile);
     this.DEFAULT_BATCH_SIZE = config.getBatchSize();
     initConnection();
+  }
+
+  @Override
+  public int getSubconceptDepth(ConceptQuery query, Entities concepts) {
+    boolean subdep = ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(query.getEntityId());
+    System.out.println(subdep);
+    return 0;
   }
 
   @Override
