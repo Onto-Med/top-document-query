@@ -230,9 +230,9 @@ public class SongTest {
   @Test
   public void test_get_subdepth() {
     Expression exp1 = And.of(c, d);
-    assertFalse(ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp1));
+    assertFalse(ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp1) != 0);
 
     Expression exp2 = And.of(Or.of(a, b), Not.of(SubTree.of(c)));
-    assertTrue(ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp2));
+    assertTrue(ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp2) != 0);
   }
 }

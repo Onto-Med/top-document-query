@@ -60,25 +60,26 @@ public class SONG {
     return functionsWithSubconceptResolution.stream();
   }
 
-  public boolean checkForSubconceptResolution(String con) {
+  public Integer checkForSubconceptResolution(String con) {
     return checkForSubconceptResolution(getConcept(con));
   }
 
-  public boolean checkForSubconceptResolution(Concept con) {
+  public Integer checkForSubconceptResolution(Concept con) {
     if (con instanceof CompositeConcept) return checkForSubconceptResolution(((CompositeConcept) con).getExpression());
-    return false;
+    return 0;
   }
 
-  public boolean checkForSubconceptResolution(Expression expression) {
-    if (expression.getFunctionId() == null) return false;
-    if (getFunctionsWithSubconceptResolution().anyMatch(func -> func.getId().equals(expression.getFunctionId()))) return true;
+  public Integer checkForSubconceptResolution(Expression expression) {
+    //ToDo: need to return the proper depth
+    if (expression.getFunctionId() == null) return 0;
+    if (getFunctionsWithSubconceptResolution().anyMatch(func -> func.getId().equals(expression.getFunctionId()))) return 1;
     if (!expression.getArguments().isEmpty()) {
       for (Expression arg : expression.getArguments()) {
-        if (arg.getFunctionId() != null && checkForSubconceptResolution(arg)) return true;
-        if (arg.getEntityId() != null && checkForSubconceptResolution(getConcept(arg.getEntityId()))) return true;
+        if (arg.getFunctionId() != null && checkForSubconceptResolution(arg) != 0) return 1;
+        if (arg.getEntityId() != null && checkForSubconceptResolution(getConcept(arg.getEntityId())) != 0) return 1;
       }
     }
-    return false;
+    return 0;
   }
 
   public Entities getConcepts() {
