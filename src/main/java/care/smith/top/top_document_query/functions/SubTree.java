@@ -63,7 +63,7 @@ public class SubTree extends TextFunction implements SubEntitiesNeeded {
     Expression arg = args.get(0);
     int subTreeLevel = -1;
     try {
-      subTreeLevel = args.size() == 2 ? Expressions.getNumberValue(args.get(1)).intValue() : -1;
+      subTreeLevel = getDepth(args);
     } catch (Exception e) {
       LOGGER.warning(
           String.format(
@@ -83,7 +83,7 @@ public class SubTree extends TextFunction implements SubEntitiesNeeded {
 
   @Override
   public int getDepth(List<Expression> args) {
-    if (args == null || args.isEmpty() || args.size() < 2) return 0;
+    if (args == null || args.isEmpty() || args.size() < 2) return -1;
     return Expressions.getNumberValue(args.get(1)).intValue();
   }
 }

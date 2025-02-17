@@ -1,5 +1,7 @@
 package care.smith.top.top_document_query.tests;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import care.smith.top.model.Concept;
 import care.smith.top.model.Expression;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
@@ -13,11 +15,10 @@ import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.builder.Cat;
 import care.smith.top.top_document_query.util.builder.Exp;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 public class SongTest {
 
@@ -230,9 +231,20 @@ public class SongTest {
   @Test
   public void test_get_subdepth() {
     Expression exp1 = And.of(c, d);
-    assertFalse(ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp1) != 0);
+    Map<String, Integer> map1 =
+        ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp1);
+    assertEquals(0, map1.size());
 
     Expression exp2 = And.of(Or.of(a, b), Not.of(SubTree.of(c)));
-    assertTrue(ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp2) != 0);
+    Map<String, Integer> map2 =
+        ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp2);
+    assertEquals(1, map2.size());
+
+    Expression exp3 = And.of(SubTree.of(a, 1), Not.of(SubTree.of(c)));
+    Map<String, Integer> map3 =
+        ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp3);
+    assertEquals(2, map3.size());
+    assertEquals(1, map3.get("a"));
+    assertEquals(-1, map3.get("c"));
   }
 }

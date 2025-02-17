@@ -7,11 +7,9 @@ import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.Values;
 import care.smith.top.top_document_query.util.builder.Exp;
 import care.smith.top.top_document_query.util.builder.Val;
-
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +37,11 @@ public class SONG {
   }
 
   /**
-   * If another Function in the implementation is one, that cares about subconcepts, the implementing class
-   * needs to call this method with the respective function.
+   * If another Function in the implementation is one, that cares about subconcepts, the
+   * implementing class needs to call this method with the respective function.
    *
-   * @param function a {@link TextFunction} that needs subconcepts to work properly (like e.g. {@link SubTree}).
+   * @param function a {@link TextFunction} that needs subconcepts to work properly (like e.g.
+   *     {@link SubTree}).
    * @return this instance
    */
   protected SONG addFunctionWithSubconceptResolution(TextFunction function) {
@@ -59,7 +58,8 @@ public class SONG {
   }
 
   public Map<String, Integer> checkForSubconceptResolution(Concept con) {
-    if (con instanceof CompositeConcept) return checkForSubconceptResolution(((CompositeConcept) con).getExpression());
+    if (con instanceof CompositeConcept)
+      return checkForSubconceptResolution(((CompositeConcept) con).getExpression());
     return Map.of();
   }
 
@@ -71,15 +71,24 @@ public class SONG {
 
   private void checkForSubconceptResolution(Expression expression, Map<String, Integer> depth) {
     if (expression.getFunctionId() == null) return;
-    if (getFunctionsWithSubconceptResolution().anyMatch(func -> func.getId().equals(expression.getFunctionId()))) {
-      if
-      ((SubEntitiesNeeded) functions.get(expression.getFunctionId())).getDepth(expression.getArguments())
-      return;
-    };
+
+    if (getFunctionsWithSubconceptResolution()
+        .anyMatch(func -> func.getId().equals(expression.getFunctionId()))) {
+      Expression firstArg = expression.getArguments().get(0);
+      if (firstArg.getEntityId() != null) {
+        if (!depth.containsKey(firstArg.getEntityId())) depth.put(firstArg.getEntityId(), 0);
+        depth.merge(
+            firstArg.getEntityId(),
+            ((SubEntitiesNeeded) functions.get(expression.getFunctionId()))
+                .getDepth(expression.getArguments()),
+            Integer::sum);
+      }
+    }
+
     if (!expression.getArguments().isEmpty()) {
       for (Expression arg : expression.getArguments()) {
-        if (arg.getFunctionId() != null && checkForSubconceptResolution(arg) != 0) return 1;
-        if (arg.getEntityId() != null && checkForSubconceptResolution(getConcept(arg.getEntityId())) != 0) return 1;
+        if (arg.getFunctionId() != null) checkForSubconceptResolution(arg, depth);
+        if (arg.getEntityId() != null) checkForSubconceptResolution(getConcept(arg.getEntityId()));
       }
     }
   }
@@ -148,9 +157,9 @@ public class SONG {
 
   public List<Expression> generate(List<Expression> args) {
     return args.stream()
-            .map(this::generate)
-            .filter(a -> !Expressions.isEmpty(a))
-            .collect(Collectors.toList());
+        .map(this::generate)
+        .filter(a -> !Expressions.isEmpty(a))
+        .collect(Collectors.toList());
   }
 
   public Expression generateFunction(Expression exp) {
