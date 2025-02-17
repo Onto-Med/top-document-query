@@ -167,16 +167,24 @@ public class Entities {
     return codeRepr;
   }
 
-  public static Set<String> getTerms(Entity e, String lang, boolean includeSubTree) {
+  /**
+   * @param e
+   * @param lang
+   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be
+   *     resolved; otherwise SubTree will be resolved up until ``subTreeLevel``
+   * @return
+   */
+  public static Set<String> getTerms(Entity e, String lang, Integer subTreeLevel) {
     Set<String> terms = getTitlesAndSynonyms(e, lang);
     terms.addAll(getCodeTitle(e, lang));
-    if (!includeSubTree) return terms;
+    if (subTreeLevel == null || subTreeLevel == 0) return terms;
+    Integer stlvl = subTreeLevel - 1;
     if (!(e instanceof SingleConcept)) return terms;
 
     SingleConcept c = (SingleConcept) e;
     if (c.getSubConcepts() != null) {
       for (Concept child : c.getSubConcepts()) {
-        terms.addAll(getTerms(child, lang, includeSubTree));
+        terms.addAll(getTerms(child, lang, stlvl));
       }
     }
 

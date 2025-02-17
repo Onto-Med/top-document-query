@@ -1,24 +1,15 @@
 package care.smith.top.top_document_query;
 
 import care.smith.top.model.*;
-import care.smith.top.top_document_query.functions.And;
-import care.smith.top.top_document_query.functions.Dist;
-import care.smith.top.top_document_query.functions.Not;
-import care.smith.top.top_document_query.functions.Or;
-import care.smith.top.top_document_query.functions.SubTree;
-import care.smith.top.top_document_query.functions.TextFunction;
-import care.smith.top.top_document_query.functions.XProd;
+import care.smith.top.top_document_query.functions.*;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.Values;
 import care.smith.top.top_document_query.util.builder.Exp;
 import care.smith.top.top_document_query.util.builder.Val;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +20,7 @@ public class SONG {
 
   private Entities concepts;
   private String lang;
+  private final List<TextFunction> functionsWithSubconceptResolution = new ArrayList<>();
 
   public static final String EXPRESSION_TYPE_QUERY = "query";
   public static final String EXPRESSION_TYPE_TERMS_INITIAL = "terms_initial";
@@ -41,6 +33,64 @@ public class SONG {
     addFunction(dist);
     addFunction(SubTree.get());
     addFunction(XProd.get());
+    addFunctionWithSubconceptResolution(SubTree.get());
+  }
+
+  /**
+   * If another Function in the implementation is one, that cares about subconcepts, the
+   * implementing class needs to call this method with the respective function.
+   *
+   * @param function a {@link TextFunction} that needs subconcepts to work properly (like e.g.
+   *     {@link SubTree}).
+   * @return this instance
+   */
+  protected SONG addFunctionWithSubconceptResolution(TextFunction function) {
+    if (function instanceof SubEntitiesNeeded) functionsWithSubconceptResolution.add(function);
+    return this;
+  }
+
+  public Stream<TextFunction> getFunctionsWithSubconceptResolution() {
+    return functionsWithSubconceptResolution.stream().filter(f -> f instanceof SubEntitiesNeeded);
+  }
+
+  public Map<String, Integer> checkForSubconceptResolution(String con) {
+    return checkForSubconceptResolution(getConcept(con));
+  }
+
+  public Map<String, Integer> checkForSubconceptResolution(Concept con) {
+    if (con instanceof CompositeConcept)
+      return checkForSubconceptResolution(((CompositeConcept) con).getExpression());
+    return Map.of();
+  }
+
+  public Map<String, Integer> checkForSubconceptResolution(Expression exp) {
+    Map<String, Integer> map = new HashMap<>();
+    checkForSubconceptResolution(exp, map);
+    return map;
+  }
+
+  private void checkForSubconceptResolution(Expression expression, Map<String, Integer> depth) {
+    if (expression.getFunctionId() == null) return;
+
+    if (getFunctionsWithSubconceptResolution()
+        .anyMatch(func -> func.getId().equals(expression.getFunctionId()))) {
+      Expression firstArg = expression.getArguments().get(0);
+      if (firstArg.getEntityId() != null) {
+        if (!depth.containsKey(firstArg.getEntityId())) depth.put(firstArg.getEntityId(), 0);
+        depth.merge(
+            firstArg.getEntityId(),
+            ((SubEntitiesNeeded) functions.get(expression.getFunctionId()))
+                .getDepth(expression.getArguments()),
+            Integer::sum);
+      }
+    }
+
+    if (!expression.getArguments().isEmpty()) {
+      for (Expression arg : expression.getArguments()) {
+        if (arg.getFunctionId() != null) checkForSubconceptResolution(arg, depth);
+        if (arg.getEntityId() != null) checkForSubconceptResolution(getConcept(arg.getEntityId()));
+      }
+    }
   }
 
   public Entities getConcepts() {
@@ -90,7 +140,7 @@ public class SONG {
       return res;
     }
 
-    Expression res = getTermsExpression(con, EXPRESSION_TYPE_TERMS_INITIAL, false);
+    Expression res = getTermsExpression(con, EXPRESSION_TYPE_TERMS_INITIAL, null);
     log.debug("end generating query for concept: {} = {}", con.getId(), toString(res));
     return res;
   }
@@ -103,6 +153,13 @@ public class SONG {
 
   public Expression generate(String conId) {
     return generate(getConcept(conId));
+  }
+
+  public List<Expression> generate(List<Expression> args) {
+    return args.stream()
+        .map(this::generate)
+        .filter(a -> !Expressions.isEmpty(a))
+        .collect(Collectors.toList());
   }
 
   public Expression generateFunction(Expression exp) {
@@ -118,24 +175,31 @@ public class SONG {
     return res;
   }
 
-  public List<Expression> generate(List<Expression> args) {
-    return args.stream()
-        .map(this::generate)
-        .filter(a -> !Expressions.isEmpty(a))
-        .collect(Collectors.toList());
-  }
-
   public String getQuery(Expression exp) {
     if (Expressions.hasQuery(exp)) return Expressions.getStringValue(exp);
     return getTermsQuery(exp);
   }
 
-  public Expression getTermsExpression(String conId, String type, boolean includeSubTree) {
-    return getTermsExpression(getConcept(conId), type, includeSubTree);
+  /**
+   * @param conId
+   * @param type
+   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be
+   *     resolved; otherwise SubTree will be resolved up until ``subTreeLevel``
+   * @return
+   */
+  public Expression getTermsExpression(String conId, String type, Integer subTreeLevel) {
+    return getTermsExpression(getConcept(conId), type, subTreeLevel);
   }
 
-  public Expression getTermsExpression(Entity con, String type, boolean includeSubTree) {
-    Set<String> terms = Entities.getTerms(con, lang, includeSubTree);
+  /**
+   * @param con
+   * @param type
+   * @param subTreeLevel 0 | null -> SubTree won't be resolved; -1 -> the whole SubTree will be
+   *     resolved; otherwise SubTree will be resolved up until and including ``subTreeLevel``
+   * @return
+   */
+  public Expression getTermsExpression(Entity con, String type, Integer subTreeLevel) {
+    Set<String> terms = Entities.getTerms(con, lang, subTreeLevel);
     if (terms.isEmpty()) return new Expression();
     return Exp.of(terms.stream().map(Val::of).collect(Collectors.toList())).type(type);
   }

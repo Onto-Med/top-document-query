@@ -9,6 +9,7 @@ import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
 import care.smith.top.top_document_query.elasticsearch.DocumentFields;
+import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -56,6 +57,13 @@ public class ElasticsearchAdapter extends TextAdapter {
     super(configFile);
     this.DEFAULT_BATCH_SIZE = config.getBatchSize();
     initConnection();
+  }
+
+  @Override
+  public Map<String, Integer> getSubconceptDepths(ConceptQuery query, Entities concepts) {
+    return ElasticsearchSong.get()
+        .concepts(concepts)
+        .checkForSubconceptResolution(query.getEntityId());
   }
 
   @Override
@@ -226,9 +234,9 @@ public class ElasticsearchAdapter extends TextAdapter {
   public Optional<Document> getDocumentById(@NonNull String documentId, Boolean simplified)
       throws IOException {
     // ToDo: right now the adapter config allows for multiple index values (as an array),
-    // but only the first index value will be used here (e.g. GetResponse needs an index name as
-    // parameter)
-    // the .search method allows for List of indices however
+    //  but only the first index value will be used here (e.g. GetResponse needs an index name as
+    //  parameter)
+    //  the .search method allows for List of indices however
     GetResponse<DocumentEntity> response =
         esClient.get(g -> g.id(documentId).index(config.getIndex()[0]), DocumentEntity.class);
     if (response.found() && response.source() != null) {

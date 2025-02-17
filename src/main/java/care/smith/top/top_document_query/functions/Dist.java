@@ -31,7 +31,7 @@ public abstract class Dist extends TextFunction {
     return of(Exp.of(arg), dist);
   }
 
-  public static Expression of(String phenotypeId, int dist) {
-    return of(Exp.ofEntity(phenotypeId), dist);
+  public static Expression of(String conceptId, int dist) {
+    return of(Exp.ofEntity(conceptId), dist);
   }
 }

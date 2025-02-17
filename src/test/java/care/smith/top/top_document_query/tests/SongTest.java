@@ -1,6 +1,6 @@
 package care.smith.top.top_document_query.tests;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
 import care.smith.top.model.Expression;
@@ -15,6 +15,7 @@ import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.builder.Cat;
 import care.smith.top.top_document_query.util.builder.Exp;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,13 +170,33 @@ public class SongTest {
   public void test6() {
     log.debug("===== Test 6 =====");
     Expression exp = And.of(Or.of(a, b), Not.of(And.of(c, f)));
-    String query =
-        Expressions.getStringValue(
-            ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp));
+    Expression genExp = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp);
+    String query = Expressions.getStringValue(genExp);
     assertEquals(
         "(((\"a- de\" OR \"a1- de\" OR \"a2- de\") OR (b-de OR b1-de OR b2-de)) AND NOT ((c-de OR"
             + " c1-de OR c2-de) AND (f-de OR f1-de OR \"f2- de\")))",
         query);
+  }
+
+  @Test
+  public void test7() {
+    log.debug("===== Test 7 =====");
+    Expression exp1 = SubTree.of(c, 1);
+    Expression genExp1 = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp1);
+    String query1 = Expressions.getStringValue(genExp1);
+    assertEquals("(c-de OR c1-de OR c2-de OR d-de OR d1-de OR d2-de)", query1);
+
+    Expression exp2 = SubTree.of(c, 0);
+    Expression genExp2 = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp2);
+    String query2 = Expressions.getStringValue(genExp2);
+    assertEquals("(c-de OR c1-de OR c2-de)", query2);
+
+    Expression exp3 = SubTree.of(c, -1);
+    Expression genExp3 = ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp3);
+    String query3 = Expressions.getStringValue(genExp3);
+    assertEquals(
+        "(c-de OR c1-de OR c2-de OR d-de OR d1-de OR d2-de OR e-de OR e1-de OR \"e2- de\")",
+        query3);
   }
 
   @Test
@@ -205,5 +226,25 @@ public class SongTest {
         Expressions.getStringValue(
             ElasticsearchSong.get().concepts(concepts_for_lang).lang("en").generate(exp));
     assertEquals("((en_title OR en_syn))", query);
+  }
+
+  @Test
+  public void test_get_subdepth() {
+    Expression exp1 = And.of(c, d);
+    Map<String, Integer> map1 =
+        ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp1);
+    assertEquals(0, map1.size());
+
+    Expression exp2 = And.of(Or.of(a, b), Not.of(SubTree.of(c)));
+    Map<String, Integer> map2 =
+        ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp2);
+    assertEquals(1, map2.size());
+
+    Expression exp3 = And.of(SubTree.of(a, 1), Not.of(SubTree.of(c)));
+    Map<String, Integer> map3 =
+        ElasticsearchSong.get().concepts(concepts).checkForSubconceptResolution(exp3);
+    assertEquals(2, map3.size());
+    assertEquals(1, map3.get("a"));
+    assertEquals(-1, map3.get("c"));
   }
 }

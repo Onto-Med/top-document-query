@@ -5,10 +5,12 @@ import care.smith.top.model.Expression;
 import care.smith.top.model.ExpressionFunction;
 import care.smith.top.model.ExpressionFunction.NotationEnum;
 import care.smith.top.top_document_query.SONG;
+import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class SubTree extends TextFunction {
+public class SubTree extends TextFunction implements SubEntitiesNeeded {
 
   public static final String ID = "SubTree";
   private static final NotationEnum NOTATION = NotationEnum.PREFIX;
@@ -19,7 +21,7 @@ public class SubTree extends TextFunction {
           .title(ID)
           .notation(NOTATION)
           .minArgumentNumber(1)
-          .maxArgumentNumber(1);
+          .maxArgumentNumber(2);
 
   private static SubTree INSTANCE = new SubTree();
 
@@ -39,15 +41,49 @@ public class SubTree extends TextFunction {
     return of(Exp.of(arg));
   }
 
-  public static Expression of(String phenotypeId) {
-    return of(Exp.ofEntity(phenotypeId));
+  public static Expression of(String conceptId) {
+    return of(Exp.ofEntity(conceptId));
+  }
+
+  public static Expression of(Expression arg, int level) {
+    return Exp.function(ID, arg, Exp.of(level));
+  }
+
+  public static Expression of(Entity arg, int level) {
+    return of(Exp.of(arg), level);
+  }
+
+  public static Expression of(String conceptId, int level) {
+    return of(Exp.ofEntity(conceptId), level);
   }
 
   @Override
   public Expression generate(List<Expression> args, SONG song) {
-    if (args.isEmpty()) return new Expression();
+    if (args == null || args.isEmpty()) return new Expression();
     Expression arg = args.get(0);
+    int subTreeLevel = -1;
+    try {
+      subTreeLevel = getDepth(args);
+    } catch (Exception e) {
+      LOGGER.warning(
+          String.format(
+              "Encountered error when getting NumberValue for '%s'. Using -1 as distance",
+              args.get(1)));
+    }
     if (arg.getEntityId() == null) return new Expression();
-    return song.getTermsExpression(arg.getEntityId(), SONG.EXPRESSION_TYPE_TERMS_INITIAL, true);
+    String query =
+        Expressions.getStringValues(
+                song.getTermsExpression(
+                    arg.getEntityId(), SONG.EXPRESSION_TYPE_TERMS_INITIAL, subTreeLevel))
+            .stream()
+            .map(s -> s.split("\\s+").length > 1 ? String.format("\"%s\"", s) : s)
+            .collect(Collectors.joining(" OR "));
+    return Exp.of("(" + query + ")").type(SONG.EXPRESSION_TYPE_QUERY);
+  }
+
+  @Override
+  public int getDepth(List<Expression> args) {
+    if (args == null || args.isEmpty() || args.size() < 2) return -1;
+    return Expressions.getNumberValue(args.get(1)).intValue();
   }
 }
