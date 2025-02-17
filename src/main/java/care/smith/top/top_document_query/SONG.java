@@ -1,13 +1,7 @@
 package care.smith.top.top_document_query;
 
 import care.smith.top.model.*;
-import care.smith.top.top_document_query.functions.And;
-import care.smith.top.top_document_query.functions.Dist;
-import care.smith.top.top_document_query.functions.Not;
-import care.smith.top.top_document_query.functions.Or;
-import care.smith.top.top_document_query.functions.SubTree;
-import care.smith.top.top_document_query.functions.TextFunction;
-import care.smith.top.top_document_query.functions.XProd;
+import care.smith.top.top_document_query.functions.*;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.Values;
@@ -52,34 +46,42 @@ public class SONG {
    * @return this instance
    */
   protected SONG addFunctionWithSubconceptResolution(TextFunction function) {
-    functionsWithSubconceptResolution.add(function);
+    if (function instanceof SubEntitiesNeeded) functionsWithSubconceptResolution.add(function);
     return this;
   }
 
   public Stream<TextFunction> getFunctionsWithSubconceptResolution() {
-    return functionsWithSubconceptResolution.stream();
+    return functionsWithSubconceptResolution.stream().filter(f -> f instanceof SubEntitiesNeeded);
   }
 
-  public Integer checkForSubconceptResolution(String con) {
+  public Map<String, Integer> checkForSubconceptResolution(String con) {
     return checkForSubconceptResolution(getConcept(con));
   }
 
-  public Integer checkForSubconceptResolution(Concept con) {
+  public Map<String, Integer> checkForSubconceptResolution(Concept con) {
     if (con instanceof CompositeConcept) return checkForSubconceptResolution(((CompositeConcept) con).getExpression());
-    return 0;
+    return Map.of();
   }
 
-  public Integer checkForSubconceptResolution(Expression expression) {
-    //ToDo: need to return the proper depth
-    if (expression.getFunctionId() == null) return 0;
-    if (getFunctionsWithSubconceptResolution().anyMatch(func -> func.getId().equals(expression.getFunctionId()))) return 1;
+  public Map<String, Integer> checkForSubconceptResolution(Expression exp) {
+    Map<String, Integer> map = new HashMap<>();
+    checkForSubconceptResolution(exp, map);
+    return map;
+  }
+
+  private void checkForSubconceptResolution(Expression expression, Map<String, Integer> depth) {
+    if (expression.getFunctionId() == null) return;
+    if (getFunctionsWithSubconceptResolution().anyMatch(func -> func.getId().equals(expression.getFunctionId()))) {
+      if
+      ((SubEntitiesNeeded) functions.get(expression.getFunctionId())).getDepth(expression.getArguments())
+      return;
+    };
     if (!expression.getArguments().isEmpty()) {
       for (Expression arg : expression.getArguments()) {
         if (arg.getFunctionId() != null && checkForSubconceptResolution(arg) != 0) return 1;
         if (arg.getEntityId() != null && checkForSubconceptResolution(getConcept(arg.getEntityId())) != 0) return 1;
       }
     }
-    return 0;
   }
 
   public Entities getConcepts() {

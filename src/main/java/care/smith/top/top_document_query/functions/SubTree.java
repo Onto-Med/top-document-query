@@ -10,7 +10,7 @@ import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SubTree extends TextFunction {
+public class SubTree extends TextFunction implements SubEntitiesNeeded {
 
   public static final String ID = "SubTree";
   private static final NotationEnum NOTATION = NotationEnum.PREFIX;
@@ -79,5 +79,11 @@ public class SubTree extends TextFunction {
             .map(s -> s.split("\\s+").length > 1 ? String.format("\"%s\"", s) : s)
             .collect(Collectors.joining(" OR "));
     return Exp.of("(" + query + ")").type(SONG.EXPRESSION_TYPE_QUERY);
+  }
+
+  @Override
+  public int getDepth(List<Expression> args) {
+    if (args == null || args.isEmpty() || args.size() < 2) return 0;
+    return Expressions.getNumberValue(args.get(1)).intValue();
   }
 }
