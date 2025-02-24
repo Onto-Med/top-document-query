@@ -59,7 +59,7 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
     // not "test03": has "document" but neither "entity" nor "entities" ((see setUp))
     int correctDocumentCount = 2;
 
-    List<DocumentHit> documents = adapter.execute(queryString);
+    List<DocumentHit> documents = adapter.execute(queryString).flatMap(List::stream).toList();
     assertEquals(correctDocumentCount, documents.size());
     assertEquals(
         new HashSet<>(Arrays.asList("test01", "test02")),
@@ -69,7 +69,7 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
 
     // Test if "field" specification correctly excludes documents when searching on "name" field
     adapter.getConfig().setField(new String[] {"name"});
-    documents = adapter.execute(queryString);
+    documents = adapter.execute(queryString).flatMap(List::stream).toList();
     assertNotEquals(correctDocumentCount, documents.size());
   }
 

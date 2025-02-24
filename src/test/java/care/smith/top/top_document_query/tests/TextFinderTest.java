@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +47,7 @@ class TextFinderTest extends AbstractElasticTest {
     TextFinder tf =
         new CQue(adapter, adapter.getConfig(), concepts, dependencies, PARENT_CAT_ID, "en")
             .getFinder();
-    List<DocumentHit> documents = tf.execute();
+    List<DocumentHit> documents = tf.execute().flatMap(List::stream).toList();
     assertEquals(1, documents.size());
   }
 }

@@ -67,7 +67,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
   @Override
-  public List<DocumentHit> execute(
+  public Stream<List<DocumentHit>> execute(
       ConceptQuery query, Map<String, Entity> entities, Map<String, Set<String>> dependencies) {
     // ToDo: somehow need to check how large a query becomes and split it up (or reject it)
     Expression esExp =
@@ -90,13 +90,15 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   // ToDo: should not return List but rather batched/paged like the other methods
   @Override
-  public List<DocumentHit> execute(String queryString) {
+  public Stream<List<DocumentHit>> execute(String queryString) {
     SearchResponse<DocumentEntity> searchResponse;
     // ToDo: shall the highlighting be hard-coded? Or in adapter config?
+    Query hq = QueryStringQuery.of(q -> q.query(queryString))._toQuery();
     Highlight highlight =
         Highlight.of(
             h ->
-                h.type(HighlighterType.Unified)
+                h.highlightQuery(hq)
+                    .type(HighlighterType.Unified)
                     .fields(
                         Arrays.stream(config.getField())
                             .map(
@@ -115,25 +117,33 @@ public class ElasticsearchAdapter extends TextAdapter {
                                   return firstMap;
                                 })
                             .orElseThrow()));
-    try {
-      searchResponse =
-          esClient.search(
-              s ->
-                  s.index(Arrays.asList(config.getIndex()))
-                      .query(
-                          q ->
-                              q.queryString(
-                                  qs ->
-                                      qs.query(queryString)
-                                          .fields(Arrays.asList(config.getField()))))
-                      .highlight(highlight),
-              DocumentEntity.class);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    return searchResponse.hits().hits().stream()
-        .map(hit -> new DocumentHit(hit.id(), hit.source(), hit.highlight(), hit.score()))
-        .collect(Collectors.toList());
+    return Stream.generate(new Supplier<List<DocumentHit>>() {
+      List<FieldValue> sortValues = List.of(FieldValue.of(""));
+      final FieldSort fs =
+              new FieldSort.Builder().field("name.keyword").order(SortOrder.Asc).build();
+      final int bs = prepareBatchSize(config.getBatchSize());
+
+      @Override
+      public List<DocumentHit> get() {
+        try {
+//          SearchResponse<DocumentEntity> response =
+//                  esClient.search(
+//                          s ->
+//                                  s.index(Arrays.asList(config.getIndex()))
+//                                          .query(hq)
+//                                          .sort(sb -> sb.field(fs))
+//                                          .size(bs)
+//                                          .searchAfter(sortValues),
+//                          DocumentEntity.class);
+          List<Hit<DocumentEntity>> hits = getSearchAfter(hq, fs, bs, sortValues).hits().hits();
+          sortValues = getLastSortValues(hits);
+          return hits.stream().map(hit -> new DocumentHit(hit.id(), hit.source(), hit.highlight(), hit.score())).toList();
+        } catch (IOException e) {
+          LOGGER.fine(String.format("Could not retrieve documents for query:\n'%s'", hq));
+          return List.of();
+        }
+      }
+    }).takeWhile(list -> !list.isEmpty());
   }
 
   @Override
@@ -340,6 +350,22 @@ public class ElasticsearchAdapter extends TextAdapter {
     return toPage(response, page, simplified);
   }
 
+  private SearchResponse<DocumentEntity> getSearchAfter(Query query, FieldSort fieldSort, Integer batchSize, List<FieldValue> sortValues) throws IOException {
+    List<FieldValue> finalSortValues = sortValues;
+    SearchResponse<DocumentEntity> response =
+            esClient.search(
+                    s ->
+                            s.index(Arrays.asList(config.getIndex()))
+                                    .query(query)
+                                    .sort(sb -> sb.field(fieldSort))
+                                    .size(batchSize)
+                                    .searchAfter(finalSortValues),
+                    DocumentEntity.class);
+//    List<Hit<DocumentEntity>> hits = response.hits().hits();
+    sortValues = getLastSortValues(response.hits().hits());
+    return response;
+  }
+
   private Supplier<List<Document>> documentSupplier(
       Query query, Integer batchSize, Boolean simplified) {
     return new Supplier<>() {
@@ -351,16 +377,16 @@ public class ElasticsearchAdapter extends TextAdapter {
       @Override
       public List<Document> get() {
         try {
-          SearchResponse<DocumentEntity> response =
-              esClient.search(
-                  s ->
-                      s.index(Arrays.asList(config.getIndex()))
-                          .query(query)
-                          .sort(sb -> sb.field(fs))
-                          .size(bs)
-                          .searchAfter(sortValues),
-                  DocumentEntity.class);
-          List<Hit<DocumentEntity>> hits = response.hits().hits();
+//          SearchResponse<DocumentEntity> response =
+//              esClient.search(
+//                  s ->
+//                      s.index(Arrays.asList(config.getIndex()))
+//                          .query(query)
+//                          .sort(sb -> sb.field(fs))
+//                          .size(bs)
+//                          .searchAfter(sortValues),
+//                  DocumentEntity.class);
+          List<Hit<DocumentEntity>> hits = getSearchAfter(query, fs, bs, sortValues).hits().hits();
           sortValues = getLastSortValues(hits);
           List<Document> documents = new ArrayList<>();
           hits.forEach(
