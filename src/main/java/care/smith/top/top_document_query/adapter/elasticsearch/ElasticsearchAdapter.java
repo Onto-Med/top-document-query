@@ -40,6 +40,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 public class ElasticsearchAdapter extends TextAdapter {
   // ToDo: fuzzy matching for terms
@@ -88,17 +89,14 @@ public class ElasticsearchAdapter extends TextAdapter {
     return execute(queryString);
   }
 
-  // ToDo: should not return List but rather batched/paged like the other methods
   @Override
   public Stream<List<DocumentHit>> execute(String queryString) {
-    SearchResponse<DocumentEntity> searchResponse;
     // ToDo: shall the highlighting be hard-coded? Or in adapter config?
-    Query hq = QueryStringQuery.of(q -> q.query(queryString))._toQuery();
+    Query query = QueryStringQuery.of(q -> q.query(queryString).fields(Arrays.asList(config.getField())))._toQuery();
     Highlight highlight =
         Highlight.of(
             h ->
-                h.highlightQuery(hq)
-                    .type(HighlighterType.Unified)
+                h.type(HighlighterType.Unified)
                     .fields(
                         Arrays.stream(config.getField())
                             .map(
@@ -119,6 +117,7 @@ public class ElasticsearchAdapter extends TextAdapter {
                             .orElseThrow()));
     return Stream.generate(new Supplier<List<DocumentHit>>() {
       List<FieldValue> sortValues = List.of(FieldValue.of(""));
+      //ToDo: need to check the value for "name.keyword"
       final FieldSort fs =
               new FieldSort.Builder().field("name.keyword").order(SortOrder.Asc).build();
       final int bs = prepareBatchSize(config.getBatchSize());
@@ -126,20 +125,11 @@ public class ElasticsearchAdapter extends TextAdapter {
       @Override
       public List<DocumentHit> get() {
         try {
-//          SearchResponse<DocumentEntity> response =
-//                  esClient.search(
-//                          s ->
-//                                  s.index(Arrays.asList(config.getIndex()))
-//                                          .query(hq)
-//                                          .sort(sb -> sb.field(fs))
-//                                          .size(bs)
-//                                          .searchAfter(sortValues),
-//                          DocumentEntity.class);
-          List<Hit<DocumentEntity>> hits = getSearchAfter(hq, fs, bs, sortValues).hits().hits();
+          List<Hit<DocumentEntity>> hits = getSearchAfter(query, highlight, fs, bs, sortValues).hits().hits();
           sortValues = getLastSortValues(hits);
           return hits.stream().map(hit -> new DocumentHit(hit.id(), hit.source(), hit.highlight(), hit.score())).toList();
         } catch (IOException e) {
-          LOGGER.fine(String.format("Could not retrieve documents for query:\n'%s'", hq));
+          LOGGER.fine(String.format("Could not retrieve documents for query:\n'%s'", highlight.highlightQuery()));
           return List.of();
         }
       }
@@ -350,13 +340,14 @@ public class ElasticsearchAdapter extends TextAdapter {
     return toPage(response, page, simplified);
   }
 
-  private SearchResponse<DocumentEntity> getSearchAfter(Query query, FieldSort fieldSort, Integer batchSize, List<FieldValue> sortValues) throws IOException {
+  private SearchResponse<DocumentEntity> getSearchAfter(Query query, @Nullable Highlight highlight, FieldSort fieldSort, Integer batchSize, List<FieldValue> sortValues) throws IOException {
     List<FieldValue> finalSortValues = sortValues;
     SearchResponse<DocumentEntity> response =
             esClient.search(
                     s ->
                             s.index(Arrays.asList(config.getIndex()))
                                     .query(query)
+                                    .highlight(highlight)
                                     .sort(sb -> sb.field(fieldSort))
                                     .size(batchSize)
                                     .searchAfter(finalSortValues),
@@ -386,7 +377,7 @@ public class ElasticsearchAdapter extends TextAdapter {
 //                          .size(bs)
 //                          .searchAfter(sortValues),
 //                  DocumentEntity.class);
-          List<Hit<DocumentEntity>> hits = getSearchAfter(query, fs, bs, sortValues).hits().hits();
+          List<Hit<DocumentEntity>> hits = getSearchAfter(query, null, fs, bs, sortValues).hits().hits();
           sortValues = getLastSortValues(hits);
           List<Document> documents = new ArrayList<>();
           hits.forEach(
