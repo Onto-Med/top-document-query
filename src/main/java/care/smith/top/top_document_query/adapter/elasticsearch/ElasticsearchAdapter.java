@@ -91,8 +91,9 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   @Override
   public Stream<List<DocumentHit>> execute(String queryString) {
-    // ToDo: shall the highlighting be hard-coded? Or in adapter config?
-    Query query = QueryStringQuery.of(q -> q.query(queryString).fields(Arrays.asList(config.getField())))._toQuery();
+    Query query =
+        QueryStringQuery.of(q -> q.query(queryString).fields(Arrays.asList(config.getField())))
+            ._toQuery();
     Highlight highlight =
         Highlight.of(
             h ->
@@ -115,25 +116,35 @@ public class ElasticsearchAdapter extends TextAdapter {
                                   return firstMap;
                                 })
                             .orElseThrow()));
-    return Stream.generate(new Supplier<List<DocumentHit>>() {
-      List<FieldValue> sortValues = List.of(FieldValue.of(""));
-      //ToDo: need to check the value for "name.keyword"
-      final FieldSort fs =
-              new FieldSort.Builder().field("name.keyword").order(SortOrder.Asc).build();
-      final int bs = prepareBatchSize(config.getBatchSize());
+    return Stream.generate(
+            new Supplier<List<DocumentHit>>() {
+              List<FieldValue> sortValues = List.of(FieldValue.of(""));
+              // ToDo: need to check the value for "name.keyword"
+              final FieldSort fs =
+                  new FieldSort.Builder().field("name.keyword").order(SortOrder.Asc).build();
+              final int bs = prepareBatchSize(config.getBatchSize());
 
-      @Override
-      public List<DocumentHit> get() {
-        try {
-          List<Hit<DocumentEntity>> hits = getSearchAfter(query, highlight, fs, bs, sortValues).hits().hits();
-          sortValues = getLastSortValues(hits);
-          return hits.stream().map(hit -> new DocumentHit(hit.id(), hit.source(), hit.highlight(), hit.score())).toList();
-        } catch (IOException e) {
-          LOGGER.fine(String.format("Could not retrieve documents for query:\n'%s'", highlight.highlightQuery()));
-          return List.of();
-        }
-      }
-    }).takeWhile(list -> !list.isEmpty());
+              @Override
+              public List<DocumentHit> get() {
+                try {
+                  List<Hit<DocumentEntity>> hits =
+                      getSearchAfter(query, highlight, fs, bs, sortValues).hits().hits();
+                  sortValues = getLastSortValues(hits);
+                  return hits.stream()
+                      .map(
+                          hit ->
+                              new DocumentHit(hit.id(), hit.source(), hit.highlight(), hit.score()))
+                      .toList();
+                } catch (IOException e) {
+                  LOGGER.fine(
+                      String.format(
+                          "Could not retrieve documents for query:\n'%s'",
+                          highlight.highlightQuery()));
+                  return List.of();
+                }
+              }
+            })
+        .takeWhile(list -> !list.isEmpty());
   }
 
   @Override
@@ -340,19 +351,25 @@ public class ElasticsearchAdapter extends TextAdapter {
     return toPage(response, page, simplified);
   }
 
-  private SearchResponse<DocumentEntity> getSearchAfter(Query query, @Nullable Highlight highlight, FieldSort fieldSort, Integer batchSize, List<FieldValue> sortValues) throws IOException {
+  private SearchResponse<DocumentEntity> getSearchAfter(
+      Query query,
+      @Nullable Highlight highlight,
+      FieldSort fieldSort,
+      Integer batchSize,
+      List<FieldValue> sortValues)
+      throws IOException {
     List<FieldValue> finalSortValues = sortValues;
     SearchResponse<DocumentEntity> response =
-            esClient.search(
-                    s ->
-                            s.index(Arrays.asList(config.getIndex()))
-                                    .query(query)
-                                    .highlight(highlight)
-                                    .sort(sb -> sb.field(fieldSort))
-                                    .size(batchSize)
-                                    .searchAfter(finalSortValues),
-                    DocumentEntity.class);
-//    List<Hit<DocumentEntity>> hits = response.hits().hits();
+        esClient.search(
+            s ->
+                s.index(Arrays.asList(config.getIndex()))
+                    .query(query)
+                    .highlight(highlight)
+                    .sort(sb -> sb.field(fieldSort))
+                    .size(batchSize)
+                    .searchAfter(finalSortValues),
+            DocumentEntity.class);
+    //    List<Hit<DocumentEntity>> hits = response.hits().hits();
     sortValues = getLastSortValues(response.hits().hits());
     return response;
   }
@@ -368,16 +385,17 @@ public class ElasticsearchAdapter extends TextAdapter {
       @Override
       public List<Document> get() {
         try {
-//          SearchResponse<DocumentEntity> response =
-//              esClient.search(
-//                  s ->
-//                      s.index(Arrays.asList(config.getIndex()))
-//                          .query(query)
-//                          .sort(sb -> sb.field(fs))
-//                          .size(bs)
-//                          .searchAfter(sortValues),
-//                  DocumentEntity.class);
-          List<Hit<DocumentEntity>> hits = getSearchAfter(query, null, fs, bs, sortValues).hits().hits();
+          //          SearchResponse<DocumentEntity> response =
+          //              esClient.search(
+          //                  s ->
+          //                      s.index(Arrays.asList(config.getIndex()))
+          //                          .query(query)
+          //                          .sort(sb -> sb.field(fs))
+          //                          .size(bs)
+          //                          .searchAfter(sortValues),
+          //                  DocumentEntity.class);
+          List<Hit<DocumentEntity>> hits =
+              getSearchAfter(query, null, fs, bs, sortValues).hits().hits();
           sortValues = getLastSortValues(hits);
           List<Document> documents = new ArrayList<>();
           hits.forEach(
