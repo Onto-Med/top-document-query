@@ -108,6 +108,8 @@ public class DocumentHit {
    */
   private Map<String, List<Pair<Integer, Integer>>> calculateHighlightOffsets(
       Map<String, List<String>> highlights, String preTag, String postTag) {
+    // ToDo: offsets are sometimes not right?! e.g. Albers document. There seems to be something in
+    // there that moves the offset
     Pattern pattern = Pattern.compile(String.format("%s(.*?)%s", preTag, postTag));
     Map<String, List<Pair<Integer, Integer>>> offsets = new HashMap<>();
     for (Map.Entry<String, List<String>> entry : highlights.entrySet()) {
