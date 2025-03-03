@@ -14,8 +14,8 @@ import org.apache.commons.lang3.tuple.Pair;
 public class DocumentCSV {
 
   private Charset charset = StandardCharsets.UTF_8;
-  private String entriesDelimiter = "\t";
-  private String entryPartsDelimiter = ";";
+  public static String entriesDelimiter = "\t";
+  public static String entryPartsDelimiter = ";";
   private String language = null;
   private int excerptLength = 100;
   private final String nullValueString = "NA";
@@ -64,7 +64,7 @@ public class DocumentCSV {
     writer.write(CSVDataRecord.FIELDS);
     for (DocumentHit document : documents) {
       Map<String, List<Pair<Integer, Integer>>> highlights = document.getHighlights();
-      // DocumentID;FIELDNAME ‖ Score ‖ Title ‖ Begin1-End1;Begin2-End2
+      // DocumentID;FIELDNAME \t Score \t Title \t Begin1-End1;Begin2-End2
       if (highlights == null || highlights.isEmpty()) {
         writer.write(
             new CSVDataRecord(
@@ -96,7 +96,7 @@ public class DocumentCSV {
   }
 
   public List<String> readColumn(InputStream inputStream, int position) {
-    Set<String> records = new HashSet<>();
+    List<String> records = new ArrayList<>();
 
     try (Scanner scanner = new Scanner(inputStream, charset)) {
       while (scanner.hasNextLine()) {
@@ -104,12 +104,14 @@ public class DocumentCSV {
           rowScanner.useDelimiter(entriesDelimiter);
           int currentPos = 0;
           while (rowScanner.hasNext()) {
-            if (currentPos > position) {
-              break;
-            } else if (currentPos == position) {
-              String item = rowScanner.next();
-              if (!CSVDataRecord.FIELDS.contains(item))
+            String item = rowScanner.next();
+            if ((currentPos > position)
+                || item.contains("sep=")
+                || CSVDataRecord.FIELDS.contains(item)) break;
+            else if (currentPos == position) {
+              if (position == CSVDataRecord.Field.ID.columnIndex) {
                 Arrays.stream(item.split(entryPartsDelimiter)).findFirst().ifPresent(records::add);
+              } else records.add(item);
             }
             currentPos++;
           }

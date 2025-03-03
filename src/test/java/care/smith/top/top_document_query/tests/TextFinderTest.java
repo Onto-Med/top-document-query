@@ -45,7 +45,7 @@ class TextFinderTest extends AbstractElasticTest {
     TextFinder tf =
         new CQue(adapter, adapter.getConfig(), concepts, dependencies, PARENT_CAT_ID, "en")
             .getFinder();
-    List<DocumentHit> documents = tf.execute();
+    List<DocumentHit> documents = tf.execute().flatMap(List::stream).toList();
     assertEquals(1, documents.size());
   }
 }

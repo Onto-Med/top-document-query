@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TextFinder {
 
@@ -44,7 +45,7 @@ public class TextFinder {
     return dependencyMap.get(id);
   }
 
-  public List<DocumentHit> execute() {
+  public Stream<List<DocumentHit>> execute() {
     return adapter.execute(query, entityMap, dependencyMap);
   }
 }

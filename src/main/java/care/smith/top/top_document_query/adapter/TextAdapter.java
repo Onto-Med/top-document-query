@@ -70,10 +70,10 @@ public abstract class TextAdapter {
 
   public abstract Map<String, Integer> getSubconceptDepths(ConceptQuery query, Entities concepts);
 
-  public abstract List<DocumentHit> execute(
+  public abstract Stream<List<DocumentHit>> execute(
       ConceptQuery query, Map<String, Entity> entities, Map<String, Set<String>> dependencies);
 
-  public abstract List<DocumentHit> execute(String queryString);
+  public abstract Stream<List<DocumentHit>> execute(String queryString);
 
   public abstract long count();
 
