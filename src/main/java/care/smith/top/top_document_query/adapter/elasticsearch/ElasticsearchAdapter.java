@@ -248,7 +248,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     //  but only the first index value will be used here (e.g. GetResponse needs an index name as
     //  parameter)
     //  the .search method allows for List of indices however
-    return getDocumentsByIdsPaged(List.of(documentId), 1, simplified).stream().findFirst();
+    return getDocumentsByIdsPaged(List.of(documentId), 0, simplified).stream().findFirst();
 //    GetResponse<DocumentEntity> response =
 //        esClient.get(g -> g.id(documentId).index(config.getIndex()[0]), DocumentEntity.class);
 //          esClient.search(s -> s.index(Arrays.asList(config.getIndex())).query(queryForIds()), DocumentEntity.class);
