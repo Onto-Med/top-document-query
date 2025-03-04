@@ -244,27 +244,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public Optional<Document> getDocumentById(@NonNull String documentId, Boolean simplified)
       throws IOException {
-    // ToDo: right now the adapter config allows for multiple index values (as an array),
-    //  but only the first index value will be used here (e.g. GetResponse needs an index name as
-    //  parameter)
-    //  the .search method allows for List of indices however
     return getDocumentsByIdsPaged(List.of(documentId), 0, simplified).stream().findFirst();
-//    GetResponse<DocumentEntity> response =
-//        esClient.get(g -> g.id(documentId).index(config.getIndex()[0]), DocumentEntity.class);
-//          esClient.search(s -> s.index(Arrays.asList(config.getIndex())).query(queryForIds()), DocumentEntity.class);
-//    if (response.found() && response.source() != null) {
-//      if (!simplified)
-//        return Optional.of(
-//            response.source().getId() == null
-//                ? response.source().toApiModel(response.id())
-//                : response.source().toApiModel());
-//      return Optional.of(
-//          response.source().getId() == null
-//              ? response.source().toSimplifiedApiModel(response.id())
-//              : response.source().toSimplifiedApiModel());
-//    } else {
-//      return Optional.empty();
-//    }
   }
 
   @Override
