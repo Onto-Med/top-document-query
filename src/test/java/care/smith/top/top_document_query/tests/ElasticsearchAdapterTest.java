@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 
@@ -87,13 +86,12 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   }
 
   @Test
-  @Disabled
   void getAllDocuments() throws IOException {
     assertEquals(
         allTestDocuments.stream()
             .map(d -> new Document().id(d.getId()).name(d.getName()).text(d.getText()))
             .collect(Collectors.toSet()),
-        adapter.getAllDocumentsPaged(null, false).toSet());
+        adapter.getAllDocumentsPaged(null, true).toSet());
   }
 
   @Test

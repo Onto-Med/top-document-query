@@ -15,7 +15,6 @@ import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
-import co.elastic.clients.elasticsearch.core.GetResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
@@ -244,25 +243,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public Optional<Document> getDocumentById(@NonNull String documentId, Boolean simplified)
       throws IOException {
-    // ToDo: right now the adapter config allows for multiple index values (as an array),
-    //  but only the first index value will be used here (e.g. GetResponse needs an index name as
-    //  parameter)
-    //  the .search method allows for List of indices however
-    GetResponse<DocumentEntity> response =
-        esClient.get(g -> g.id(documentId).index(config.getIndex()[0]), DocumentEntity.class);
-    if (response.found() && response.source() != null) {
-      if (!simplified)
-        return Optional.of(
-            response.source().getId() == null
-                ? response.source().toApiModel(response.id())
-                : response.source().toApiModel());
-      return Optional.of(
-          response.source().getId() == null
-              ? response.source().toSimplifiedApiModel(response.id())
-              : response.source().toSimplifiedApiModel());
-    } else {
-      return Optional.empty();
-    }
+    return getDocumentsByIdsPaged(List.of(documentId), 0, simplified).stream().findFirst();
   }
 
   @Override
