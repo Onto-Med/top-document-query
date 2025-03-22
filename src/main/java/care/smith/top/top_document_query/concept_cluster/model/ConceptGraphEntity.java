@@ -1,10 +1,8 @@
 package care.smith.top.top_document_query.concept_cluster.model;
 
-import care.smith.top.model.ConceptGraph;
-import care.smith.top.model.ConceptGraphAdjacency;
-import care.smith.top.model.ConceptGraphNeighbors;
-import care.smith.top.model.ConceptGraphNodes;
+import care.smith.top.model.*;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class ConceptGraphEntity {
   private AdjacencyObject[] adjacency;
@@ -47,7 +45,18 @@ public class ConceptGraphEntity {
           new ConceptGraphNodes()
               .id(node.getId())
               .label(node.getLabel())
-              .documents(Arrays.asList(node.getDocuments())));
+              .documents(
+                  Arrays.stream(node.getDocuments())
+                      .map(
+                          phraseDocumentObject -> {
+                            return new NodeDocuments()
+                                .id(phraseDocumentObject.getId())
+                                .offsets(
+                                    phraseDocumentObject.getOffsets().stream()
+                                        .map(integers -> Arrays.stream(integers).toList())
+                                        .toList());
+                          })
+                      .collect(Collectors.toList())));
     }
 
     return conceptGraph;
