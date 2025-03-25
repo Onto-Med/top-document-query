@@ -246,9 +246,10 @@ public class ConceptPipelineManager {
                     } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.RUNNING)
                         || step.getStatus().equals(ConceptGraphPipelineStatusEnum.STARTED)) {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.RUNNING);
-                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED)
-                        || step.getStatus().equals(ConceptGraphPipelineStatusEnum.ABORTED)) {
+                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED)) {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.STOPPED);
+                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.ABORTED)) {
+                      conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
                     } else {
                       conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
                     }
