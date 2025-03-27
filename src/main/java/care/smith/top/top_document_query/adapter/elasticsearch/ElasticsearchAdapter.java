@@ -350,7 +350,6 @@ public class ElasticsearchAdapter extends TextAdapter {
                     .size(batchSize)
                     .searchAfter(finalSortValues),
             DocumentEntity.class);
-    //    List<Hit<DocumentEntity>> hits = response.hits().hits();
     sortValues = getLastSortValues(response.hits().hits());
     return response;
   }
@@ -366,15 +365,6 @@ public class ElasticsearchAdapter extends TextAdapter {
       @Override
       public List<Document> get() {
         try {
-          //          SearchResponse<DocumentEntity> response =
-          //              esClient.search(
-          //                  s ->
-          //                      s.index(Arrays.asList(config.getIndex()))
-          //                          .query(query)
-          //                          .sort(sb -> sb.field(fs))
-          //                          .size(bs)
-          //                          .searchAfter(sortValues),
-          //                  DocumentEntity.class);
           List<Hit<DocumentEntity>> hits =
               getSearchAfter(query, null, fs, bs, sortValues).hits().hits();
           sortValues = getLastSortValues(hits);
@@ -420,11 +410,8 @@ public class ElasticsearchAdapter extends TextAdapter {
     // ToDo: I honestly have no idea for what FieldValue NULL, FALSE or TRUE are
     if (hits.isEmpty()) return List.of(FieldValue.FALSE);
     Hit<DocumentEntity> lastHit = hits.get(hits.size() - 1);
-    //    FieldValue documentId = (lastHit.source() != null) ?
-    // FieldValue.of(lastHit.source().getId()) : FieldValue.NULL;
     FieldValue documentName =
         (lastHit.source() != null) ? FieldValue.of(lastHit.source().getName()) : FieldValue.NULL;
-    //    return List.of(documentId, documentName);
     return List.of(documentName);
   }
 
