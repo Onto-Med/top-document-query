@@ -27,10 +27,12 @@ public class DocumentEntity {
         .id(getId())
         .name(getName())
         .text(getText())
-        .highlightedText(highlights == null ? null :
-            this.getHighlights().values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.joining()));
+        .highlightedText(
+            highlights == null
+                ? null
+                : this.getHighlights().values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.joining()));
   }
 
   public Document toApiModel(String externalId) {
@@ -38,10 +40,12 @@ public class DocumentEntity {
         .id(externalId)
         .name(getName())
         .text(getText())
-        .highlightedText(highlights == null ? null :
-            this.getHighlights().values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.joining()));
+        .highlightedText(
+            highlights == null
+                ? null
+                : this.getHighlights().values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.joining()));
   }
 
   public Document toApiModel(String externalId, Integer ellipsis) {
@@ -49,10 +53,12 @@ public class DocumentEntity {
         .id(externalId)
         .name(getName())
         .text(getText())
-        .highlightedText(highlights == null ? null :
-            this.getHighlights().values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.joining()));
+        .highlightedText(
+            highlights == null
+                ? null
+                : this.getHighlights().values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.joining()));
   }
 
   public Document toApiModel(Integer ellipsis) {
@@ -60,10 +66,12 @@ public class DocumentEntity {
         .id(id)
         .name(name)
         .text(getText(ellipsis))
-        .highlightedText(highlights == null ? null :
-            this.getHighlights().values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.joining()));
+        .highlightedText(
+            highlights == null
+                ? null
+                : this.getHighlights().values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.joining()));
   }
 
   public Document toSimplifiedApiModel() {

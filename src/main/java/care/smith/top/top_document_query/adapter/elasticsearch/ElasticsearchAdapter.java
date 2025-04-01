@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.http.HttpHost;
@@ -83,13 +84,17 @@ public class ElasticsearchAdapter extends TextAdapter {
               .map(s -> String.format("\"%s\"", s))
               .collect(Collectors.joining(" OR "));
     } else {
-      queryString = Expressions.getStringValue(esExp);
+      queryString = String.format("\"%s\"", Expressions.getStringValue(esExp));
     }
     return execute(queryString);
   }
 
   @Override
   public Stream<List<DocumentHit>> execute(String queryString) {
+    return execute(queryString, true);
+  }
+
+  public Stream<List<DocumentHit>> execute(String queryString, boolean exactHighlight) {
     Query query =
         QueryStringQuery.of(q -> q.query(queryString).fields(Arrays.asList(config.getField())))
             ._toQuery();
@@ -132,7 +137,13 @@ public class ElasticsearchAdapter extends TextAdapter {
                   return hits.stream()
                       .map(
                           hit ->
-                              new DocumentHit(hit.id(), hit.source(), hit.highlight(), hit.score()))
+                              new DocumentHit(
+                                  hit.id(),
+                                  hit.source(),
+                                  exactHighlight
+                                      ? mergeHighlights(hit.highlight(), queryString)
+                                      : hit.highlight(),
+                                  hit.score()))
                       .toList();
                 } catch (IOException e) {
                   LOGGER.fine(
@@ -144,6 +155,23 @@ public class ElasticsearchAdapter extends TextAdapter {
               }
             })
         .takeWhile(list -> !list.isEmpty());
+  }
+
+  private Map<String, List<String>> mergeHighlights(
+      Map<String, List<String>> highlights, String queryString) {
+    queryString =
+        queryString.substring(
+            queryString.charAt(0) == '"' ? 1 : 0,
+            queryString.charAt(queryString.length() - 1) == '"'
+                ? queryString.length() - 1
+                : queryString.length());
+    for (Map.Entry<String, List<String>> entry : highlights.entrySet()) {
+      for (String highlight : entry.getValue()) {
+        Pattern pattern = Pattern.compile("(<em>(.*?)</em>){1,2}");
+        System.out.println(highlight);
+      }
+    }
+    return highlights;
   }
 
   @Override
