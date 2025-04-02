@@ -83,7 +83,8 @@ public class ElasticsearchAdapter extends TextAdapter {
               .map(s -> String.format("\"%s\"", s))
               .collect(Collectors.joining(" OR ")), false);
     } else {
-      return execute(String.format("\"%s\"", Expressions.getStringValue(esExp)));
+      boolean exactMatch = entities.size() == 1;
+      return execute(String.format(exactMatch? "\"%s\"": "%s", Expressions.getStringValue(esExp)), exactMatch);
     }
   }
 

@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 class TextFinderTest extends AbstractElasticTest {
   final String PARENT_CAT_ID = "phrase_search_cat";
-  Concept phrase1 = new Cat("phrase1", false).titleEn("\"a document\"").get();
+  Concept phrase1 = new Cat("phrase1", false).titleEn("a document").get();
   Concept phrase2 = new Cat("phrase2", false).titleEn("entity").get();
   Concept parentCat =
       new Cat(PARENT_CAT_ID, true)
@@ -48,4 +48,5 @@ class TextFinderTest extends AbstractElasticTest {
     List<DocumentHit> documents = tf.execute().flatMap(List::stream).toList();
     assertEquals(1, documents.size());
   }
+  //ToDo: test for highlighting?
 }
