@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -77,16 +78,13 @@ public class ElasticsearchAdapter extends TextAdapter {
             .lang(query.getLanguage())
             .generate(query.getEntityId());
 
-    String queryString;
     if (esExp.getValues().size() > 1) {
-      queryString =
-          Expressions.getStringValues(esExp).stream()
+      return execute(Expressions.getStringValues(esExp).stream()
               .map(s -> String.format("\"%s\"", s))
-              .collect(Collectors.joining(" OR "));
+              .collect(Collectors.joining(" OR ")), false);
     } else {
-      queryString = String.format("\"%s\"", Expressions.getStringValue(esExp));
+      return execute(String.format("\"%s\"", Expressions.getStringValue(esExp)));
     }
-    return execute(queryString);
   }
 
   @Override
@@ -159,19 +157,32 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   private Map<String, List<String>> mergeHighlights(
       Map<String, List<String>> highlights, String queryString) {
-    queryString =
+    String[] queryComponents =
         queryString.substring(
             queryString.charAt(0) == '"' ? 1 : 0,
             queryString.charAt(queryString.length() - 1) == '"'
                 ? queryString.length() - 1
-                : queryString.length());
+                : queryString.length()).split("\\s+");
+    HashMap<String, List<String>> mergedHighlights = new HashMap<>();
     for (Map.Entry<String, List<String>> entry : highlights.entrySet()) {
+      ArrayList<String> newHighlights = new ArrayList<>();
       for (String highlight : entry.getValue()) {
-        Pattern pattern = Pattern.compile("(<em>(.*?)</em>){1,2}");
-        System.out.println(highlight);
+        StringBuilder highlightBuilder = new StringBuilder(highlight);
+        Pattern pattern = Pattern.compile(Arrays.stream(queryComponents).map(s -> String.format("<em>%s</em>", s)).collect(Collectors.joining("(\\s+)")));
+        Matcher matcher = pattern.matcher(highlight);
+        while (matcher.find()) {
+          StringBuilder replBuilder = new StringBuilder();
+          replBuilder.append(queryComponents[0]);
+          for (int i = 1; i <= matcher.groupCount(); i++) {
+            replBuilder.append(matcher.group(i)).append(queryComponents[i]);
+          }
+          highlightBuilder.replace(matcher.start(), matcher.end(), String.format("<em>%s</em>", replBuilder));
+          newHighlights.add(highlightBuilder.toString());
+        }
       }
+      mergedHighlights.put(entry.getKey(), newHighlights);
     }
-    return highlights;
+    return mergedHighlights;
   }
 
   @Override
