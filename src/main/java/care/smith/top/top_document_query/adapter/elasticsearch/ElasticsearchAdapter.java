@@ -79,12 +79,17 @@ public class ElasticsearchAdapter extends TextAdapter {
             .generate(query.getEntityId());
 
     if (esExp.getValues().size() > 1) {
-      return execute(Expressions.getStringValues(esExp).stream()
-              .map(s -> String.format("\"%s\"", s))
-              .collect(Collectors.joining(" OR ")), false);
+      return execute(
+          Expressions.getStringValues(esExp).stream()
+              //              .map(s -> StringUtils.containsWhitespace(s)? String.format("\"%s\"",
+              // s))
+              .collect(Collectors.joining(" OR ")),
+          false);
     } else {
       boolean exactMatch = entities.size() == 1;
-      return execute(String.format(exactMatch? "\"%s\"": "%s", Expressions.getStringValue(esExp)), exactMatch);
+      return execute(
+          String.format(exactMatch ? "\"%s\"" : "%s", Expressions.getStringValue(esExp)),
+          exactMatch);
     }
   }
 
@@ -159,17 +164,23 @@ public class ElasticsearchAdapter extends TextAdapter {
   private Map<String, List<String>> mergeHighlights(
       Map<String, List<String>> highlights, String queryString) {
     String[] queryComponents =
-        queryString.substring(
-            queryString.charAt(0) == '"' ? 1 : 0,
-            queryString.charAt(queryString.length() - 1) == '"'
-                ? queryString.length() - 1
-                : queryString.length()).split("\\s+");
+        queryString
+            .substring(
+                queryString.charAt(0) == '"' ? 1 : 0,
+                queryString.charAt(queryString.length() - 1) == '"'
+                    ? queryString.length() - 1
+                    : queryString.length())
+            .split("\\s+");
     HashMap<String, List<String>> mergedHighlights = new HashMap<>();
     for (Map.Entry<String, List<String>> entry : highlights.entrySet()) {
       ArrayList<String> newHighlights = new ArrayList<>();
       for (String highlight : entry.getValue()) {
         StringBuilder highlightBuilder = new StringBuilder(highlight);
-        Pattern pattern = Pattern.compile(Arrays.stream(queryComponents).map(s -> String.format("<em>%s</em>", s)).collect(Collectors.joining("(\\s+)")));
+        Pattern pattern =
+            Pattern.compile(
+                Arrays.stream(queryComponents)
+                    .map(s -> String.format("<em>%s</em>", s))
+                    .collect(Collectors.joining("(\\s+)")));
         Matcher matcher = pattern.matcher(highlight);
         while (matcher.find()) {
           StringBuilder replBuilder = new StringBuilder();
@@ -177,7 +188,8 @@ public class ElasticsearchAdapter extends TextAdapter {
           for (int i = 1; i <= matcher.groupCount(); i++) {
             replBuilder.append(matcher.group(i)).append(queryComponents[i]);
           }
-          highlightBuilder.replace(matcher.start(), matcher.end(), String.format("<em>%s</em>", replBuilder));
+          highlightBuilder.replace(
+              matcher.start(), matcher.end(), String.format("<em>%s</em>", replBuilder));
           newHighlights.add(highlightBuilder.toString());
         }
       }

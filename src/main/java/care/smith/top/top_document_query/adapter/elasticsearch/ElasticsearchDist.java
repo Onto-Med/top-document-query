@@ -44,7 +44,7 @@ public class ElasticsearchDist extends Dist {
 
   private Value getDist(Expression e, Value v, int d) {
     String t = Values.getStringValue(v);
-    if (!StringUtils.containsWhitespace(t)) return v;
+    if (!StringUtils.containsWhitespace(t)) return Val.of(t + "~" + d);
     if (Expressions.hasTermsInitial(e)) return Val.of("\"" + t + "\"~" + d);
     return Val.of(t + "~" + d);
   }

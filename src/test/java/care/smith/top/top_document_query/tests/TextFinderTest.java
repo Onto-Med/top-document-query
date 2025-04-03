@@ -48,5 +48,5 @@ class TextFinderTest extends AbstractElasticTest {
     List<DocumentHit> documents = tf.execute().flatMap(List::stream).toList();
     assertEquals(1, documents.size());
   }
-  //ToDo: test for highlighting?
+  // ToDo: test for highlighting?
 }
