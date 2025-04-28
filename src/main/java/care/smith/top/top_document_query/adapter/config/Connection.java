@@ -2,6 +2,7 @@ package care.smith.top.top_document_query.adapter.config;
 
 public class Connection {
   private String url;
+  private String alternateUrl;
   private String port;
 
   public String getUrl() {
@@ -10,6 +11,14 @@ public class Connection {
 
   public void setUrl(String url) {
     this.url = url;
+  }
+
+  public String getAlternateUrl() {
+    return alternateUrl;
+  }
+
+  public void setAlternateUrl(String alternateUrl) {
+    this.alternateUrl = alternateUrl;
   }
 
   public String getPort() {

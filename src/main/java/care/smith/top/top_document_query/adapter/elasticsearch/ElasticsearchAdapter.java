@@ -518,12 +518,23 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   private void initConnection() {
     String host;
+    String alternateHost = null;
 
     try {
       URL url = new URL(config.getConnection().getUrl());
       host = url.getHost();
     } catch (MalformedURLException e) {
       host = config.getConnection().getUrl();
+    }
+
+    if (config.getConnection().getAlternateUrl() != null) {
+      try {
+        URL url = new URL(config.getConnection().getAlternateUrl());
+        alternateHost = url.getHost();
+
+      } catch (MalformedURLException e) {
+        alternateHost = config.getConnection().getAlternateUrl();
+      }
     }
 
     RestClient restClient =
@@ -534,5 +545,28 @@ public class ElasticsearchAdapter extends TextAdapter {
         new RestClientTransport(restClient, new JacksonJsonpMapper());
 
     this.esClient = new ElasticsearchClient(transport);
+    try {
+      // simple call to esClient to test whether the connection works
+      String luceneVersion = this.esClient.info().version().luceneVersion();
+    } catch (IOException e) {
+      if (alternateHost == null) {
+        LOGGER.severe(
+            "Could not connect to Elasticsearch at '" + host + "'. Alternate URL not set.");
+      } else {
+        LOGGER.warning(
+            "Could not connect to Elasticsearch at "
+                + host
+                + ". Trying alternate URL at '"
+                + alternateHost
+                + "'.");
+        RestClient alternateRestClient =
+            RestClient.builder(
+                    new HttpHost(alternateHost, Integer.parseInt(config.getConnection().getPort())))
+                .build();
+        ElasticsearchTransport alternateTransport =
+            new RestClientTransport(alternateRestClient, new JacksonJsonpMapper());
+        this.esClient = new ElasticsearchClient(alternateTransport);
+      }
+    }
   }
 }
