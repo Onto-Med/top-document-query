@@ -3,7 +3,7 @@ package care.smith.top.top_document_query.concept_cluster.model;
 public class PhraseNodeObject {
   private String id;
   private String label;
-  private String[] documents;
+  private PhraseDocumentObject[] documents;
 
   public String getId() {
     return id;
@@ -21,11 +21,11 @@ public class PhraseNodeObject {
     this.label = label;
   }
 
-  public String[] getDocuments() {
+  public PhraseDocumentObject[] getDocuments() {
     return documents;
   }
 
-  public void setDocuments(String[] documents) {
+  public void setDocuments(PhraseDocumentObject[] documents) {
     this.documents = documents;
   }
 }

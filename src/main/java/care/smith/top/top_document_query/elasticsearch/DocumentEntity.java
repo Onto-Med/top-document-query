@@ -8,68 +8,78 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DocumentEntity {
+  // Attributes extracted from Elasticsearch source
   private String id;
-
-  private Integer wordEllipsis = 25;
 
   private String name;
 
   private String text;
 
-  private String label;
+  private String label; // label is not used at the moment but potentially useful
 
+  // Other attributes
   private Map<String, List<String>> highlights;
+
+  private final Integer wordEllipsis = 30;
 
   public Document toApiModel() {
     return new Document()
-        .id(id)
-        .name(name)
-        .text(documentText(wordEllipsis))
+        .id(getId())
+        .name(getName())
+        .text(getText())
         .highlightedText(
-            this.getHighlights().values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.joining()));
+            highlights == null
+                ? null
+                : this.getHighlights().values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.joining()));
   }
 
-  public Document toApiModel(String eid) {
+  public Document toApiModel(String externalId) {
     return new Document()
-        .id(eid)
-        .name(name)
-        .text(documentText(wordEllipsis))
+        .id(externalId)
+        .name(getName())
+        .text(getText())
         .highlightedText(
-            this.getHighlights().values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.joining()));
+            highlights == null
+                ? null
+                : this.getHighlights().values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.joining()));
   }
 
-  public Document toApiModel(String eid, Integer ellipsis) {
+  public Document toApiModel(String externalId, Integer ellipsis) {
     return new Document()
-        .id(eid)
-        .name(name)
-        .text(documentText(ellipsis))
+        .id(externalId)
+        .name(getName())
+        .text(getText())
         .highlightedText(
-            this.getHighlights().values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.joining()));
+            highlights == null
+                ? null
+                : this.getHighlights().values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.joining()));
   }
 
   public Document toApiModel(Integer ellipsis) {
     return new Document()
         .id(id)
         .name(name)
-        .text(documentText(ellipsis))
+        .text(getText(ellipsis))
         .highlightedText(
-            this.getHighlights().values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.joining()));
+            highlights == null
+                ? null
+                : this.getHighlights().values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.joining()));
   }
 
   public Document toSimplifiedApiModel() {
-    return new Document().id(id).name(name).text(documentText(wordEllipsis));
+    return new Document().id(id).name(name).text(getText(wordEllipsis));
   }
 
   public Document toSimplifiedApiModel(String eid) {
-    return new Document().id(eid).name(name).text(documentText(wordEllipsis));
+    return new Document().id(eid).name(name).text(getText(wordEllipsis));
   }
 
   public static Document nullDocument() {
@@ -82,15 +92,6 @@ public class DocumentEntity {
 
   public DocumentEntity setId(String id) {
     this.id = id;
-    return this;
-  }
-
-  public Integer getWordEllipsis() {
-    return wordEllipsis;
-  }
-
-  public DocumentEntity setWordEllipsis(Integer wordEllipsis) {
-    this.wordEllipsis = wordEllipsis;
     return this;
   }
 
@@ -107,26 +108,23 @@ public class DocumentEntity {
     return text;
   }
 
+  public String getText(Integer ellipsis) {
+    return (ellipsis != null && ellipsis > 0)
+        ? Arrays.stream(text.split("\\s+")).limit(ellipsis).collect(Collectors.joining(" "))
+        : text;
+  }
+
   public DocumentEntity setText(String text) {
     this.text = text;
     return this;
   }
 
   public Map<String, List<String>> getHighlights() {
-    if (this.highlights == null) {
-      return Map.of("documentText", List.of(getText()));
-    }
     return highlights;
   }
 
   public DocumentEntity setHighlights(Map<String, List<String>> highlights) {
     this.highlights = highlights;
     return this;
-  }
-
-  private String documentText(Integer ellipsis) {
-    return (ellipsis != null && ellipsis > 0)
-        ? Arrays.stream(text.split("\\s+")).limit(ellipsis).collect(Collectors.joining(" "))
-        : text;
   }
 }

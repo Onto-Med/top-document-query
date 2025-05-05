@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.http.HttpHost;
@@ -76,20 +78,27 @@ public class ElasticsearchAdapter extends TextAdapter {
             .lang(query.getLanguage())
             .generate(query.getEntityId());
 
-    String queryString;
     if (esExp.getValues().size() > 1) {
-      queryString =
+      return execute(
           Expressions.getStringValues(esExp).stream()
-              .map(s -> String.format("\"%s\"", s))
-              .collect(Collectors.joining(" OR "));
+              //              .map(s -> StringUtils.containsWhitespace(s)? String.format("\"%s\"",
+              // s))
+              .collect(Collectors.joining(" OR ")),
+          false);
     } else {
-      queryString = Expressions.getStringValue(esExp);
+      boolean exactMatch = entities.size() == 1;
+      return execute(
+          String.format(exactMatch ? "\"%s\"" : "%s", Expressions.getStringValue(esExp)),
+          exactMatch);
     }
-    return execute(queryString);
   }
 
   @Override
   public Stream<List<DocumentHit>> execute(String queryString) {
+    return execute(queryString, true);
+  }
+
+  public Stream<List<DocumentHit>> execute(String queryString, boolean exactHighlight) {
     Query query =
         QueryStringQuery.of(q -> q.query(queryString).fields(Arrays.asList(config.getField())))
             ._toQuery();
@@ -132,7 +141,13 @@ public class ElasticsearchAdapter extends TextAdapter {
                   return hits.stream()
                       .map(
                           hit ->
-                              new DocumentHit(hit.id(), hit.source(), hit.highlight(), hit.score()))
+                              new DocumentHit(
+                                  hit.id(),
+                                  hit.source(),
+                                  exactHighlight
+                                      ? mergeHighlights(hit.highlight(), queryString)
+                                      : hit.highlight(),
+                                  hit.score()))
                       .toList();
                 } catch (IOException e) {
                   LOGGER.fine(
@@ -144,6 +159,43 @@ public class ElasticsearchAdapter extends TextAdapter {
               }
             })
         .takeWhile(list -> !list.isEmpty());
+  }
+
+  private Map<String, List<String>> mergeHighlights(
+      Map<String, List<String>> highlights, String queryString) {
+    String[] queryComponents =
+        queryString
+            .substring(
+                queryString.charAt(0) == '"' ? 1 : 0,
+                queryString.charAt(queryString.length() - 1) == '"'
+                    ? queryString.length() - 1
+                    : queryString.length())
+            .split("\\s+");
+    HashMap<String, List<String>> mergedHighlights = new HashMap<>();
+    for (Map.Entry<String, List<String>> entry : highlights.entrySet()) {
+      ArrayList<String> newHighlights = new ArrayList<>();
+      for (String highlight : entry.getValue()) {
+        StringBuilder highlightBuilder = new StringBuilder(highlight);
+        Pattern pattern =
+            Pattern.compile(
+                Arrays.stream(queryComponents)
+                    .map(s -> String.format("<em>%s</em>", s))
+                    .collect(Collectors.joining("(\\s+)")));
+        Matcher matcher = pattern.matcher(highlight);
+        while (matcher.find()) {
+          StringBuilder replBuilder = new StringBuilder();
+          replBuilder.append(queryComponents[0]);
+          for (int i = 1; i <= matcher.groupCount(); i++) {
+            replBuilder.append(matcher.group(i)).append(queryComponents[i]);
+          }
+          highlightBuilder.replace(
+              matcher.start(), matcher.end(), String.format("<em>%s</em>", replBuilder));
+          newHighlights.add(highlightBuilder.toString());
+        }
+      }
+      mergedHighlights.put(entry.getKey(), newHighlights);
+    }
+    return mergedHighlights;
   }
 
   @Override
@@ -350,7 +402,6 @@ public class ElasticsearchAdapter extends TextAdapter {
                     .size(batchSize)
                     .searchAfter(finalSortValues),
             DocumentEntity.class);
-    //    List<Hit<DocumentEntity>> hits = response.hits().hits();
     sortValues = getLastSortValues(response.hits().hits());
     return response;
   }
@@ -366,15 +417,6 @@ public class ElasticsearchAdapter extends TextAdapter {
       @Override
       public List<Document> get() {
         try {
-          //          SearchResponse<DocumentEntity> response =
-          //              esClient.search(
-          //                  s ->
-          //                      s.index(Arrays.asList(config.getIndex()))
-          //                          .query(query)
-          //                          .sort(sb -> sb.field(fs))
-          //                          .size(bs)
-          //                          .searchAfter(sortValues),
-          //                  DocumentEntity.class);
           List<Hit<DocumentEntity>> hits =
               getSearchAfter(query, null, fs, bs, sortValues).hits().hits();
           sortValues = getLastSortValues(hits);
@@ -420,11 +462,8 @@ public class ElasticsearchAdapter extends TextAdapter {
     // ToDo: I honestly have no idea for what FieldValue NULL, FALSE or TRUE are
     if (hits.isEmpty()) return List.of(FieldValue.FALSE);
     Hit<DocumentEntity> lastHit = hits.get(hits.size() - 1);
-    //    FieldValue documentId = (lastHit.source() != null) ?
-    // FieldValue.of(lastHit.source().getId()) : FieldValue.NULL;
     FieldValue documentName =
         (lastHit.source() != null) ? FieldValue.of(lastHit.source().getName()) : FieldValue.NULL;
-    //    return List.of(documentId, documentName);
     return List.of(documentName);
   }
 
@@ -479,12 +518,23 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   private void initConnection() {
     String host;
+    String alternateHost = null;
 
     try {
       URL url = new URL(config.getConnection().getUrl());
       host = url.getHost();
     } catch (MalformedURLException e) {
       host = config.getConnection().getUrl();
+    }
+
+    if (config.getConnection().getAlternateUrl() != null) {
+      try {
+        URL url = new URL(config.getConnection().getAlternateUrl());
+        alternateHost = url.getHost();
+
+      } catch (MalformedURLException e) {
+        alternateHost = config.getConnection().getAlternateUrl();
+      }
     }
 
     RestClient restClient =
@@ -495,5 +545,28 @@ public class ElasticsearchAdapter extends TextAdapter {
         new RestClientTransport(restClient, new JacksonJsonpMapper());
 
     this.esClient = new ElasticsearchClient(transport);
+    try {
+      // simple call to esClient to test whether the connection works
+      String luceneVersion = this.esClient.info().version().luceneVersion();
+    } catch (IOException e) {
+      if (alternateHost == null) {
+        LOGGER.severe(
+            "Could not connect to Elasticsearch at '" + host + "'. Alternate URL not set.");
+      } else {
+        LOGGER.warning(
+            "Could not connect to Elasticsearch at "
+                + host
+                + ". Trying alternate URL at '"
+                + alternateHost
+                + "'.");
+        RestClient alternateRestClient =
+            RestClient.builder(
+                    new HttpHost(alternateHost, Integer.parseInt(config.getConnection().getPort())))
+                .build();
+        ElasticsearchTransport alternateTransport =
+            new RestClientTransport(alternateRestClient, new JacksonJsonpMapper());
+        this.esClient = new ElasticsearchClient(alternateTransport);
+      }
+    }
   }
 }

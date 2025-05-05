@@ -29,19 +29,19 @@ public abstract class AbstractElasticTest {
           .id("d1")
           .name("test01")
           .text("What do we have here? A test document. With an entity. Nice.")
-          .highlightedText("What do we have here? A test document. With an entity. Nice.");
+          .highlightedText(null);
   protected static Document document2 =
       new Document()
           .id("d2")
           .name("test02")
           .text("Another document is here. It has two entities.")
-          .highlightedText("Another document is here. It has two entities.");
+          .highlightedText(null);
   protected static Document document3 =
       new Document()
           .id("d3")
           .name("test03")
           .text("And a third document; but this one features nothing. No test.")
-          .highlightedText("And a third document; but this one features nothing. No test.");
+          .highlightedText(null);
   protected static Set<Document> allTestDocuments = Set.of(document1, document2, document3);
 
   protected static void setUpLocalESIndex() {
