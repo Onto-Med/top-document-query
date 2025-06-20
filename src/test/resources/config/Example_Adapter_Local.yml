@@ -3,6 +3,7 @@ adapter: care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAd
 connection:
   url: http://localhost
   port: 9008
+  alternateUrl: http://192.168.48.111
 index:
   - documents
 field:
@@ -14,3 +15,7 @@ conceptGraph:
   connection:
     url: http://localhost
     port: 5000
+vectorStore:
+  connection:
+    url: http://localhost
+    port: 8882

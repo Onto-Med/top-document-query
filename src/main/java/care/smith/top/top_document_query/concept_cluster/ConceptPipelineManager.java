@@ -77,6 +77,23 @@ public class ConceptPipelineManager {
   }
 
   /**
+   * Switches to a new base url for the Concept Graphs API endpoint.
+   *
+   * @param conceptGraphApiEndpoint The new concept-graphs endpoint.
+   * @return {@code boolean} whether change was successful or not.
+   */
+  public boolean switchConnection(String conceptGraphApiEndpoint) {
+    try {
+      this.conceptGraphsApi = this.conceptGraphsApi.mutate().baseUrl(conceptGraphApiEndpoint).build();
+      LOGGER.info("New base url is: " + "'" + conceptGraphApiEndpoint + "'.");
+      return true;
+    } catch (Exception e) {
+      LOGGER.warning("Couldn't change to new base url: " + "'" + conceptGraphApiEndpoint + "'.");
+    }
+    return false;
+  }
+
+  /**
    * Get number of pipelines, including running, completed and failed once.
    *
    * @return Number of pipelines.
