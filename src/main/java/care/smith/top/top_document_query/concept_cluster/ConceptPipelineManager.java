@@ -11,6 +11,8 @@ import care.smith.top.top_document_query.concept_cluster.model.pipeline_response
 import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineResponseEntity;
 import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineStatusEntity;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -41,6 +43,7 @@ public class ConceptPipelineManager {
   private static final Logger LOGGER = Logger.getLogger(ConceptPipelineManager.class.getName());
   private WebClient conceptGraphsApi;
   private int maxInMemorySize = DEFAULT_MAX_IN_MEMORY_SIZE;
+  private URL currentUrl;
 
   /**
    * Instantiate a new concept pipeline manager with the given concept-graphs endpoint. See <a
@@ -51,7 +54,8 @@ public class ConceptPipelineManager {
    *
    * @param conceptGraphApiEndpoint The concept-graphs endpoint.
    */
-  public ConceptPipelineManager(String conceptGraphApiEndpoint) {
+  public ConceptPipelineManager(String conceptGraphApiEndpoint) throws MalformedURLException {
+    this.currentUrl = new URL(conceptGraphApiEndpoint);
     ExchangeStrategies exchangeStrategies =
         ExchangeStrategies.builder()
             .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(maxInMemorySize))
@@ -71,7 +75,8 @@ public class ConceptPipelineManager {
    * @param conceptGraphApiEndpoint The concept-graphs endpoint.
    * @param maxInMemorySize Maximum in-memory size in bytes for requests to Elasticsearch.
    */
-  public ConceptPipelineManager(String conceptGraphApiEndpoint, int maxInMemorySize) {
+  public ConceptPipelineManager(String conceptGraphApiEndpoint, int maxInMemorySize)
+      throws MalformedURLException {
     this.maxInMemorySize = maxInMemorySize;
     new ConceptPipelineManager(conceptGraphApiEndpoint);
   }
@@ -82,13 +87,19 @@ public class ConceptPipelineManager {
    * @param conceptGraphApiEndpoint The new concept-graphs endpoint.
    * @return {@code boolean} whether change was successful or not.
    */
-  public boolean switchConnection(String conceptGraphApiEndpoint) {
-    try {
-      this.conceptGraphsApi = this.conceptGraphsApi.mutate().baseUrl(conceptGraphApiEndpoint).build();
-      LOGGER.info("New base url is: " + "'" + conceptGraphApiEndpoint + "'.");
+  public boolean switchConnection(String conceptGraphApiEndpoint) throws MalformedURLException {
+    if (!(new URL(conceptGraphApiEndpoint)).sameFile(this.currentUrl)) {
+      try {
+        this.conceptGraphsApi =
+            this.conceptGraphsApi.mutate().baseUrl(conceptGraphApiEndpoint).build();
+        LOGGER.info("New base url is: " + "'" + conceptGraphApiEndpoint + "'.");
+        return true;
+      } catch (Exception e) {
+        LOGGER.warning("Couldn't change to new base url: " + "'" + conceptGraphApiEndpoint + "'.");
+      }
+    } else {
+      LOGGER.info("New base url is the same as the current one.");
       return true;
-    } catch (Exception e) {
-      LOGGER.warning("Couldn't change to new base url: " + "'" + conceptGraphApiEndpoint + "'.");
     }
     return false;
   }
