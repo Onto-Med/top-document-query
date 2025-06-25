@@ -44,6 +44,15 @@ public class ConceptPipelineManager {
   private WebClient conceptGraphsApi;
   private int maxInMemorySize = DEFAULT_MAX_IN_MEMORY_SIZE;
   private URL currentUrl;
+  private URL defaultUrl;
+
+  public URL getCurrentUrl() {
+    return currentUrl;
+  }
+
+  public URL getDefaultUrl() {
+    return defaultUrl;
+  }
 
   /**
    * Instantiate a new concept pipeline manager with the given concept-graphs endpoint. See <a
@@ -56,6 +65,7 @@ public class ConceptPipelineManager {
    */
   public ConceptPipelineManager(String conceptGraphApiEndpoint) throws MalformedURLException {
     this.currentUrl = new URL(conceptGraphApiEndpoint);
+    this.defaultUrl = new URL(conceptGraphApiEndpoint);
     ExchangeStrategies exchangeStrategies =
         ExchangeStrategies.builder()
             .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(maxInMemorySize))
@@ -81,6 +91,18 @@ public class ConceptPipelineManager {
     new ConceptPipelineManager(conceptGraphApiEndpoint);
   }
 
+  public boolean isAccessible() {
+    try {
+      conceptGraphsApi.get().retrieve().bodyToMono(String.class).block();
+      return true;
+    } catch (WebClientResponseException e) {
+      LOGGER.severe(
+          String.format(
+              "Pipeline Manager at '%s' doesn't seem to be accessible.", this.currentUrl));
+      return false;
+    }
+  }
+
   /**
    * Switches to a new base url for the Concept Graphs API endpoint.
    *
@@ -89,13 +111,25 @@ public class ConceptPipelineManager {
    */
   public boolean switchConnection(String conceptGraphApiEndpoint) throws MalformedURLException {
     if (!(new URL(conceptGraphApiEndpoint)).sameFile(this.currentUrl)) {
+      URL tmpUrl = this.currentUrl;
       try {
+        this.currentUrl = new URL(conceptGraphApiEndpoint);
         this.conceptGraphsApi =
             this.conceptGraphsApi.mutate().baseUrl(conceptGraphApiEndpoint).build();
+        if (!isAccessible()) {
+          this.currentUrl = tmpUrl;
+          this.conceptGraphsApi = this.conceptGraphsApi.mutate().baseUrl(tmpUrl.toString()).build();
+          return false;
+        }
+        ;
         LOGGER.info("New base url is: " + "'" + conceptGraphApiEndpoint + "'.");
         return true;
       } catch (Exception e) {
-        LOGGER.warning("Couldn't change to new base url: " + "'" + conceptGraphApiEndpoint + "'.");
+        LOGGER.warning(
+            String.format(
+                "Couldn't change to new base url: '%s'; using the previous one: '%s'.",
+                conceptGraphApiEndpoint, tmpUrl.toString()));
+        this.conceptGraphsApi = this.conceptGraphsApi.mutate().baseUrl(tmpUrl.toString()).build();
       }
     } else {
       LOGGER.info("New base url is the same as the current one.");
@@ -307,7 +341,7 @@ public class ConceptPipelineManager {
   }
 
   /**
-   * Deletes a process by its id; can't delete a process that is running.
+   * Deletes a process by its id. A process that is running will be stopped first before deletion.
    *
    * @param processId The id of the process.
    * @return The server message as {@link String}.
@@ -325,7 +359,8 @@ public class ConceptPipelineManager {
                     response.statusCode().value())) {
                   return response.bodyToMono(String.class);
                 }
-                return response.bodyToMono(String.class);
+                return Mono.just(
+                    "Http Status of concept graphs pipeline could not be evaluated. See its logs.");
               })
           .block();
     } catch (WebClientResponseException e) {
