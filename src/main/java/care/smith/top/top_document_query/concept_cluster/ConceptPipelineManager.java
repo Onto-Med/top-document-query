@@ -299,6 +299,11 @@ public class ConceptPipelineManager {
         (processOverviewEntity != null ? processOverviewEntity.toApiModel() : new ArrayList<>());
     conceptGraphPipelines.forEach(
         conceptGraphPipeline -> {
+          if (conceptGraphPipeline.getSteps().stream()
+              .anyMatch(step -> step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED))) {
+            conceptGraphPipeline.setStatus(PipelineResponseStatus.STOPPED);
+            return;
+          }
           conceptGraphPipeline.getSteps().stream()
               .filter(step -> step.getName().equals(ConceptGraphPipelineStepsEnum.GRAPH))
               .forEach(
