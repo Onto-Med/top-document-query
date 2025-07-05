@@ -51,6 +51,8 @@ public class TextAdapterConfig {
 
   private ConceptGraphConfig conceptGraph;
 
+  private VectorStoreConfig vectorStore;
+
   public static TextAdapterConfig getInstance(String yamlFilePath) {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
     TextAdapterConfig config = null;
@@ -154,6 +156,14 @@ public class TextAdapterConfig {
 
   public void setConceptGraph(ConceptGraphConfig conceptGraph) {
     this.conceptGraph = conceptGraph;
+  }
+
+  public VectorStoreConfig getVectorStore() {
+    return vectorStore;
+  }
+
+  public void setVectorStore(VectorStoreConfig vectorStore) {
+    this.vectorStore = vectorStore;
   }
 
   @Override
