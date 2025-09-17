@@ -42,11 +42,11 @@ public class ConceptPipelineManager extends AbstractExternalManager {
 
   private static final Logger LOGGER = Logger.getLogger(ConceptPipelineManager.class.getName());
 
-  ConceptPipelineManager(String conceptGraphApiEndpoint) throws MalformedURLException {
+  public ConceptPipelineManager(String conceptGraphApiEndpoint) throws MalformedURLException {
       super(conceptGraphApiEndpoint, LOGGER);
   }
 
-  ConceptPipelineManager(String conceptGraphApiEndpoint, int memorySize) throws MalformedURLException {
+  public ConceptPipelineManager(String conceptGraphApiEndpoint, int memorySize) throws MalformedURLException {
       super(conceptGraphApiEndpoint, memorySize, LOGGER);
   }
 
