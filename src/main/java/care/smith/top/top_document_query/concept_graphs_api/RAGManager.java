@@ -13,11 +13,11 @@ import java.util.logging.Logger;
 public class RAGManager extends AbstractExternalManager {
     private static final Logger LOGGER = Logger.getLogger(RAGManager.class.getName());
 
-    RAGManager(String conceptGraphApiEndpoint) throws MalformedURLException {
+    public RAGManager(String conceptGraphApiEndpoint) throws MalformedURLException {
         super(conceptGraphApiEndpoint, LOGGER);
     }
 
-    RAGManager(String conceptGraphApiEndpoint, int memorySize) throws MalformedURLException {
+    public RAGManager(String conceptGraphApiEndpoint, int memorySize) throws MalformedURLException {
         super(conceptGraphApiEndpoint, memorySize, LOGGER);
     }
 
