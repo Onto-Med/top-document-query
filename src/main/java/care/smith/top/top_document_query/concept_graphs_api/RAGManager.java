@@ -1,0 +1,83 @@
+package care.smith.top.top_document_query.concept_graphs_api;
+
+import care.smith.top.model.RAGAnswer;
+import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiRagMethod;
+import org.json.JSONObject;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import reactor.core.publisher.Mono;
+
+import java.net.MalformedURLException;
+import java.util.logging.Logger;
+
+public class RAGManager extends AbstractExternalManager {
+    private static final Logger LOGGER = Logger.getLogger(RAGManager.class.getName());
+
+    RAGManager(String conceptGraphApiEndpoint) throws MalformedURLException {
+        super(conceptGraphApiEndpoint, LOGGER);
+    }
+
+    RAGManager(String conceptGraphApiEndpoint, int memorySize) throws MalformedURLException {
+        super(conceptGraphApiEndpoint, memorySize, LOGGER);
+    }
+
+    public RAGAnswer poseQuestion(
+            String process,
+            String question
+    ) {
+        Mono<RAGAnswer> apiResponse =
+                conceptGraphsApi
+                        .get()
+                        .uri(
+                                uriBuilder ->
+                                        uriBuilder
+                                                .path(ApiRagMethod.QUESTION.getEndpoint())
+                                                .queryParam("process", process)
+                                                .queryParam("q", question)
+                                                .build())
+                        .exchangeToMono(
+                                response -> {
+                                    if (response.statusCode().equals(HttpStatus.OK)) {
+                                        return response.bodyToMono(RAGAnswer.class);
+                                    } else if (response.statusCode().equals(HttpStatus.NOT_FOUND)) {
+                                        return Mono.fromSupplier(() ->
+                                                new RAGAnswer()
+                                                        .answer("No active and ready rag component found.")
+                                                        .info("You need to initialize it first and wait for it to be ready with '/document/rag/init' endpoint."));
+                                    } else if (response.statusCode().equals(HttpStatus.BAD_REQUEST)) {
+                                        return Mono.fromSupplier(() ->
+                                                new RAGAnswer()
+                                                        .answer("Either no question was posed or method not supported; use GET!"));
+                                    } else {
+                                        return Mono.fromSupplier(() ->
+                                                new RAGAnswer()
+                                                        .answer("Something went wrong. Please see the logs of 'concept-graphs-api'."));
+                                    }
+                                }
+                        );
+        return apiResponse.block();
+    }
+
+    public String initRag(
+            String process,
+            boolean force,
+            JSONObject jsonBody
+    ) {
+        Mono<String> apiResponse =
+                conceptGraphsApi
+                        .post()
+                        .uri(
+                                uriBuilder ->
+                                        uriBuilder
+                                                .path(ApiRagMethod.INIT.getEndpoint())
+                                                .queryParam("process", process)
+                                                .queryParam("force", force)
+                                                .build())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(jsonBody.toString())
+                        .exchangeToMono(
+                                response -> response.bodyToMono(String.class)
+                        );
+        return apiResponse.block();
+    }
+}

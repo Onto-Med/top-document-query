@@ -1,15 +1,15 @@
-package care.smith.top.top_document_query.concept_cluster;
+package care.smith.top.top_document_query.concept_graphs_api;
 
 import care.smith.top.model.*;
-import care.smith.top.top_document_query.concept_cluster.model.*;
-import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiGraphMethod;
-import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiPipelineMethod;
-import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiProcessMethod;
-import care.smith.top.top_document_query.concept_cluster.model.api_method.ApiStatus;
-import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineFailEntity;
-import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineFailWithExplicit;
-import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineResponseEntity;
-import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineStatusEntity;
+import care.smith.top.top_document_query.concept_graphs_api.model.*;
+import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiGraphMethod;
+import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiPipelineMethod;
+import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiProcessMethod;
+import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiStatus;
+import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineFailEntity;
+import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineFailWithExplicit;
+import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineResponseEntity;
+import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineStatusEntity;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -38,104 +38,16 @@ import reactor.core.publisher.Mono;
  * <p>Each pipeline consists of two steps, one for generating concept graphs from a document source,
  * and one for extracting relevant clusters from these graphs.
  */
-public class ConceptPipelineManager {
-  public static final int DEFAULT_MAX_IN_MEMORY_SIZE = 16 * 1024 * 1024;
+public class ConceptPipelineManager extends AbstractExternalManager {
+
   private static final Logger LOGGER = Logger.getLogger(ConceptPipelineManager.class.getName());
-  private WebClient conceptGraphsApi;
-  private int maxInMemorySize = DEFAULT_MAX_IN_MEMORY_SIZE;
-  private URL currentUrl;
-  private URL defaultUrl;
 
-  public URL getCurrentUrl() {
-    return currentUrl;
+  ConceptPipelineManager(String conceptGraphApiEndpoint) throws MalformedURLException {
+      super(conceptGraphApiEndpoint, LOGGER);
   }
 
-  public URL getDefaultUrl() {
-    return defaultUrl;
-  }
-
-  /**
-   * Instantiate a new concept pipeline manager with the given concept-graphs endpoint. See <a
-   * href="https://github.com/Onto-Med/concept-graphs">concept-graphs</a> for details.
-   *
-   * <p>Maximum in-memory size for requests to Elasticsearch defaults to {@link
-   * #DEFAULT_MAX_IN_MEMORY_SIZE} bytes.
-   *
-   * @param conceptGraphApiEndpoint The concept-graphs endpoint.
-   */
-  public ConceptPipelineManager(String conceptGraphApiEndpoint) throws MalformedURLException {
-    this.currentUrl = new URL(conceptGraphApiEndpoint);
-    this.defaultUrl = new URL(conceptGraphApiEndpoint);
-    ExchangeStrategies exchangeStrategies =
-        ExchangeStrategies.builder()
-            .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(maxInMemorySize))
-            .build();
-    conceptGraphsApi =
-        WebClient.builder()
-            .baseUrl(conceptGraphApiEndpoint)
-            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .exchangeStrategies(exchangeStrategies)
-            .build();
-  }
-
-  /**
-   * Instantiate a new concept pipeline manager with the given concept-graphs endpoint. See <a
-   * href="https://github.com/Onto-Med/concept-graphs">concept-graphs</a> for details.
-   *
-   * @param conceptGraphApiEndpoint The concept-graphs endpoint.
-   * @param maxInMemorySize Maximum in-memory size in bytes for requests to Elasticsearch.
-   */
-  public ConceptPipelineManager(String conceptGraphApiEndpoint, int maxInMemorySize)
-      throws MalformedURLException {
-    this.maxInMemorySize = maxInMemorySize;
-    new ConceptPipelineManager(conceptGraphApiEndpoint);
-  }
-
-  public boolean isAccessible() {
-    try {
-      conceptGraphsApi.get().retrieve().bodyToMono(String.class).block();
-      return true;
-    } catch (WebClientResponseException e) {
-      LOGGER.severe(
-          String.format(
-              "Pipeline Manager at '%s' doesn't seem to be accessible.", this.currentUrl));
-      return false;
-    }
-  }
-
-  /**
-   * Switches to a new base url for the Concept Graphs API endpoint.
-   *
-   * @param conceptGraphApiEndpoint The new concept-graphs endpoint.
-   * @return {@code boolean} whether change was successful or not.
-   */
-  public boolean switchConnection(String conceptGraphApiEndpoint) throws MalformedURLException {
-    if (!(new URL(conceptGraphApiEndpoint)).sameFile(this.currentUrl)) {
-      URL tmpUrl = this.currentUrl;
-      try {
-        this.currentUrl = new URL(conceptGraphApiEndpoint);
-        this.conceptGraphsApi =
-            this.conceptGraphsApi.mutate().baseUrl(conceptGraphApiEndpoint).build();
-        if (!isAccessible()) {
-          this.currentUrl = tmpUrl;
-          this.conceptGraphsApi = this.conceptGraphsApi.mutate().baseUrl(tmpUrl.toString()).build();
-          return false;
-        }
-        ;
-        LOGGER.info("New base url is: " + "'" + conceptGraphApiEndpoint + "'.");
-        return true;
-      } catch (Exception e) {
-        LOGGER.warning(
-            String.format(
-                "Couldn't change to new base url: '%s'; using the previous one: '%s'.",
-                conceptGraphApiEndpoint, tmpUrl.toString()));
-        this.conceptGraphsApi = this.conceptGraphsApi.mutate().baseUrl(tmpUrl.toString()).build();
-      }
-    } else {
-      LOGGER.info("New base url is the same as the current one.");
-      return true;
-    }
-    return false;
+  ConceptPipelineManager(String conceptGraphApiEndpoint, int memorySize) throws MalformedURLException {
+      super(conceptGraphApiEndpoint, memorySize, LOGGER);
   }
 
   /**
