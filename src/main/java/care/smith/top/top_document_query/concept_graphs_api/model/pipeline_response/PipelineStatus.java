@@ -1,4 +1,4 @@
-package care.smith.top.top_document_query.concept_cluster.model.pipeline_response;
+package care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response;
 
 import care.smith.top.model.ConceptGraphPipelineStatusEnum;
 import care.smith.top.model.ConceptGraphPipelineStepsEnum;

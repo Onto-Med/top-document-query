@@ -1,4 +1,4 @@
-package care.smith.top.top_document_query.concept_cluster.model;
+package care.smith.top.top_document_query.concept_graphs_api.model;
 
 public class AdjacencyObject {
   private String id;

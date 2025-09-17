@@ -1,4 +1,4 @@
-package care.smith.top.top_document_query.concept_cluster.model.api_method;
+package care.smith.top.top_document_query.concept_graphs_api.model.api_method;
 
 public enum ApiStatus {
   SELF("/status"),

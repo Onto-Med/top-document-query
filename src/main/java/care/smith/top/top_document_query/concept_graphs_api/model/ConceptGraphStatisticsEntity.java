@@ -1,8 +1,8 @@
-package care.smith.top.top_document_query.concept_cluster.model;
+package care.smith.top.top_document_query.concept_graphs_api.model;
 
 import care.smith.top.model.PipelineResponse;
 import care.smith.top.model.PipelineResponseStatus;
-import care.smith.top.top_document_query.concept_cluster.model.pipeline_response.PipelineResponseEntity;
+import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineResponseEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
