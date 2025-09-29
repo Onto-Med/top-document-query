@@ -2,12 +2,15 @@ package care.smith.top.top_document_query.concept_graphs_api;
 
 import care.smith.top.model.RAGAnswer;
 import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiRagMethod;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import reactor.core.publisher.Mono;
 
 import java.net.MalformedURLException;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 public class RAGManager extends AbstractExternalManager {
@@ -35,28 +38,59 @@ public class RAGManager extends AbstractExternalManager {
                                                 .queryParam("process", process)
                                                 .queryParam("q", question)
                                                 .build())
-                        .exchangeToMono(
-                                response -> {
-                                    if (response.statusCode().equals(HttpStatus.OK)) {
-                                        return response.bodyToMono(RAGAnswer.class);
-                                    } else if (response.statusCode().equals(HttpStatus.NOT_FOUND)) {
-                                        return Mono.fromSupplier(() ->
-                                                new RAGAnswer()
-                                                        .answer("No active and ready rag component found.")
-                                                        .info("You need to initialize it first and wait for it to be ready with '/document/rag/init' endpoint."));
-                                    } else if (response.statusCode().equals(HttpStatus.BAD_REQUEST)) {
-                                        return Mono.fromSupplier(() ->
-                                                new RAGAnswer()
-                                                        .answer("Either no question was posed or method not supported; use GET!"));
-                                    } else {
-                                        return Mono.fromSupplier(() ->
-                                                new RAGAnswer()
-                                                        .answer("Something went wrong. Please see the logs of 'concept-graphs-api'."));
-                                    }
-                                }
-                        );
+                        .exchangeToMono(responseToRAGAnswer);
         return apiResponse.block();
     }
+
+    public RAGAnswer poseQuestion(
+            String process,
+            String question,
+            String[] filter_list
+    ) {
+        class FilterIds {
+            @JsonProperty("doc_ids") String[] docIds;
+            FilterIds addIds(String[] ids) {
+                this.docIds = ids;
+                return this;
+            }
+        }
+
+        FilterIds filterIds = new FilterIds().addIds(filter_list);
+
+        Mono<RAGAnswer> apiResponse =
+                conceptGraphsApi
+                        .post()
+                        .uri(
+                                uriBuilder ->
+                                        uriBuilder
+                                                .path(ApiRagMethod.QUESTION.getEndpoint())
+                                                .queryParam("process", process)
+                                                .queryParam("q", question)
+                                                .build())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(filterIds, FilterIds.class)
+                        .exchangeToMono(responseToRAGAnswer);
+        return apiResponse.block();
+    }
+
+    private final Function<ClientResponse, Mono<RAGAnswer>> responseToRAGAnswer = (response) -> {
+        if (response.statusCode().equals(HttpStatus.OK)) {
+            return response.bodyToMono(RAGAnswer.class);
+        } else if (response.statusCode().equals(HttpStatus.NOT_FOUND)) {
+            return Mono.fromSupplier(() ->
+                    new RAGAnswer()
+                            .answer("No active and ready rag component found.")
+                            .info("You need to initialize it first and wait for it to be ready with '/document/rag/init' endpoint."));
+        } else if (response.statusCode().equals(HttpStatus.BAD_REQUEST)) {
+            return Mono.fromSupplier(() ->
+                    new RAGAnswer()
+                            .answer("Either no question was posed or method not supported; use GET!"));
+        } else {
+            return Mono.fromSupplier(() ->
+                    new RAGAnswer()
+                            .answer("Something went wrong. Please see the logs of 'concept-graphs-api'."));
+        }
+    };
 
     public String initRag(
             String process,

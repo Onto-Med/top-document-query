@@ -14,6 +14,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -27,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -392,24 +394,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
                               "return_statistics", returnStatistics != null && returnStatistics)
                           .build())
               .body(BodyInserters.fromMultipartData(parts))
-              .exchangeToMono(
-                  response -> {
-                    if (response.statusCode().equals(HttpStatus.OK)) {
-                      return response.bodyToMono(ConceptGraphStatisticsEntity.class);
-                    } else if (response.statusCode().equals(HttpStatus.ACCEPTED)) {
-                      return response.bodyToMono(PipelineStatusEntity.class);
-                    } else if (ArrayUtils.contains(
-                        new int[] {
-                          HttpStatus.FORBIDDEN.value(),
-                          HttpStatus.NOT_FOUND.value(),
-                          HttpStatus.BAD_REQUEST.value()
-                        },
-                        response.statusCode().value())) {
-                      return response.bodyToMono(PipelineFailWithExplicit.class);
-                    } else {
-                      return response.bodyToMono(PipelineFailEntity.class);
-                    }
-                  });
+              .exchangeToMono(responseToPipelineResponse);
       return apiResponse.block();
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
@@ -439,28 +424,29 @@ public class ConceptPipelineManager extends AbstractExternalManager {
                           .build())
               .contentType(MediaType.APPLICATION_JSON)
               .bodyValue(jsonBody.toString())
-              .exchangeToMono(
-                  response -> {
-                    if (response.statusCode().equals(HttpStatus.OK)) {
-                      return response.bodyToMono(ConceptGraphStatisticsEntity.class);
-                    } else if (response.statusCode().equals(HttpStatus.ACCEPTED)) {
-                      return response.bodyToMono(PipelineStatusEntity.class);
-                    } else if (ArrayUtils.contains(
-                        new int[] {
-                          HttpStatus.FORBIDDEN.value(),
-                          HttpStatus.NOT_FOUND.value(),
-                          HttpStatus.BAD_REQUEST.value()
-                        },
-                        response.statusCode().value())) {
-                      return response.bodyToMono(PipelineFailWithExplicit.class);
-                    } else {
-                      return response.bodyToMono(PipelineFailEntity.class);
-                    }
-                  });
+              .exchangeToMono(responseToPipelineResponse);
       return apiResponse.block();
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
       return null;
     }
   }
+
+  private final Function<ClientResponse, Mono<PipelineResponseEntity>> responseToPipelineResponse = (response) -> {
+      if (response.statusCode().equals(HttpStatus.OK)) {
+          return response.bodyToMono(ConceptGraphStatisticsEntity.class);
+      } else if (response.statusCode().equals(HttpStatus.ACCEPTED)) {
+          return response.bodyToMono(PipelineStatusEntity.class);
+      } else if (ArrayUtils.contains(
+              new int[] {
+                      HttpStatus.FORBIDDEN.value(),
+                      HttpStatus.NOT_FOUND.value(),
+                      HttpStatus.BAD_REQUEST.value()
+              },
+              response.statusCode().value())) {
+          return response.bodyToMono(PipelineFailWithExplicit.class);
+      } else {
+          return response.bodyToMono(PipelineFailEntity.class);
+      }
+  };
 }
