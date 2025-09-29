@@ -12,7 +12,6 @@ import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_respo
 import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineStatusEntity;
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -22,15 +21,12 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.ArrayUtils;
 import org.json.JSONObject;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
@@ -45,11 +41,12 @@ public class ConceptPipelineManager extends AbstractExternalManager {
   private static final Logger LOGGER = Logger.getLogger(ConceptPipelineManager.class.getName());
 
   public ConceptPipelineManager(String conceptGraphApiEndpoint) throws MalformedURLException {
-      super(conceptGraphApiEndpoint, LOGGER);
+    super(conceptGraphApiEndpoint, LOGGER);
   }
 
-  public ConceptPipelineManager(String conceptGraphApiEndpoint, int memorySize) throws MalformedURLException {
-      super(conceptGraphApiEndpoint, memorySize, LOGGER);
+  public ConceptPipelineManager(String conceptGraphApiEndpoint, int memorySize)
+      throws MalformedURLException {
+    super(conceptGraphApiEndpoint, memorySize, LOGGER);
   }
 
   /**
@@ -432,21 +429,22 @@ public class ConceptPipelineManager extends AbstractExternalManager {
     }
   }
 
-  private final Function<ClientResponse, Mono<PipelineResponseEntity>> responseToPipelineResponse = (response) -> {
-      if (response.statusCode().equals(HttpStatus.OK)) {
+  private final Function<ClientResponse, Mono<PipelineResponseEntity>> responseToPipelineResponse =
+      (response) -> {
+        if (response.statusCode().equals(HttpStatus.OK)) {
           return response.bodyToMono(ConceptGraphStatisticsEntity.class);
-      } else if (response.statusCode().equals(HttpStatus.ACCEPTED)) {
+        } else if (response.statusCode().equals(HttpStatus.ACCEPTED)) {
           return response.bodyToMono(PipelineStatusEntity.class);
-      } else if (ArrayUtils.contains(
-              new int[] {
-                      HttpStatus.FORBIDDEN.value(),
-                      HttpStatus.NOT_FOUND.value(),
-                      HttpStatus.BAD_REQUEST.value()
-              },
-              response.statusCode().value())) {
+        } else if (ArrayUtils.contains(
+            new int[] {
+              HttpStatus.FORBIDDEN.value(),
+              HttpStatus.NOT_FOUND.value(),
+              HttpStatus.BAD_REQUEST.value()
+            },
+            response.statusCode().value())) {
           return response.bodyToMono(PipelineFailWithExplicit.class);
-      } else {
+        } else {
           return response.bodyToMono(PipelineFailEntity.class);
-      }
-  };
+        }
+      };
 }
