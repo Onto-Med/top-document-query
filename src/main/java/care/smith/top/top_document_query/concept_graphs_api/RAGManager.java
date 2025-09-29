@@ -62,7 +62,7 @@ public class RAGManager extends AbstractExternalManager {
                         .queryParam("q", question)
                         .build())
             .contentType(MediaType.APPLICATION_JSON)
-            .body(filterIds, FilterIds.class)
+            .body(Mono.just(filterIds), FilterIds.class)
             .exchangeToMono(responseToRAGAnswer);
     return apiResponse.block();
   }
