@@ -111,8 +111,8 @@ public class RAGManager extends AbstractExternalManager {
     return apiResponse.block();
   }
 
-  public boolean isActiveRag(String process) {
-      RAGStatus apiResponse =
+  public RAGStatus getRAGStatus(String process) {
+      Mono<RAGStatus> apiResponse =
               conceptGraphsApi
                       .get()
                       .uri(
@@ -121,9 +121,10 @@ public class RAGManager extends AbstractExternalManager {
                                               .path(ApiStatus.RAG.getEndpoint())
                                               .queryParam("process", process)
                                               .build())
-                      .exchangeToMono(response -> response.bodyToMono(RAGStatus.class))
-                      .block();
-      if (apiResponse == null) return false;
-      return Boolean.TRUE.equals(apiResponse.isActive());
+                      .exchangeToMono(
+                              response -> response.bodyToMono(RAGStatus.class)
+                      );
+
+      return apiResponse.block();
   }
 }
