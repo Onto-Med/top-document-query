@@ -112,19 +112,17 @@ public class RAGManager extends AbstractExternalManager {
   }
 
   public RAGStatus getRAGStatus(String process) {
-      Mono<RAGStatus> apiResponse =
-              conceptGraphsApi
-                      .get()
-                      .uri(
-                              uriBuilder ->
-                                      uriBuilder
-                                              .path(ApiStatus.RAG.getEndpoint())
-                                              .queryParam("process", process)
-                                              .build())
-                      .exchangeToMono(
-                              response -> response.bodyToMono(RAGStatus.class)
-                      );
+    Mono<RAGStatus> apiResponse =
+        conceptGraphsApi
+            .get()
+            .uri(
+                uriBuilder ->
+                    uriBuilder
+                        .path(ApiStatus.RAG.getEndpoint())
+                        .queryParam("process", process)
+                        .build())
+            .exchangeToMono(response -> response.bodyToMono(RAGStatus.class));
 
-      return apiResponse.block();
+    return apiResponse.block();
   }
 }
