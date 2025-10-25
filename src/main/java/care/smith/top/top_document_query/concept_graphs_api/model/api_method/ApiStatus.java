@@ -2,7 +2,8 @@ package care.smith.top.top_document_query.concept_graphs_api.model.api_method;
 
 public enum ApiStatus {
   SELF("/status"),
-  DOCUMENT_SERVER("/status/document-server");
+  DOCUMENT_SERVER("/status/document-server"),
+  RAG("/status/rag");
 
   private String endpoint;
 

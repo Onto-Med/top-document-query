@@ -1,7 +1,9 @@
 package care.smith.top.top_document_query.concept_graphs_api;
 
 import care.smith.top.model.RAGAnswer;
+import care.smith.top.model.RAGStatus;
 import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiRagMethod;
+import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.MalformedURLException;
 import java.util.function.Function;
@@ -106,6 +108,21 @@ public class RAGManager extends AbstractExternalManager {
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(jsonBody.toString())
             .exchangeToMono(response -> response.bodyToMono(String.class));
+    return apiResponse.block();
+  }
+
+  public RAGStatus getRAGStatus(String process) {
+    Mono<RAGStatus> apiResponse =
+        conceptGraphsApi
+            .get()
+            .uri(
+                uriBuilder ->
+                    uriBuilder
+                        .path(ApiStatus.RAG.getEndpoint())
+                        .queryParam("process", process)
+                        .build())
+            .exchangeToMono(response -> response.bodyToMono(RAGStatus.class));
+
     return apiResponse.block();
   }
 }
