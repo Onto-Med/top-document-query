@@ -127,4 +127,12 @@ public class DocumentEntity {
     this.highlights = highlights;
     return this;
   }
+
+  public DocumentEntity fromDocumentModel(Document document) {
+    this.id = document.getId();
+    this.name = document.getName();
+    this.text = document.getText();
+    this.label = document.getLabel();
+    return this;
+  }
 }

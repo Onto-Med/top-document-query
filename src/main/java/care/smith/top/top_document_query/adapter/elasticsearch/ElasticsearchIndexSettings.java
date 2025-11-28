@@ -1,50 +1,46 @@
 package care.smith.top.top_document_query.adapter.elasticsearch;
 
 import care.smith.top.top_document_query.adapter.DocumentIndexSettings;
+import co.elastic.clients.elasticsearch._types.analysis.*;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
-import org.json.JSONObject;
+import co.elastic.clients.elasticsearch.indices.IndexSettingsAnalysis;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Objects;
 
 public class ElasticsearchIndexSettings implements DocumentIndexSettings {
 
-    public static @Nullable Map<String, Object> getMappings(String language) {
+    public static Map<String, Map<String, Property>> getMappings(String language) {
         if (Objects.equals(language.toLowerCase(), "de")) {
             return Map.of("properties", Map.of(
                     "id", Property.of(p -> p.keyword(k -> k.index(true))),
-                    "name", Property.of(p -> p.text(t -> t.fields("keyword", Property.of(ip -> ip.keyword(k -> k.ignoreAbove(256))))))),
+                    "name", Property.of(p -> p.text(t -> t.fields("keyword", Property.of(ip -> ip.keyword(k -> k.ignoreAbove(256)))))),
                     "text", Property.of(p -> p.text(t -> t.analyzer("medical_analyzer_german")))
-            );
+            ));
         } else {
-            return null;
+            return Map.of("properties", Map.of());
         }
     }
 
-    public @Nullable Map<String, Map<String, JSONObject>> getSettings(String language) {
+    public static Map<String, IndexSettingsAnalysis> getSettings(String language) {
         if (Objects.equals(language.toLowerCase(), "de")) {
             return Map.of("analysis",
-                    Map.of("analyzer", new JSONObject(
-                                    """
-                                            {
-                                            'analyzer': {
-                                                'medical_analyzer_german': {
-                                                    'tokenizer': 'whitespace',
-                                                    'filter': ['lowercase', 'german_stop', 'german_snowball']
-                                                },
-                                            },
-                                            'filter': {
-                                                'german_snowball': {'type': 'snowball', 'language': 'German2'},
-                                                'german_stop': {'type': 'stop', 'stopwords': '_german_'},
-                                            }
-                                            }
-                                            """
+                    new IndexSettingsAnalysis.Builder()
+                            .filter(
+                                    Map.of(
+                                            "german_snowball", new TokenFilter.Builder().definition(new TokenFilterDefinition.Builder().snowball(s -> s.language(SnowballLanguage.German2)).build()).build(),
+                                            "german_stop", new TokenFilter.Builder().definition(new TokenFilterDefinition.Builder().stop(s -> s.stopwords("_german_")).build()).build()
+                                    )
                             )
-                    )
+                            .analyzer(
+                                    Map.of(
+                                            "medical_analyzer_german", new Analyzer.Builder().custom(new CustomAnalyzer.Builder().tokenizer("whitespace").filter("lowercase", "german_stop", "german_snowball").build()).build()
+                                    )
+                            )
+                            .build()
             );
-        } else  {
-            return null;
+        } else {
+            return Map.of("analysis", new IndexSettingsAnalysis.Builder().build());
         }
     }
 }

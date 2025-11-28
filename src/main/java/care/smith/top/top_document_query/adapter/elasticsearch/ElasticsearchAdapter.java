@@ -14,17 +14,22 @@ import co.elastic.clients.elasticsearch._types.*;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.elasticsearch.core.search.HighlighterType;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
+import co.elastic.clients.elasticsearch.indices.IndexSettingsAnalysis;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -385,25 +390,61 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
     @Override
-    public DocumentImport importDocuments(@NonNull Document[] documents, String indexName, String language) throws IOException {
-        if (initDocumentIndex(indexName, language)) {
-            System.out.println(esClient.indices().getMapping());
+    public DocumentImport importDocuments(@NonNull Document[] documents, String language) throws IOException {
+      String index = config.getIndex()[0].toLowerCase();
+      DocumentImport documentImport = new DocumentImport();
+      if (initDocumentIndex(language)) {
+        BulkRequest.Builder br = new BulkRequest.Builder();
+        for (Document document : documents) {
+          br.operations(op -> op
+                  .index(idx -> idx
+                          .index(index)
+                          .id(document.getId())
+                          .document(new DocumentEntity().fromDocumentModel(document))
+                  )
+          );
         }
-        return null;
+        BulkResponse result = esClient.bulk(br.build());
+        int successCount = 0;
+        if (result.errors()) {
+          LOGGER.warning("Document upload had errors:");
+        }
+        for (BulkResponseItem item : result.items()) {
+          if (item.error() != null) {
+            LOGGER.severe(item.error().reason());
+          } else {
+            documentImport.addDocumentsItem(item.id());
+            successCount++;
+          }
+        }
+        if (successCount >= result.items().size()) {
+          documentImport.setStatus(DocumentImportStatus.SUCCESSFUL);
+        } else if (successCount == 0) {
+          documentImport.setStatus(DocumentImportStatus.FAILED);
+          LOGGER.severe("All documents failed to upload.");
+        } else {
+          documentImport.setStatus(DocumentImportStatus.PARTIALLY);
+          LOGGER.warning(String.format("Not all documents were successfully uploaded. %s from %s failed.", result.items().size() - successCount, result.items().size()));
+        }
+      }
+      return documentImport.count(BigDecimal.valueOf(documentImport.getDocuments() != null ? documentImport.getDocuments().size() : 0));
     }
 
-    private boolean initDocumentIndex(String indexName, String language) {
-        if (hasIndex(indexName)) {
-            LOGGER.warning("Index already exists: " + indexName);
+    private boolean initDocumentIndex(String language) {
+      String index = config.getIndex()[0].toLowerCase();
+        if (hasIndex(index)) {
+            LOGGER.warning("Index already exists: " + index);
             return true;
         }
         try {
             esClient.indices().create(c -> c
-                    .index(indexName)
+                    .index(index)
                     .mappings(m -> m
-                                    .properties((Map<String, Property>) ElasticsearchIndexSettings.getMappings(language).get("properties"))
-                            )
-//                    .settings()
+                      .properties(Objects.requireNonNull(ElasticsearchIndexSettings.getMappings(language)).get("properties"))
+                    )
+                    .settings(s -> s
+                      .analysis(Objects.requireNonNull(ElasticsearchIndexSettings.getSettings(language)).get("analysis"))
+                    )
             );
         } catch (IOException e) {
             return false;

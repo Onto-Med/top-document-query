@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
 import care.smith.top.model.Document;
+import care.smith.top.model.DocumentImport;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
 import care.smith.top.top_document_query.functions.And;
@@ -12,6 +13,7 @@ import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import care.smith.top.top_document_query.util.builder.Cat;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -177,9 +179,16 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   }
 
   @Test
-  void createIndex() throws IOException {
-      Document[] documents = {};
-      adapter.importDocuments(documents, "testIndex", "de");
-      System.out.println();
+  void createIndexAndUploadDocuments() throws IOException {
+    adapter.getConfig().setIndex(new String[]{"test_index"});
+      Document[] documents = {
+              new Document().id("d1").name("d1").text("Das ist ein deutscher Text."),
+              new Document().id("d2").name("d2").text("Das ist ein deutscher Text. Der auch noch ein paar mehr Wörter hat.")
+      };
+      DocumentImport result = adapter.importDocuments(documents,"de");
+      assertEquals(BigDecimal.valueOf(2), result.getCount());
+    System.out.println(result);
+    System.out.println(adapter.getAllDocumentsBatched(2, false).findFirst().get());
+    adapter.getConfig().setIndex(ELASTIC_INDEX);
   }
 }

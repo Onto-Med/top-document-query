@@ -131,7 +131,6 @@ public abstract class TextAdapter {
 
     public abstract DocumentImport importDocuments(
         @NonNull Document[] documents,
-        String indexName,
         String language
     ) throws IOException;
 }
