@@ -28,4 +28,15 @@ public class Connection {
   public void setPort(String port) {
     this.port = port;
   }
+
+    @Override
+    public String toString() {
+        return "Connection [url="
+                + url
+                + ", port="
+                + port
+                + ", alternateUrl="
+                + alternateUrl
+                + "]";
+    }
 }

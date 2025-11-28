@@ -175,4 +175,11 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
     assertEquals(allTestDocuments, result2.toSet());
     assertEquals(Set.of(document1, document2), result3.toSet());
   }
+
+  @Test
+  void createIndex() throws IOException {
+      Document[] documents = {};
+      adapter.importDocuments(documents, "testIndex", "de");
+      System.out.println();
+  }
 }

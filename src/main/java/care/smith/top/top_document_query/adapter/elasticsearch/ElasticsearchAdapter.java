@@ -1,9 +1,6 @@
 package care.smith.top.top_document_query.adapter.elasticsearch;
 
-import care.smith.top.model.ConceptQuery;
-import care.smith.top.model.Document;
-import care.smith.top.model.Entity;
-import care.smith.top.model.Expression;
+import care.smith.top.model.*;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.TextAdapter;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
@@ -14,13 +11,16 @@ import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
+import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.elasticsearch.core.search.HighlighterType;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -384,7 +384,48 @@ public class ElasticsearchAdapter extends TextAdapter {
     return toPage(response, page, simplified);
   }
 
-  private SearchResponse<DocumentEntity> getSearchAfter(
+    @Override
+    public DocumentImport importDocuments(@NonNull Document[] documents, String indexName, String language) throws IOException {
+        if (initDocumentIndex(indexName, language)) {
+            System.out.println(esClient.indices().getMapping());
+        }
+        return null;
+    }
+
+    private boolean initDocumentIndex(String indexName, String language) {
+        if (hasIndex(indexName)) {
+            LOGGER.warning("Index already exists: " + indexName);
+            return true;
+        }
+        try {
+            esClient.indices().create(c -> c
+                    .index(indexName)
+                    .mappings(m -> m
+                                    .properties((Map<String, Property>) ElasticsearchIndexSettings.getMappings(language).get("properties"))
+                            )
+//                    .settings()
+            );
+        } catch (IOException e) {
+            return false;
+        } catch (ElasticsearchException e) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean hasIndex(String indexName) {
+        try {
+            return esClient.indices().exists(ExistsRequest.of(e -> e.index(indexName))).value();
+        } catch (IOException e) {
+            LOGGER.severe("Could not connect to elasticsearch: " + config.getConnection().toString());
+            return false;
+        } catch (ElasticsearchException e) {
+            LOGGER.severe("Some Elasticsearch Error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private SearchResponse<DocumentEntity> getSearchAfter(
       Query query,
       @Nullable Highlight highlight,
       FieldSort fieldSort,
