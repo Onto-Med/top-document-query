@@ -1,6 +1,5 @@
 package care.smith.top.top_document_query.adapter;
 
-
 import java.util.Map;
 import javax.annotation.Nullable;
 
