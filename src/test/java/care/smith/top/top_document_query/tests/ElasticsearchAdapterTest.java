@@ -182,13 +182,17 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
   void createIndexAndUploadDocuments() throws IOException {
     adapter.getConfig().setIndex(new String[]{"test_index"});
       Document[] documents = {
-              new Document().id("d1").name("d1").text("Das ist ein deutscher Text."),
-              new Document().id("d2").name("d2").text("Das ist ein deutscher Text. Der auch noch ein paar mehr Wörter hat.")
+              document1, document2
       };
       DocumentImport result = adapter.importDocuments(documents,"de");
       assertEquals(BigDecimal.valueOf(2), result.getCount());
-    System.out.println(result);
-    System.out.println(adapter.getAllDocumentsBatched(2, false).findFirst().get());
+      try {
+        Thread.sleep(2000); // need to wait a bit so that the documents are indexed
+        assertEquals(Set.of(document1, document2), adapter.getAllDocumentsBatched(2, false).flatMap(List::stream).collect(Collectors.toSet()));
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+
     adapter.getConfig().setIndex(ELASTIC_INDEX);
   }
 }
