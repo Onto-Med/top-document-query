@@ -29,14 +29,8 @@ public class Connection {
     this.port = port;
   }
 
-    @Override
-    public String toString() {
-        return "Connection [url="
-                + url
-                + ", port="
-                + port
-                + ", alternateUrl="
-                + alternateUrl
-                + "]";
-    }
+  @Override
+  public String toString() {
+    return "Connection [url=" + url + ", port=" + port + ", alternateUrl=" + alternateUrl + "]";
+  }
 }

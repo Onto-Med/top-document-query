@@ -12,8 +12,6 @@ import java.util.stream.Stream;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.NonNull;
 
-import javax.servlet.http.HttpServletRequest;
-
 public abstract class TextAdapter {
 
   protected TextAdapterConfig config;
@@ -129,8 +127,6 @@ public abstract class TextAdapter {
       Boolean simplified)
       throws IOException;
 
-    public abstract DocumentImport importDocuments(
-        @NonNull Document[] documents,
-        String language
-    ) throws IOException;
+  public abstract DocumentImport importDocuments(@NonNull Document[] documents, String language)
+      throws IOException;
 }

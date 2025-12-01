@@ -180,18 +180,21 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
 
   @Test
   void createIndexAndUploadDocuments() throws IOException {
-    adapter.getConfig().setIndex(new String[]{"test_index"});
-      Document[] documents = {
-              document1, document2
-      };
-      DocumentImport result = adapter.importDocuments(documents,"de");
-      assertEquals(BigDecimal.valueOf(2), result.getCount());
-      try {
-        Thread.sleep(2000); // need to wait a bit so that the documents are indexed
-        assertEquals(Set.of(document1, document2), adapter.getAllDocumentsBatched(2, false).flatMap(List::stream).collect(Collectors.toSet()));
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+    adapter.getConfig().setIndex(new String[] {"test_index"});
+    Document[] documents = {document1, document2};
+    DocumentImport result = adapter.importDocuments(documents, "de");
+    assertEquals(BigDecimal.valueOf(2), result.getCount());
+    try {
+      Thread.sleep(2000); // need to wait a bit so that the documents are indexed
+      assertEquals(
+          Set.of(document1, document2),
+          adapter
+              .getAllDocumentsBatched(2, false)
+              .flatMap(List::stream)
+              .collect(Collectors.toSet()));
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
 
     adapter.getConfig().setIndex(ELASTIC_INDEX);
   }

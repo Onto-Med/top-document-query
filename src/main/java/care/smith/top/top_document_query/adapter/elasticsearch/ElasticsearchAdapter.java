@@ -11,7 +11,6 @@ import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
-import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -24,7 +23,6 @@ import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.elasticsearch.core.search.HighlighterType;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
-import co.elastic.clients.elasticsearch.indices.IndexSettingsAnalysis;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -389,84 +387,98 @@ public class ElasticsearchAdapter extends TextAdapter {
     return toPage(response, page, simplified);
   }
 
-    @Override
-    public DocumentImport importDocuments(@NonNull Document[] documents, String language) throws IOException {
-      String index = config.getIndex()[0].toLowerCase();
-      DocumentImport documentImport = new DocumentImport();
-      if (initDocumentIndex(language)) {
-        BulkRequest.Builder br = new BulkRequest.Builder();
-        for (Document document : documents) {
-          br.operations(op -> op
-                  .index(idx -> idx
-                          .index(index)
-                          .id(document.getId())
-                          .document(new DocumentEntity().fromDocumentModel(document))
-                  )
-          );
-        }
-        BulkResponse result = esClient.bulk(br.build());
-        int successCount = 0;
-        if (result.errors()) {
-          LOGGER.warning("Document upload had errors:");
-        }
-        for (BulkResponseItem item : result.items()) {
-          if (item.error() != null) {
-            LOGGER.severe(item.error().reason());
-          } else {
-            documentImport.addDocumentsItem(item.id());
-            successCount++;
-          }
-        }
-        if (successCount >= result.items().size()) {
-          documentImport.setStatus(DocumentImportStatus.SUCCESSFUL);
-        } else if (successCount == 0) {
-          documentImport.setStatus(DocumentImportStatus.FAILED);
-          LOGGER.severe("All documents failed to upload.");
+  @Override
+  public DocumentImport importDocuments(@NonNull Document[] documents, String language)
+      throws IOException {
+    String index = config.getIndex()[0].toLowerCase();
+    DocumentImport documentImport = new DocumentImport();
+    if (initDocumentIndex(language)) {
+      BulkRequest.Builder br = new BulkRequest.Builder();
+      for (Document document : documents) {
+        br.operations(
+            op ->
+                op.index(
+                    idx ->
+                        idx.index(index)
+                            .id(document.getId())
+                            .document(new DocumentEntity().fromDocumentModel(document))));
+      }
+      BulkResponse result = esClient.bulk(br.build());
+      int successCount = 0;
+      if (result.errors()) {
+        LOGGER.warning("Document upload had errors:");
+      }
+      for (BulkResponseItem item : result.items()) {
+        if (item.error() != null) {
+          LOGGER.severe(item.error().reason());
         } else {
-          documentImport.setStatus(DocumentImportStatus.PARTIALLY);
-          LOGGER.warning(String.format("Not all documents were successfully uploaded. %s from %s failed.", result.items().size() - successCount, result.items().size()));
+          documentImport.addDocumentsItem(item.id());
+          successCount++;
         }
       }
-      return documentImport.count(BigDecimal.valueOf(documentImport.getDocuments() != null ? documentImport.getDocuments().size() : 0));
+      if (successCount >= result.items().size()) {
+        documentImport.setStatus(DocumentImportStatus.SUCCESSFUL);
+      } else if (successCount == 0) {
+        documentImport.setStatus(DocumentImportStatus.FAILED);
+        LOGGER.severe("All documents failed to upload.");
+      } else {
+        documentImport.setStatus(DocumentImportStatus.PARTIALLY);
+        LOGGER.warning(
+            String.format(
+                "Not all documents were successfully uploaded. %s from %s failed.",
+                result.items().size() - successCount, result.items().size()));
+      }
     }
+    return documentImport.count(
+        BigDecimal.valueOf(
+            documentImport.getDocuments() != null ? documentImport.getDocuments().size() : 0));
+  }
 
-    private boolean initDocumentIndex(String language) {
-      String index = config.getIndex()[0].toLowerCase();
-        if (hasIndex(index)) {
-            LOGGER.warning("Index already exists: " + index);
-            return true;
-        }
-        try {
-            esClient.indices().create(c -> c
-                    .index(index)
-                    .mappings(m -> m
-                      .properties(Objects.requireNonNull(ElasticsearchIndexSettings.getMappings(language)).get("properties"))
-                    )
-                    .settings(s -> s
-                      .analysis(Objects.requireNonNull(ElasticsearchIndexSettings.getSettings(language)).get("analysis"))
-                    )
-            );
-        } catch (IOException e) {
-            return false;
-        } catch (ElasticsearchException e) {
-            return false;
-        }
-        return true;
+  private boolean initDocumentIndex(String language) {
+    String index = config.getIndex()[0].toLowerCase();
+    if (hasIndex(index)) {
+      LOGGER.warning("Index already exists: " + index);
+      return true;
     }
-
-    private boolean hasIndex(String indexName) {
-        try {
-            return esClient.indices().exists(ExistsRequest.of(e -> e.index(indexName))).value();
-        } catch (IOException e) {
-            LOGGER.severe("Could not connect to elasticsearch: " + config.getConnection().toString());
-            return false;
-        } catch (ElasticsearchException e) {
-            LOGGER.severe("Some Elasticsearch Error: " + e.getMessage());
-            return false;
-        }
+    try {
+      esClient
+          .indices()
+          .create(
+              c ->
+                  c.index(index)
+                      .mappings(
+                          m ->
+                              m.properties(
+                                  Objects.requireNonNull(
+                                          ElasticsearchIndexSettings.getMappings(language))
+                                      .get("properties")))
+                      .settings(
+                          s ->
+                              s.analysis(
+                                  Objects.requireNonNull(
+                                          ElasticsearchIndexSettings.getSettings(language))
+                                      .get("analysis"))));
+    } catch (IOException e) {
+      return false;
+    } catch (ElasticsearchException e) {
+      return false;
     }
+    return true;
+  }
 
-    private SearchResponse<DocumentEntity> getSearchAfter(
+  private boolean hasIndex(String indexName) {
+    try {
+      return esClient.indices().exists(ExistsRequest.of(e -> e.index(indexName))).value();
+    } catch (IOException e) {
+      LOGGER.severe("Could not connect to elasticsearch: " + config.getConnection().toString());
+      return false;
+    } catch (ElasticsearchException e) {
+      LOGGER.severe("Some Elasticsearch Error: " + e.getMessage());
+      return false;
+    }
+  }
+
+  private SearchResponse<DocumentEntity> getSearchAfter(
       Query query,
       @Nullable Highlight highlight,
       FieldSort fieldSort,
