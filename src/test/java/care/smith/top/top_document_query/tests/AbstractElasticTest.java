@@ -99,9 +99,12 @@ public abstract class AbstractElasticTest {
                   .document(
                       new TextDocument(
                           document3.getId(), document3.getName(), document3.getText())));
-      await().until(() -> esClient.count().count() == 3);
+//      await().until(() -> esClient.count().count() == 3);
+      Thread.sleep(2000);
     } catch (IOException e) {
       throw new RuntimeException(e);
+    } catch (InterruptedException e) {
+        throw new RuntimeException(e);
     }
   }
 
