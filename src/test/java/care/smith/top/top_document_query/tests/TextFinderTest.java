@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -34,6 +35,11 @@ class TextFinderTest extends AbstractElasticTest {
   @BeforeAll
   static void setUp() {
     setUpESIndex();
+  }
+
+  @AfterAll
+  static void tearDown() {
+    elasticsearchContainer.stop();
   }
 
   @Test

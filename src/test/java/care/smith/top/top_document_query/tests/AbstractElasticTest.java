@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import care.smith.top.model.Document;
+import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.AcknowledgedResponse;
@@ -99,11 +100,8 @@ public abstract class AbstractElasticTest {
                   .document(
                       new TextDocument(
                           document3.getId(), document3.getName(), document3.getText())));
-      //      await().until(() -> esClient.count().count() == 3);
-      Thread.sleep(2000);
+      await().until(() -> esClient.count().count() == 3);
     } catch (IOException e) {
-      throw new RuntimeException(e);
-    } catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
   }
@@ -124,7 +122,10 @@ public abstract class AbstractElasticTest {
         Thread.currentThread().getContextClassLoader().getResource("config/Example_Adapter.yml");
     assertNotNull(configFile);
 
-    adapter = (ElasticsearchAdapter) ElasticsearchAdapter.getInstance(configFile.getPath());
+    TextAdapterConfig config = TextAdapterConfig.getInstance(configFile.getPath());
+    config.getConnection().setPort(String.valueOf(elasticsearchContainer.getMappedPort(9200)));
+
+    adapter = (ElasticsearchAdapter) ElasticsearchAdapter.getInstance(config);
     assertNotNull(adapter);
   }
 
