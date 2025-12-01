@@ -126,4 +126,7 @@ public abstract class TextAdapter {
       Integer page,
       Boolean simplified)
       throws IOException;
+
+  public abstract DocumentImport importDocuments(@NonNull Document[] documents, String language)
+      throws IOException;
 }

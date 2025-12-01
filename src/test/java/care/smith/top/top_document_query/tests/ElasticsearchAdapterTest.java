@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
 import care.smith.top.model.Document;
+import care.smith.top.model.DocumentImport;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
 import care.smith.top.top_document_query.functions.And;
@@ -12,6 +13,7 @@ import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import care.smith.top.top_document_query.util.builder.Cat;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -174,5 +176,26 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
     assertEquals(Set.of(document1, document3), result1.toSet());
     assertEquals(allTestDocuments, result2.toSet());
     assertEquals(Set.of(document1, document2), result3.toSet());
+  }
+
+  @Test
+  void createIndexAndUploadDocuments() throws IOException {
+    adapter.getConfig().setIndex(new String[] {"test_index"});
+    Document[] documents = {document1, document2};
+    DocumentImport result = adapter.importDocuments(documents, "de");
+    assertEquals(BigDecimal.valueOf(2), result.getCount());
+    try {
+      Thread.sleep(2000); // need to wait a bit so that the documents are indexed
+      assertEquals(
+          Set.of(document1, document2),
+          adapter
+              .getAllDocumentsBatched(2, false)
+              .flatMap(List::stream)
+              .collect(Collectors.toSet()));
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+
+    adapter.getConfig().setIndex(ELASTIC_INDEX);
   }
 }
