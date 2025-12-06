@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 public abstract class AbstractExternalManager {
@@ -74,7 +75,7 @@ public abstract class AbstractExternalManager {
     try {
       conceptGraphsApi.get().retrieve().bodyToMono(String.class).block();
       return true;
-    } catch (WebClientResponseException e) {
+    } catch (WebClientResponseException | WebClientRequestException e) {
       logger.severe(
           String.format(
               "Pipeline Manager at '%s' doesn't seem to be accessible.", this.currentUrl));
