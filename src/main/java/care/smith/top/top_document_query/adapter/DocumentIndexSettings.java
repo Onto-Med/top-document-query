@@ -1,7 +1,7 @@
 package care.smith.top.top_document_query.adapter;
 
+import jakarta.annotation.Nullable;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 public interface DocumentIndexSettings {
   @Nullable

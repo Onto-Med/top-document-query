@@ -13,7 +13,6 @@ import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import care.smith.top.top_document_query.util.builder.Cat;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -183,7 +182,7 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
     adapter.getConfig().setIndex(new String[] {"test_index"});
     Document[] documents = {document1, document2};
     DocumentImport result = adapter.importDocuments(documents, "de");
-    assertEquals(BigDecimal.valueOf(2), result.getCount());
+    assertEquals(2, result.getCount());
     try {
       Thread.sleep(2000); // need to wait a bit so that the documents are indexed
       assertEquals(

@@ -27,7 +27,6 @@ import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -430,8 +429,7 @@ public class ElasticsearchAdapter extends TextAdapter {
       }
     }
     return documentImport.count(
-        BigDecimal.valueOf(
-            documentImport.getDocuments() != null ? documentImport.getDocuments().size() : 0));
+        documentImport.getDocuments() != null ? documentImport.getDocuments().size() : 0);
   }
 
   private boolean initDocumentIndex(String language) {
