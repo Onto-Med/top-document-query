@@ -1,6 +1,8 @@
 package care.smith.top.top_document_query.concept_graphs_api;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.logging.Logger;
 import org.springframework.http.HttpHeaders;
@@ -35,9 +37,11 @@ public abstract class AbstractExternalManager {
    * #DEFAULT_MAX_IN_MEMORY_SIZE} bytes.
    *
    * @param conceptGraphApiEndpoint The concept-graphs endpoint.
+   * @throws URISyntaxException If `conceptGraphApiEndpoint` is an invalid URI.
+   * @throws MalformedURLException If `conceptGraphApiEndpoint` cannot be converted to an URL.
    */
   AbstractExternalManager(String conceptGraphApiEndpoint, Logger logger)
-      throws MalformedURLException {
+      throws MalformedURLException, URISyntaxException {
     init(conceptGraphApiEndpoint, maxInMemorySize, logger);
   }
 
@@ -47,18 +51,20 @@ public abstract class AbstractExternalManager {
    *
    * @param conceptGraphApiEndpoint The concept-graphs endpoint.
    * @param memorySize Maximum in-memory size in bytes for requests to Elasticsearch.
+   * @throws URISyntaxException If `conceptGraphApiEndpoint` is an invalid URI.
+   * @throws MalformedURLException If `conceptGraphApiEndpoint` cannot be converted to an URL.
    */
   AbstractExternalManager(String conceptGraphApiEndpoint, int memorySize, Logger logger)
-      throws MalformedURLException {
+      throws MalformedURLException, URISyntaxException {
     this.maxInMemorySize = memorySize;
     init(conceptGraphApiEndpoint, memorySize, logger);
   }
 
   private void init(String conceptGraphApiEndpoint, Integer memory, Logger logger)
-      throws MalformedURLException {
+      throws MalformedURLException, URISyntaxException {
     this.logger = logger;
-    this.currentUrl = new URL(conceptGraphApiEndpoint);
-    this.defaultUrl = new URL(conceptGraphApiEndpoint);
+    this.currentUrl = new URI(conceptGraphApiEndpoint).toURL();
+    this.defaultUrl = new URI(conceptGraphApiEndpoint).toURL();
     ExchangeStrategies exchangeStrategies =
         ExchangeStrategies.builder()
             .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(memory))
@@ -88,12 +94,16 @@ public abstract class AbstractExternalManager {
    *
    * @param conceptGraphApiEndpoint The new concept-graphs endpoint.
    * @return {@code boolean} whether change was successful or not.
+   * @throws URISyntaxException If `conceptGraphApiEndpoint` is an invalid URI.
+   * @throws MalformedURLException If `conceptGraphApiEndpoint` cannot be converted to an URL.
    */
-  public boolean switchConnection(String conceptGraphApiEndpoint) throws MalformedURLException {
-    if (!(new URL(conceptGraphApiEndpoint)).sameFile(this.currentUrl)) {
+  public boolean switchConnection(String conceptGraphApiEndpoint)
+      throws URISyntaxException, MalformedURLException {
+    URL url = new URI(conceptGraphApiEndpoint).toURL();
+    if (!(url).sameFile(this.currentUrl)) {
       URL tmpUrl = this.currentUrl;
       try {
-        this.currentUrl = new URL(conceptGraphApiEndpoint);
+        this.currentUrl = url;
         this.conceptGraphsApi =
             this.conceptGraphsApi.mutate().baseUrl(conceptGraphApiEndpoint).build();
         if (!isAccessible()) {

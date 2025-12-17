@@ -17,7 +17,10 @@ public class DocumentCSV {
   public static String entriesDelimiter = "\t";
   public static String entryPartsDelimiter = ";";
   private String language = null;
+
+  @SuppressWarnings("unused")
   private int excerptLength = 100;
+
   private final String nullValueString = "NA";
 
   public DocumentCSV() {}
@@ -42,12 +45,12 @@ public class DocumentCSV {
   }
 
   public DocumentCSV entriesDelimiter(String entriesDelimiter) {
-    this.entriesDelimiter = entriesDelimiter;
+    DocumentCSV.entriesDelimiter = entriesDelimiter;
     return this;
   }
 
   public DocumentCSV entryPartsDelimiter(String entryPartsDelimiter) {
-    this.entryPartsDelimiter = entryPartsDelimiter;
+    DocumentCSV.entryPartsDelimiter = entryPartsDelimiter;
     return this;
   }
 

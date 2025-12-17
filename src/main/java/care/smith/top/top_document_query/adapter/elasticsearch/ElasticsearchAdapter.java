@@ -28,6 +28,8 @@ import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Consumer;
@@ -172,7 +174,7 @@ public class ElasticsearchAdapter extends TextAdapter {
                 queryString.charAt(queryString.length() - 1) == '"'
                     ? queryString.length() - 1
                     : queryString.length())
-            .split("\\s+");
+            .split("\s+");
     HashMap<String, List<String>> mergedHighlights = new HashMap<>();
     for (Map.Entry<String, List<String>> entry : highlights.entrySet()) {
       ArrayList<String> newHighlights = new ArrayList<>();
@@ -182,7 +184,7 @@ public class ElasticsearchAdapter extends TextAdapter {
             Pattern.compile(
                 Arrays.stream(queryComponents)
                     .map(s -> String.format("<em>%s</em>", s))
-                    .collect(Collectors.joining("(\\s+)")));
+                    .collect(Collectors.joining("(\s+)")));
         Matcher matcher = pattern.matcher(highlight);
         while (matcher.find()) {
           StringBuilder replBuilder = new StringBuilder();
@@ -559,6 +561,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     return List.of(documentName);
   }
 
+  @SuppressWarnings("unused")
   private SortOptions defaultSort() {
     return SortOptions.of(
         sob ->
@@ -613,18 +616,18 @@ public class ElasticsearchAdapter extends TextAdapter {
     String alternateHost = null;
 
     try {
-      URL url = new URL(config.getConnection().getUrl());
+      URL url = new URI(config.getConnection().getUrl()).toURL();
       host = url.getHost();
-    } catch (MalformedURLException e) {
+    } catch (MalformedURLException | URISyntaxException e) {
       host = config.getConnection().getUrl();
     }
 
     if (config.getConnection().getAlternateUrl() != null) {
       try {
-        URL url = new URL(config.getConnection().getAlternateUrl());
+        URL url = new URI(config.getConnection().getAlternateUrl()).toURL();
         alternateHost = url.getHost();
 
-      } catch (MalformedURLException e) {
+      } catch (MalformedURLException | URISyntaxException e) {
         alternateHost = config.getConnection().getAlternateUrl();
       }
     }
@@ -639,7 +642,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     this.esClient = new ElasticsearchClient(transport);
     try {
       // simple call to esClient to test whether the connection works
-      String luceneVersion = this.esClient.info().version().luceneVersion();
+      this.esClient.info().version().luceneVersion();
     } catch (IOException e) {
       if (alternateHost == null) {
         LOGGER.severe(

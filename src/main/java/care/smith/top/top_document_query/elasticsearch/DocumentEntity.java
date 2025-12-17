@@ -15,6 +15,7 @@ public class DocumentEntity {
 
   private String text;
 
+  @SuppressWarnings("unused")
   private String label; // label is not used at the moment but potentially useful
 
   // Other attributes

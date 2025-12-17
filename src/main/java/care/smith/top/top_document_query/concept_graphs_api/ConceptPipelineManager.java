@@ -14,6 +14,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -40,12 +41,13 @@ public class ConceptPipelineManager extends AbstractExternalManager {
 
   private static final Logger LOGGER = Logger.getLogger(ConceptPipelineManager.class.getName());
 
-  public ConceptPipelineManager(String conceptGraphApiEndpoint) throws MalformedURLException {
+  public ConceptPipelineManager(String conceptGraphApiEndpoint)
+      throws MalformedURLException, URISyntaxException {
     super(conceptGraphApiEndpoint, LOGGER);
   }
 
   public ConceptPipelineManager(String conceptGraphApiEndpoint, int memorySize)
-      throws MalformedURLException {
+      throws MalformedURLException, URISyntaxException {
     super(conceptGraphApiEndpoint, memorySize, LOGGER);
   }
 
