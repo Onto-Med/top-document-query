@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Publish as dependency
 
 on:
   workflow_dispatch:
