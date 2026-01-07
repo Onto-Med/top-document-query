@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -36,10 +37,10 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
     assertNotNull(adapter);
   }
 
-  //  @AfterEach
-  //  void tearDown() throws IOException {
-  //    deleteIndex();
-  //  }
+  @AfterAll
+  static void tearDown() throws IOException {
+    elasticsearchContainer.stop();
+  }
 
   @Test
   void count() {
