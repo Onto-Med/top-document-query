@@ -10,6 +10,11 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      GH_MAVEN_PKG_AUTH_TOKEN: ${{ secrets.GH_MAVEN_PKG_AUTH_TOKEN }}
+      GH_MAVEN_PKG_USER: ${{ secrets.GH_MAVEN_PKG_USER }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -24,7 +29,3 @@ jobs:
           check-latest: true
       - name: Publish to GitHub Packages Apache Maven
         run: mvn -B --no-transfer-progress deploy -s $GITHUB_WORKSPACE/settings.xml -s .mvn-ci.xml --file pom.xml
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GH_MAVEN_PKG_AUTH_TOKEN: ${{ secrets.GH_MAVEN_PKG_AUTH_TOKEN }}
-          GH_MAVEN_PKG_USER: ${{ secrets.GH_MAVEN_PKG_USER }}
