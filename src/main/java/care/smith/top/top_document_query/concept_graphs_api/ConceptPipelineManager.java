@@ -10,6 +10,7 @@ import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_respo
 import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineFailWithExplicit;
 import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineResponseEntity;
 import care.smith.top.top_document_query.concept_graphs_api.model.pipeline_response.PipelineStatusEntity;
+import care.smith.top.top_document_query.util.NLPUtils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import java.io.File;
@@ -131,7 +132,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
     boolean defaultConfig;
     String lang = Objects.requireNonNullElse(language, "en");
     if (processName != null) {
-      processName = processName.trim();
+      processName = NLPUtils.stringConformity(processName);
       defaultConfig = false;
     } else {
       processName = "default";
@@ -172,9 +173,10 @@ public class ConceptPipelineManager extends AbstractExternalManager {
   public Map<String, ConceptGraphEntity> getConceptGraphs(
       String processName, @Nullable List<String> graphIds) {
     List<String> ids;
+    String finalProcessName = NLPUtils.stringConformity(processName);
     if (graphIds == null || graphIds.isEmpty()) {
       ids =
-          getGraphStatisticsForProcess(processName)
+          getGraphStatisticsForProcess(finalProcessName)
               .map(
                   conceptGraphStatisticsEntity ->
                       Arrays.stream(conceptGraphStatisticsEntity.getConceptGraphs())
@@ -186,7 +188,9 @@ public class ConceptPipelineManager extends AbstractExternalManager {
     }
     HashMap<String, ConceptGraphEntity> result = new HashMap<>();
     ids.forEach(
-        id -> getGraphForIdAndProcess(id, processName).ifPresent(graph -> result.put(id, graph)));
+        id ->
+            getGraphForIdAndProcess(id, finalProcessName)
+                .ifPresent(graph -> result.put(id, graph)));
     return result;
   }
 
@@ -246,10 +250,13 @@ public class ConceptPipelineManager extends AbstractExternalManager {
    * @return The server message as {@link String}.
    */
   public String stopPipeline(String processId) {
+    String finalProcessId = NLPUtils.stringConformity(processId);
     try {
       return conceptGraphsApi
           .get()
-          .uri(uriBuilder -> uriBuilder.path(ApiProcessMethod.STOP.getEndpoint(processId)).build())
+          .uri(
+              uriBuilder ->
+                  uriBuilder.path(ApiProcessMethod.STOP.getEndpoint(finalProcessId)).build())
           .exchangeToMono(response -> response.bodyToMono(String.class))
           .block();
     } catch (WebClientResponseException e) {
@@ -265,11 +272,13 @@ public class ConceptPipelineManager extends AbstractExternalManager {
    * @return The server message as {@link String}.
    */
   public String deleteProcess(String processId) {
+    String finalProcessId = NLPUtils.stringConformity(processId);
     try {
       return conceptGraphsApi
           .delete()
           .uri(
-              uriBuilder -> uriBuilder.path(ApiProcessMethod.DELETE.getEndpoint(processId)).build())
+              uriBuilder ->
+                  uriBuilder.path(ApiProcessMethod.DELETE.getEndpoint(finalProcessId)).build())
           .exchangeToMono(
               response -> {
                 if (ArrayUtils.contains(
@@ -295,6 +304,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
    * @return {@link Optional} containing the graph, if there is any.
    */
   public Optional<ConceptGraphEntity> getGraphForIdAndProcess(String graphId, String processName) {
+    String finalProcessName = NLPUtils.stringConformity(processName);
     try {
       return Optional.ofNullable(
           conceptGraphsApi
@@ -303,7 +313,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
                   uriBuilder ->
                       uriBuilder
                           .path(ApiGraphMethod.GRAPH.getEndpoint(graphId))
-                          .queryParam("process", processName)
+                          .queryParam("process", finalProcessName)
                           .build())
               .retrieve()
               .bodyToMono(ConceptGraphEntity.class)
@@ -322,6 +332,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
    *     exists.
    */
   public Optional<ConceptGraphStatisticsEntity> getGraphStatisticsForProcess(String processName) {
+    String finalProcessName = NLPUtils.stringConformity(processName);
     try {
       return Optional.ofNullable(
           conceptGraphsApi
@@ -330,7 +341,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
                   uriBuilder ->
                       uriBuilder
                           .path(ApiGraphMethod.STATISTICS.getEndpoint())
-                          .queryParam("process", processName)
+                          .queryParam("process", finalProcessName)
                           .build())
               .retrieve()
               .bodyToMono(ConceptGraphStatisticsEntity.class)
@@ -348,6 +359,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
    * @return {@link Optional} containing the status of a pipeline with the given name if exists.
    */
   public Optional<PipelineStatusEntity> getStatusOfProcess(String processName) {
+    String finalProcessName = NLPUtils.stringConformity(processName);
     try {
       return Optional.ofNullable(
           conceptGraphsApi
@@ -356,7 +368,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
                   uriBuilder ->
                       uriBuilder
                           .path(ApiStatus.SELF.getEndpoint())
-                          .queryParam("process", processName)
+                          .queryParam("process", finalProcessName)
                           .build())
               .retrieve()
               .bodyToMono(PipelineStatusEntity.class)
@@ -375,6 +387,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
       Boolean returnStatistics,
       Map<String, File> configs,
       MultiValueMap<String, Object> parts) {
+    String finalProcessName = NLPUtils.stringConformity(processName);
     if (labels != null) parts.add("labels", new FileSystemResource(labels));
     if (configs != null && !configs.isEmpty())
       configs.forEach((name, file) -> parts.add(name + "_config", new FileSystemResource(file)));
@@ -386,7 +399,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
                   uriBuilder ->
                       uriBuilder
                           .path(ApiPipelineMethod.INITIALIZE.getEndpoint())
-                          .queryParam("process", processName)
+                          .queryParam("process", finalProcessName)
                           .queryParam("lang", language == null ? "en" : language)
                           .queryParam("skip_present", skipPresent == null || skipPresent)
                           .queryParam(
@@ -407,6 +420,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
       Boolean skipPresent,
       Boolean returnStatistics,
       JSONObject jsonBody) {
+    String finalProcessName = NLPUtils.stringConformity(processName);
     try {
       Mono<PipelineResponseEntity> apiResponse =
           conceptGraphsApi
@@ -415,7 +429,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
                   uriBuilder ->
                       uriBuilder
                           .path(ApiPipelineMethod.INITIALIZE.getEndpoint())
-                          .queryParam("process", processName)
+                          .queryParam("process", finalProcessName)
                           .queryParam("lang", language == null ? "en" : language)
                           .queryParam("skip_present", skipPresent == null || skipPresent)
                           .queryParam(

@@ -4,6 +4,7 @@ import care.smith.top.model.RAGAnswer;
 import care.smith.top.model.RAGStatus;
 import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiRagMethod;
 import care.smith.top.top_document_query.concept_graphs_api.model.api_method.ApiStatus;
+import care.smith.top.top_document_query.util.NLPUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -29,6 +30,7 @@ public class RAGManager extends AbstractExternalManager {
   }
 
   public RAGAnswer poseQuestion(String process, String question) {
+    String finalProcessName = NLPUtils.stringConformity(process);
     Mono<RAGAnswer> apiResponse =
         conceptGraphsApi
             .get()
@@ -36,7 +38,7 @@ public class RAGManager extends AbstractExternalManager {
                 uriBuilder ->
                     uriBuilder
                         .path(ApiRagMethod.QUESTION.getEndpoint())
-                        .queryParam("process", process)
+                        .queryParam("process", finalProcessName)
                         .queryParam("q", question)
                         .build())
             .exchangeToMono(responseToRAGAnswer);
@@ -53,6 +55,7 @@ public class RAGManager extends AbstractExternalManager {
         return this;
       }
     }
+    String finalProcessName = NLPUtils.stringConformity(process);
 
     FilterIds filterIds = new FilterIds().addIds(filter_list);
 
@@ -63,7 +66,7 @@ public class RAGManager extends AbstractExternalManager {
                 uriBuilder ->
                     uriBuilder
                         .path(ApiRagMethod.QUESTION.getEndpoint())
-                        .queryParam("process", process)
+                        .queryParam("process", finalProcessName)
                         .queryParam("q", question)
                         .build())
             .contentType(MediaType.APPLICATION_JSON)
@@ -99,6 +102,7 @@ public class RAGManager extends AbstractExternalManager {
       };
 
   public String initRag(String process, boolean force, JSONObject jsonBody) {
+    String finalProcessName = NLPUtils.stringConformity(process);
     Mono<String> apiResponse =
         conceptGraphsApi
             .post()
@@ -106,7 +110,7 @@ public class RAGManager extends AbstractExternalManager {
                 uriBuilder ->
                     uriBuilder
                         .path(ApiRagMethod.INIT.getEndpoint())
-                        .queryParam("process", process)
+                        .queryParam("process", finalProcessName)
                         .queryParam("force", force)
                         .build())
             .contentType(MediaType.APPLICATION_JSON)
@@ -116,6 +120,7 @@ public class RAGManager extends AbstractExternalManager {
   }
 
   public RAGStatus getRAGStatus(String process) {
+    String finalProcessName = NLPUtils.stringConformity(process);
     Mono<RAGStatus> apiResponse =
         conceptGraphsApi
             .get()
@@ -123,7 +128,7 @@ public class RAGManager extends AbstractExternalManager {
                 uriBuilder ->
                     uriBuilder
                         .path(ApiStatus.RAG.getEndpoint())
-                        .queryParam("process", process)
+                        .queryParam("process", finalProcessName)
                         .build())
             .exchangeToMono(response -> response.bodyToMono(RAGStatus.class));
 
