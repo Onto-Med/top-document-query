@@ -463,4 +463,9 @@ public class ConceptPipelineManager extends AbstractExternalManager {
           return response.bodyToMono(PipelineFailEntity.class);
         }
       };
+
+  @Override
+  String getSubclassName() {
+    return "Pipeline Manager";
+  }
 }

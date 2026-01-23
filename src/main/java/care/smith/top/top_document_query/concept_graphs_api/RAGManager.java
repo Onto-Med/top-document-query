@@ -134,4 +134,9 @@ public class RAGManager extends AbstractExternalManager {
 
     return apiResponse.block();
   }
+
+  @Override
+  String getSubclassName() {
+    return "RAG Manager";
+  }
 }

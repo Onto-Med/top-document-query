@@ -389,8 +389,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
   @Override
-  public DocumentImport importDocuments(@NonNull Document[] documents, String language)
-      throws IOException {
+  public DocumentImport importDocuments(@NonNull Document[] documents, String language) {
     String index = config.getIndex()[0].toLowerCase();
     DocumentImport documentImport = new DocumentImport();
     if (initDocumentIndex(language)) {
@@ -404,7 +403,19 @@ public class ElasticsearchAdapter extends TextAdapter {
                             .id(document.getId())
                             .document(new DocumentEntity().fromDocumentModel(document))));
       }
-      BulkResponse result = esClient.bulk(br.build());
+      BulkResponse result;
+      try {
+        result = esClient.bulk(br.build());
+      } catch (IOException e) {
+        LOGGER.severe(
+            String.format(
+                "Server Instance could not be reached/queried. Please check the Elasticsearch logs and/or the adapter configuration: %s",
+                config));
+        return documentImport
+            .status(DocumentImportStatus.FAILED)
+            .count(0)
+            .documents(new ArrayList<>());
+      }
       int successCount = 0;
       if (result.errors()) {
         LOGGER.warning("Document upload had errors:");
