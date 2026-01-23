@@ -60,6 +60,8 @@ public abstract class AbstractExternalManager {
     init(conceptGraphApiEndpoint, memorySize, logger);
   }
 
+  abstract String getSubclassName();
+
   private void init(String conceptGraphApiEndpoint, Integer memory, Logger logger)
       throws MalformedURLException, URISyntaxException {
     this.logger = logger;
@@ -84,7 +86,8 @@ public abstract class AbstractExternalManager {
     } catch (WebClientResponseException | WebClientRequestException e) {
       logger.severe(
           String.format(
-              "Pipeline Manager at '%s' doesn't seem to be accessible.", this.currentUrl));
+              "%s at '%s' doesn't seem to be accessible.",
+              this.getSubclassName(), this.currentUrl));
       return false;
     }
   }

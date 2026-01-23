@@ -3,7 +3,7 @@
 	<groupId>care.smith.top</groupId>
 	<artifactId>top-document-query</artifactId>
 	<name>TOP Document Query</name>
-	<version>0.9.4</version>
+	<version>0.9.5</version>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
