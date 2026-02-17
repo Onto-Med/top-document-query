@@ -234,7 +234,8 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public Page<Document> getAllDocumentsPaged(Integer page, Boolean simplified) throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
-    SearchRequest.Builder sb = new SearchRequest.Builder().index(Arrays.asList(indexArrayStringConformity()));
+    SearchRequest.Builder sb =
+        new SearchRequest.Builder().index(Arrays.asList(indexArrayStringConformity()));
 
     SearchResponse<DocumentEntity> response;
     if (page != null && page >= 0) {
