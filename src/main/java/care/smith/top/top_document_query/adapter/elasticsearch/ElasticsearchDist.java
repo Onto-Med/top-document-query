@@ -7,9 +7,7 @@ import care.smith.top.top_document_query.functions.Dist;
 import care.smith.top.top_document_query.util.Expressions;
 import care.smith.top.top_document_query.util.Values;
 import care.smith.top.top_document_query.util.builder.Exp;
-import care.smith.top.top_document_query.util.builder.Val;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -29,11 +27,10 @@ public class ElasticsearchDist extends Dist {
     if (args == null || args.size() != 2) return new Expression();
 
     Expression arg = song.generate(args.getFirst());
-    if (
-          Expressions.isEmpty(arg) ||
-          // DIST must not take a query as argument; only terms
-          Expressions.hasQuery(arg)
-    ) {
+    if (Expressions.isEmpty(arg)
+        ||
+        // DIST must not take a query as argument; only terms
+        Expressions.hasQuery(arg)) {
       return arg;
     }
 
@@ -46,8 +43,10 @@ public class ElasticsearchDist extends Dist {
               "Encountered error when getting NumberValue for '%s'. Using 1 as distance",
               args.get(1)));
     }
-      String valsWithDist =
-        arg.getValues().stream().map(v -> getDist(arg, v, dist.get())).collect(Collectors.joining(" OR "));
+    String valsWithDist =
+        arg.getValues().stream()
+            .map(v -> getDist(arg, v, dist.get()))
+            .collect(Collectors.joining(" OR "));
     return Exp.of("(" + valsWithDist + ")").type(SONG.EXPRESSION_TYPE_QUERY);
   }
 
