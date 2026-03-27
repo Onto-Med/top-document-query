@@ -9,6 +9,7 @@ import care.smith.top.top_document_query.util.Values;
 import care.smith.top.top_document_query.util.builder.Exp;
 import care.smith.top.top_document_query.util.builder.Val;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -26,8 +27,16 @@ public class ElasticsearchDist extends Dist {
   @Override
   public Expression generate(List<Expression> args, SONG song) {
     if (args == null || args.size() != 2) return new Expression();
-    Expression arg = song.generate(args.get(0));
-    if (Expressions.isEmpty(arg)) return arg;
+
+    Expression arg = song.generate(args.getFirst());
+    if (
+          Expressions.isEmpty(arg) ||
+          // DIST must not take a query as argument; only terms
+          Expressions.hasQuery(arg)
+    ) {
+      return arg;
+    }
+
     AtomicInteger dist = new AtomicInteger(1);
     try {
       dist.set(Expressions.getNumberValue(args.get(1)).intValue());
@@ -37,15 +46,15 @@ public class ElasticsearchDist extends Dist {
               "Encountered error when getting NumberValue for '%s'. Using 1 as distance",
               args.get(1)));
     }
-    List<Value> valsWithDist =
-        arg.getValues().stream().map(v -> getDist(arg, v, dist.get())).collect(Collectors.toList());
-    return Exp.of(valsWithDist).type(SONG.EXPRESSION_TYPE_TERMS_PROCESSED);
+      String valsWithDist =
+        arg.getValues().stream().map(v -> getDist(arg, v, dist.get())).collect(Collectors.joining(" OR "));
+    return Exp.of("(" + valsWithDist + ")").type(SONG.EXPRESSION_TYPE_QUERY);
   }
 
-  private Value getDist(Expression e, Value v, int d) {
+  private String getDist(Expression e, Value v, int d) {
     String t = Values.getStringValue(v);
-    if (!StringUtils.containsWhitespace(t)) return Val.of(t + "~" + d);
-    if (Expressions.hasTermsInitial(e)) return Val.of("\"" + t + "\"~" + d);
-    return Val.of(t + "~" + d);
+    if (!StringUtils.containsWhitespace(t)) return (t + "~" + d);
+    if (Expressions.hasTermsInitial(e)) return ("\"" + t + "\"~" + d);
+    return (t + "~" + d);
   }
 }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import care.smith.top.model.Concept;
 import care.smith.top.model.Expression;
+import care.smith.top.top_document_query.SONG;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
 import care.smith.top.top_document_query.functions.And;
 import care.smith.top.top_document_query.functions.Dist;
@@ -197,6 +198,23 @@ public class SongTest {
     assertEquals(
         "(c-de OR c1-de OR c2-de OR d-de OR d1-de OR d2-de OR e-de OR e1-de OR \"e2- de\")",
         query3);
+  }
+
+  @Test
+  public void test_distance() {
+    log.debug("===== Test Distance =====");
+    Expression exp0 = Dist.of(Dist.of(b, 5), 2);
+    String query0 = ElasticsearchSong.get().getQuery(ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp0));
+    assertEquals(
+"(b-de~5 OR b1-de~5 OR b2-de~5)", query0
+    );
+    Expression exp1 = Not.of(Dist.of(XProd.of(a, b), 2));
+    String query1 = ElasticsearchSong.get().getQuery(ElasticsearchSong.get().concepts(concepts).lang("de").generate(exp1));
+    assertEquals(
+"NOT (\"a- de b-de\"~2 OR \"a- de b1-de\"~2 OR \"a- de b2-de\"~2 OR \"a1- de b-de\"~2 OR"
+       + " \"a1- de b1-de\"~2 OR \"a1- de b2-de\"~2 OR \"a2- de b-de\"~2 OR \"a2- de b1-de\"~2 OR"
+       + " \"a2- de b2-de\"~2)", query1
+    );
   }
 
   @Test
