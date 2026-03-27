@@ -8,6 +8,7 @@ import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
 import care.smith.top.top_document_query.elasticsearch.DocumentFields;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.Expressions;
+import care.smith.top.top_document_query.util.NLPUtils;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.*;
@@ -205,7 +206,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public long count() {
     try {
-      return esClient.count(s -> s.index(Arrays.asList(config.getIndex()))).count();
+      return esClient.count(s -> s.index(Arrays.asList(indexArrayStringConformity()))).count();
     } catch (IOException e) {
       LOGGER.warning(e.getMessage());
       return 0;
@@ -233,7 +234,8 @@ public class ElasticsearchAdapter extends TextAdapter {
   @Override
   public Page<Document> getAllDocumentsPaged(Integer page, Boolean simplified) throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
-    SearchRequest.Builder sb = new SearchRequest.Builder().index(Arrays.asList(config.getIndex()));
+    SearchRequest.Builder sb =
+        new SearchRequest.Builder().index(Arrays.asList(indexArrayStringConformity()));
 
     SearchResponse<DocumentEntity> response;
     if (page != null && page >= 0) {
@@ -257,7 +259,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
-              return s.index(Arrays.asList(config.getIndex()))
+              return s.index(Arrays.asList(indexArrayStringConformity()))
                   .query(
                       q ->
                           q.wildcard(
@@ -310,7 +312,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
-              return s.index(Arrays.asList(config.getIndex())).query(queryForIds(ids));
+              return s.index(Arrays.asList(indexArrayStringConformity())).query(queryForIds(ids));
             },
             DocumentEntity.class);
     return toPage(response, page, simplified);
@@ -343,7 +345,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
-              return s.index(Arrays.asList(config.getIndex()))
+              return s.index(Arrays.asList(indexArrayStringConformity()))
                   .query(queryForQueryString(queryString));
             },
             DocumentEntity.class);
@@ -375,7 +377,7 @@ public class ElasticsearchAdapter extends TextAdapter {
         esClient.search(
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
-              return s.index(Arrays.asList(config.getIndex()))
+              return s.index(Arrays.asList(indexArrayStringConformity()))
                   .query(
                       q ->
                           q.bool(
@@ -390,7 +392,7 @@ public class ElasticsearchAdapter extends TextAdapter {
 
   @Override
   public DocumentImport importDocuments(@NonNull Document[] documents, String language) {
-    String index = config.getIndex()[0].toLowerCase();
+    String index = NLPUtils.stringConformity(config.getIndex()[0]);
     DocumentImport documentImport = new DocumentImport();
     if (initDocumentIndex(language)) {
       BulkRequest.Builder br = new BulkRequest.Builder();
@@ -446,7 +448,7 @@ public class ElasticsearchAdapter extends TextAdapter {
   }
 
   private boolean initDocumentIndex(String language) {
-    String index = config.getIndex()[0].toLowerCase();
+    String index = NLPUtils.stringConformity(config.getIndex()[0]);
     if (hasIndex(index)) {
       LOGGER.warning("Index already exists: " + index);
       return true;
@@ -500,7 +502,7 @@ public class ElasticsearchAdapter extends TextAdapter {
     SearchResponse<DocumentEntity> response =
         esClient.search(
             s ->
-                s.index(Arrays.asList(config.getIndex()))
+                s.index(Arrays.asList(indexArrayStringConformity()))
                     .query(query)
                     .highlight(highlight)
                     .sort(sb -> sb.field(fieldSort))
@@ -660,9 +662,9 @@ public class ElasticsearchAdapter extends TextAdapter {
             "Could not connect to Elasticsearch at '" + host + "'. Alternate URL not set.");
       } else {
         LOGGER.warning(
-            "Could not connect to Elasticsearch at "
+            "Could not connect to Elasticsearch at '"
                 + host
-                + ". Trying alternate URL at '"
+                + "'. Trying alternate URL at '"
                 + alternateHost
                 + "'.");
         RestClient alternateRestClient =
@@ -674,5 +676,9 @@ public class ElasticsearchAdapter extends TextAdapter {
         this.esClient = new ElasticsearchClient(alternateTransport);
       }
     }
+  }
+
+  private String[] indexArrayStringConformity() {
+    return Arrays.stream(config.getIndex()).map(NLPUtils::stringConformity).toArray(String[]::new);
   }
 }
