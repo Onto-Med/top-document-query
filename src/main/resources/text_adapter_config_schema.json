@@ -38,6 +38,42 @@
         }
       },
       "required": ["url"]
+    },
+    "queryExpansion": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "description": "Concept Graphs query-expansion profile referenced by this data source"
+        },
+        "relations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/queryExpansionRelation"
+          }
+        }
+      },
+      "required": ["profile"]
+    },
+    "queryExpansionRelation": {
+      "type": "object",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "alternatives",
+            "optional_context",
+            "require_context",
+            "exclude_context",
+            "recall_expansion",
+            "specificity_focus",
+            "proximity_context",
+            "phrase_context",
+            "ignore"
+          ]
+        }
+      },
+      "required": ["strategy"]
     }
   },
   "type": "object",
@@ -77,6 +113,9 @@
     },
     "conceptGraph": {
       "$ref": "#/definitions/conceptGraph"
+    },
+    "queryExpansion": {
+      "$ref": "#/definitions/queryExpansion"
     }
   },
   "required": ["id", "adapter", "connection"]

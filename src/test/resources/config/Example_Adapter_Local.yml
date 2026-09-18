@@ -19,3 +19,14 @@ vectorStore:
   connection:
     url: http://localhost
     port: 8882
+queryExpansion:
+  profile: medical_de
+  relations:
+    equivalent_to:
+      strategy: alternatives
+    treated_by:
+      strategy: require_context
+    investigated_by:
+      strategy: proximity_context
+    confirmed_by:
+      strategy: phrase_context
