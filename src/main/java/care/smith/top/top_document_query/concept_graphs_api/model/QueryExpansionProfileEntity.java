@@ -1,10 +1,20 @@
 package care.smith.top.top_document_query.concept_graphs_api.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
 
 public class QueryExpansionProfileEntity {
   private String name;
+
+  @JsonProperty("language_name")
+  private String languageName;
+
+  private List<QueryExpansionProfileCategoryEntity> categories = Collections.emptyList();
+
+  @JsonProperty("default_categories")
+  private List<String> defaultCategories = Collections.emptyList();
+
   private List<QueryExpansionProfileRelationEntity> relations = Collections.emptyList();
 
   public String getName() {
@@ -13,6 +23,30 @@ public class QueryExpansionProfileEntity {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public String getLanguageName() {
+    return languageName;
+  }
+
+  public void setLanguageName(String languageName) {
+    this.languageName = languageName;
+  }
+
+  public List<QueryExpansionProfileCategoryEntity> getCategories() {
+    return categories == null ? Collections.emptyList() : categories;
+  }
+
+  public void setCategories(List<QueryExpansionProfileCategoryEntity> categories) {
+    this.categories = categories;
+  }
+
+  public List<String> getDefaultCategories() {
+    return defaultCategories == null ? Collections.emptyList() : defaultCategories;
+  }
+
+  public void setDefaultCategories(List<String> defaultCategories) {
+    this.defaultCategories = defaultCategories;
   }
 
   public List<QueryExpansionProfileRelationEntity> getRelations() {

@@ -1,7 +1,9 @@
 package care.smith.top.top_document_query.concept_graphs_api.model.api_method;
 
 public enum ApiQueryExpansionMethod {
-  PROFILE("/query-expansion/profiles/{profileName}");
+  PROFILES("/query-expansion/profiles"),
+  PROFILE("/query-expansion/profiles/{profileName}"),
+  EXPAND("/query-expansion");
 
   private String endpoint;
 
