@@ -28,4 +28,4 @@ jobs:
           cache: 'maven'
           check-latest: true
       - name: Publish to GitHub Packages Apache Maven
-        run: mvn -B --no-transfer-progress deploy -s $GITHUB_WORKSPACE/settings.xml -s .mvn-ci.xml --file pom.xml
+        run: mvn -B --no-transfer-progress deploy -s .mvn-ci.xml --file pom.xml
