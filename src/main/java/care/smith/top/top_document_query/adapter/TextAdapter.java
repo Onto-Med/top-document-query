@@ -2,6 +2,9 @@ package care.smith.top.top_document_query.adapter;
 
 import care.smith.top.model.*;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
+import care.smith.top.top_document_query.query_expansion.QueryExpansionExpressionCompiler;
+import care.smith.top.top_document_query.query_expansion.QueryExpansionStrategy;
+import care.smith.top.top_document_query.query_expansion.QueryExpansionStrategyDefinition;
 import care.smith.top.top_document_query.util.Entities;
 import care.smith.top.top_document_query.util.TermConcatenationTypes;
 import java.io.IOException;
@@ -79,6 +82,15 @@ public abstract class TextAdapter {
 
   public TextAdapterConfig getConfig() {
     return config;
+  }
+
+  public List<QueryExpansionStrategyDefinition> getQueryExpansionStrategyDefinitions() {
+    return QueryExpansionStrategy.getDefinitions();
+  }
+
+  public Optional<Expression> compileQueryExpansionRelation(
+      String strategy, String sourceEntityId, String targetEntityId) {
+    return QueryExpansionExpressionCompiler.compileRelation(strategy, sourceEntityId, targetEntityId);
   }
 
   public abstract Stream<List<Document>> getAllDocumentsBatched(

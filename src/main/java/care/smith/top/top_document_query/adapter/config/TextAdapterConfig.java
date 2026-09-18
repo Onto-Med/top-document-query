@@ -51,6 +51,8 @@ public class TextAdapterConfig {
 
   private ConceptGraphConfig conceptGraph;
 
+  private QueryExpansionConfig queryExpansion;
+
   private VectorStoreConfig vectorStore;
 
   public static TextAdapterConfig getInstance(String yamlFilePath) {
@@ -156,6 +158,14 @@ public class TextAdapterConfig {
 
   public void setConceptGraph(ConceptGraphConfig conceptGraph) {
     this.conceptGraph = conceptGraph;
+  }
+
+  public QueryExpansionConfig getQueryExpansion() {
+    return queryExpansion;
+  }
+
+  public void setQueryExpansion(QueryExpansionConfig queryExpansion) {
+    this.queryExpansion = queryExpansion;
   }
 
   public VectorStoreConfig getVectorStore() {
