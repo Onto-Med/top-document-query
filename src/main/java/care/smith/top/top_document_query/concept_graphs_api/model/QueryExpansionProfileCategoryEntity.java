@@ -2,6 +2,7 @@ package care.smith.top.top_document_query.concept_graphs_api.model;
 
 public class QueryExpansionProfileCategoryEntity {
   private String id;
+  private String label;
   private String description;
 
   public String getId() {
@@ -10,6 +11,14 @@ public class QueryExpansionProfileCategoryEntity {
 
   public void setId(String id) {
     this.id = id;
+  }
+
+  public String getLabel() {
+    return label;
+  }
+
+  public void setLabel(String label) {
+    this.label = label;
   }
 
   public String getDescription() {
