@@ -21,9 +21,11 @@ public class QueryExpansionExpressionCompiler {
 
   public static Optional<Expression> compileRelation(
       QueryExpansionStrategy strategy, String sourceEntityId, String targetEntityId) {
-    Expression source = Exp.ofEntity(sourceEntityId);
-    Expression target = Exp.ofEntity(targetEntityId);
+    return compileRelation(strategy, Exp.ofEntity(sourceEntityId), Exp.ofEntity(targetEntityId));
+  }
 
+  public static Optional<Expression> compileRelation(
+      QueryExpansionStrategy strategy, Expression source, Expression target) {
     return switch (strategy) {
       case ALTERNATIVES, OPTIONAL_CONTEXT, RECALL_EXPANSION -> Optional.of(Or.of(source, target));
       case REQUIRE_CONTEXT, SPECIFICITY_FOCUS -> Optional.of(And.of(source, target));
