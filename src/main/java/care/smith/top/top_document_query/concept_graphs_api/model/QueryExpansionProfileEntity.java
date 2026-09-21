@@ -15,6 +15,9 @@ public class QueryExpansionProfileEntity {
   @JsonProperty("default_categories")
   private List<String> defaultCategories = Collections.emptyList();
 
+  @JsonProperty("default_relations")
+  private List<String> defaultRelations = Collections.emptyList();
+
   private List<QueryExpansionProfileRelationEntity> relations = Collections.emptyList();
 
   public String getName() {
@@ -47,6 +50,14 @@ public class QueryExpansionProfileEntity {
 
   public void setDefaultCategories(List<String> defaultCategories) {
     this.defaultCategories = defaultCategories;
+  }
+
+  public List<String> getDefaultRelations() {
+    return defaultRelations == null ? Collections.emptyList() : defaultRelations;
+  }
+
+  public void setDefaultRelations(List<String> defaultRelations) {
+    this.defaultRelations = defaultRelations;
   }
 
   public List<QueryExpansionProfileRelationEntity> getRelations() {
