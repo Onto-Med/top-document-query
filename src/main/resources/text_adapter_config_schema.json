@@ -42,18 +42,23 @@
     "queryExpansion": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether Concept Graphs-backed query expansion is enabled for this data source"
+        },
         "profile": {
           "type": "string",
-          "description": "Concept Graphs query-expansion profile referenced by this data source"
+          "description": "Deprecated legacy profile reference. Query-expansion profiles are selected by the caller and owned by Concept Graphs."
         },
         "relations": {
           "type": "object",
+          "description": "Deprecated legacy relation strategy overrides. Relation strategy mapping is centralized in TOP.",
           "additionalProperties": {
             "$ref": "#/definitions/queryExpansionRelation"
           }
         }
       },
-      "required": ["profile"]
+      "required": ["enabled"]
     },
     "queryExpansionRelation": {
       "type": "object",

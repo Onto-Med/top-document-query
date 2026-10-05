@@ -10,6 +10,7 @@ import care.smith.top.top_document_query.functions.Not;
 import care.smith.top.top_document_query.functions.Or;
 import care.smith.top.top_document_query.functions.XProd;
 import care.smith.top.top_document_query.query_expansion.QueryExpansionExpressionCompiler;
+import care.smith.top.top_document_query.query_expansion.QueryExpansionRelationStrategyResolver;
 import care.smith.top.top_document_query.query_expansion.QueryExpansionStrategy;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -22,19 +23,26 @@ public class QueryExpansionTest {
     TextAdapterConfig config = TextAdapterConfig.getInstance(configPath);
 
     assertNotNull(config.getQueryExpansion());
-    assertEquals("medical_de", config.getQueryExpansion().getProfile());
+    assertTrue(config.getQueryExpansion().isEnabled());
+    assertNull(config.getQueryExpansion().getProfile());
+    assertTrue(config.getQueryExpansion().getRelations().isEmpty());
+  }
+
+  @Test
+  public void resolvesCentralizedRelationStrategies() {
     assertEquals(
-        "alternatives",
-        config.getQueryExpansion().getRelations().get("equivalent_to").getStrategy());
+        QueryExpansionStrategy.ALTERNATIVES,
+        QueryExpansionRelationStrategyResolver.getStrategy("equivalent_to").orElseThrow());
     assertEquals(
-        "require_context",
-        config.getQueryExpansion().getRelations().get("treated_by").getStrategy());
+        QueryExpansionStrategy.REQUIRE_CONTEXT,
+        QueryExpansionRelationStrategyResolver.getStrategy("treated_by").orElseThrow());
     assertEquals(
-        "proximity_context",
-        config.getQueryExpansion().getRelations().get("investigated_by").getStrategy());
+        QueryExpansionStrategy.RECALL_EXPANSION,
+        QueryExpansionRelationStrategyResolver.getStrategy("broader_than").orElseThrow());
     assertEquals(
-        "phrase_context",
-        config.getQueryExpansion().getRelations().get("confirmed_by").getStrategy());
+        QueryExpansionStrategy.SPECIFICITY_FOCUS,
+        QueryExpansionRelationStrategyResolver.getStrategy("narrower_than").orElseThrow());
+    assertTrue(QueryExpansionRelationStrategyResolver.getStrategy("unknown_relation").isEmpty());
   }
 
   @Test

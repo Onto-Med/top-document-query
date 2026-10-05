@@ -38,34 +38,14 @@ This connection is used by TOP backend services that call [Concept Graphs](https
 
 ## Query expansion policy
 
-A data source can define how semantic query-expansion relations should be translated into TOP query-building intent.
+A data source can enable backend-mediated Concept Graphs query expansion.
 
 ```yaml
 queryExpansion:
-  profile: medical_de
-  relations:
-    equivalent_to:
-      strategy: alternatives
-    related_to:
-      strategy: optional_context
-    may_indicate:
-      strategy: require_context
-    treated_by:
-      strategy: require_context
-    investigated_by:
-      strategy: require_context
-    confirmed_by:
-      strategy: require_context
-    broader_than:
-      strategy: recall_expansion
-    narrower_than:
-      strategy: specificity_focus
+  enabled: true
 ```
 
-`profile` references a [Concept Graphs](https://github.com/Onto-Med/concept-graphs) query-expansion profile. Relations exposed to the frontend should be the intersection of:
-
-1. relations configured in this data source, and
-2. relations allowed by the referenced [Concept Graphs](https://github.com/Onto-Med/concept-graphs) profile.
+[Concept Graphs](https://github.com/Onto-Med/concept-graphs) owns semantic query-expansion profiles and relations. TOP keeps the relation-to-query-building strategy mapping centralized in code instead of configuring it per data source.
 
 The strategy names are domain-neutral retrieval intents. They should not expose concrete Boolean operators to users.
 
@@ -81,7 +61,7 @@ Initial strategy vocabulary:
 - `phrase_context`
 - `ignore`
 
-Available default strategies are defined centrally in `QueryExpansionStrategy`. Backend services can expose a selected adapter's `TextAdapter.getQueryExpansionStrategyDefinitions()` to the frontend, similar to how TOP expression functions are exposed via `SONG.getExpressionFunctions()`.
+Available default strategies are defined centrally in `QueryExpansionStrategy`. Semantic relation IDs are mapped to strategies centrally in `QueryExpansionRelationStrategyResolver`. Backend services can expose a selected adapter's `TextAdapter.getQueryExpansionStrategyDefinitions()` to the frontend, similar to how TOP expression functions are exposed via `SONG.getExpressionFunctions()`.
 
 The current default TOP compiler maps supported strategies to existing expressions such as `OR`, `AND`, or `NOT` in `QueryExpansionExpressionCompiler`. Adapters can override `TextAdapter.compileQueryExpansionRelation(...)` and `TextAdapter.getQueryExpansionStrategyDefinitions()` if they support more specific behavior. This mapping is intentionally hidden from domain users and should not be duplicated in the frontend.
 
