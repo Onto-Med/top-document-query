@@ -1,7 +1,10 @@
 package care.smith.top.top_document_query.query_expansion;
 
 import care.smith.top.model.Expression;
+import care.smith.top.top_document_query.functions.And;
+import care.smith.top.top_document_query.functions.Not;
 import care.smith.top.top_document_query.functions.Or;
+import care.smith.top.top_document_query.util.builder.Exp;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,17 +75,10 @@ public final class QueryExpansionBundleCompiler {
 
   private static Optional<QueryExpansionBundle> compileComponent(
       GroupKey group, List<QueryExpansionRelationEdge> edges) {
-    List<Expression> expressions =
-        edges.stream()
-            .map(
-                edge ->
-                    QueryExpansionExpressionCompiler.compileRelation(
-                        edge.strategy(), edge.sourceEntityId(), edge.targetEntityId()))
-            .flatMap(Optional::stream)
-            .toList();
-    if (expressions.isEmpty()) return Optional.empty();
+    Optional<Expression> compiledExpression = compileComponentExpression(group.strategy(), edges);
+    if (compiledExpression.isEmpty()) return Optional.empty();
+    Expression expression = QueryExpansionExpressionNormalizer.normalize(compiledExpression.get());
 
-    Expression expression = expressions.size() == 1 ? expressions.get(0) : Or.of(expressions);
     Set<String> sourceEntityIds = new TreeSet<>();
     Set<String> targetEntityIds = new TreeSet<>();
     edges.forEach(
@@ -100,6 +96,46 @@ public final class QueryExpansionBundleCompiler {
             new LinkedHashSet<>(targetEntityIds),
             edges,
             expression));
+  }
+
+  private static Optional<Expression> compileComponentExpression(
+      QueryExpansionStrategy strategy, List<QueryExpansionRelationEdge> edges) {
+    if (strategy == QueryExpansionStrategy.EXCLUDE_CONTEXT) {
+      return Optional.of(compileExclusionComponent(edges));
+    }
+
+    List<Expression> expressions =
+        edges.stream()
+            .map(
+                edge ->
+                    QueryExpansionExpressionCompiler.compileRelation(
+                        edge.strategy(), edge.sourceEntityId(), edge.targetEntityId()))
+            .flatMap(Optional::stream)
+            .toList();
+    if (expressions.isEmpty()) return Optional.empty();
+    return Optional.of(expressions.size() == 1 ? expressions.get(0) : Or.of(expressions));
+  }
+
+  private static Expression compileExclusionComponent(
+      List<QueryExpansionRelationEdge> edges) {
+    Map<String, Set<String>> targetsBySource = new TreeMap<>();
+    edges.forEach(
+        edge ->
+            targetsBySource
+                .computeIfAbsent(edge.sourceEntityId(), ignored -> new TreeSet<>())
+                .add(edge.targetEntityId()));
+
+    List<Expression> sourceClauses =
+        targetsBySource.entrySet().stream()
+            .map(
+                entry -> {
+                  List<Expression> targets = entry.getValue().stream().map(Exp::ofEntity).toList();
+                  Expression excludedTargets =
+                      targets.size() == 1 ? targets.get(0) : Or.of(targets);
+                  return And.of(Exp.ofEntity(entry.getKey()), Not.of(excludedTargets));
+                })
+            .toList();
+    return sourceClauses.size() == 1 ? sourceClauses.get(0) : Or.of(sourceClauses);
   }
 
   private static List<Set<String>> connectedComponents(

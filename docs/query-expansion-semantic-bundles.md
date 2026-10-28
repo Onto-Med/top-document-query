@@ -71,8 +71,8 @@ The generic compilation algorithm should be semantics-preserving:
 1. Resolve Concept Graphs concept IDs to TOP entity or draft IDs.
 2. Discard relation edges whose endpoints cannot be resolved.
 3. Partition edges according to the bundle boundary above.
-4. Compile every edge with the existing `QueryExpansionExpressionCompiler`.
-5. Combine the compiled edge expressions with `OR`.
+4. Compile every edge with the existing `QueryExpansionExpressionCompiler` for strategies whose edge expressions can be combined with `OR`.
+5. Construct exclusion bundles per source as `AND(source, NOT(OR(targets)))`; combining independently compiled exclusion edges with `OR` would change the intended meaning.
 6. Normalize the combined expression by flattening operators, removing duplicates, and applying safe factoring rules.
 
 For a required-context relation, the initial combined form is:
@@ -93,7 +93,7 @@ AND(
 )
 ```
 
-Compiling edges before combining them avoids inventing separate bundle semantics for every relation strategy.
+Compiling edges before combining them avoids inventing separate bundle semantics for most relation strategies. Exclusion is deliberately strategy-aware: for multiple excluded targets, `OR(AND(source, NOT(target1)), AND(source, NOT(target2)))` would still match when only one excluded target is present and is therefore not equivalent to `AND(source, NOT(OR(target1, target2)))`.
 
 ### Expected forms by strategy
 
