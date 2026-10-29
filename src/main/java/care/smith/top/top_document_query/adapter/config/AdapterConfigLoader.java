@@ -88,7 +88,7 @@ final class AdapterConfigLoader {
 
   private static Connection serviceConnection(Service service) {
     Connection connection = new Connection();
-    connection.setEndpoints(List.of(Connection.validateEndpoint(service.endpoint()).toString()));
+    connection.setEndpoints(service.endpoints());
     return connection;
   }
 
@@ -113,5 +113,5 @@ final class AdapterConfigLoader {
 
   record Services(Service conceptGraph, Service vectorStore) {}
 
-  record Service(String endpoint) {}
+  record Service(List<String> endpoints) {}
 }

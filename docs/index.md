@@ -18,7 +18,8 @@ locations and removal prerequisites. Prefer current source over stale prose; upd
 - Configure available document indices only under `source.indices`; no `readIndices`/`writeIndex` split.
   Choose the target in the operation/UI instead of relying on list order.
 - Keep one shared `source.batchSize` for Java retrieval/page sizes and Python ingestion fetches.
-- Represent the primary and alternate Elasticsearch addresses as ordered complete `connection.endpoints`.
+- Use ordered complete URI lists: Elasticsearch `connection.endpoints` and service
+  `services.conceptGraph.endpoints` / `services.vectorStore.endpoints` (primary, then fallbacks).
 - Preserve downstream ingestion mappings and concept-graph/vector-store settings: they have consumers.
 - Keep the implemented `SearchCursor` pagination redesign after explicit user review: PIT snapshot,
   full server sort values, `_shard_doc` tie-breaker, and cursor cleanup. Do not revert it speculatively.
@@ -34,7 +35,7 @@ locations and removal prerequisites. Prefer current source over stale prose; upd
 | Index scope | `forIndex()` / `forIndices()` return independent views sharing the client, without changing the allowlist. V2 multi-index reads require explicit scope. |
 | Import/lookup | Single selected import destination; ID-only lookup requires one index; exact-reference lookup supports configured aliases. |
 | Provenance | `DocumentReference`, `IndexedDocument`, indexed reads, and query-hit/CSV source/index fields. Old plain-document APIs remain. |
-| Connections | Complete URIs/HTTPS, ordered startup fallback, failed-transport cleanup, ownership-aware `close()`. |
+| Connections | Elasticsearch: complete URIs/HTTPS, ordered startup fallback, failed-transport cleanup, ownership-aware `close()`. Services: ordered lists loaded/validated; full-list runtime fallback still needs backend/Python integration. |
 | Batching | PIT-backed `SearchCursor`, shared by query execution and document streams. |
 
 Additional behavior changes requiring attention during review: query/stream failures now propagate
@@ -55,16 +56,17 @@ Next expected activity is answering the user's remaining implementation-review q
 lists in these docs are **not instructions to automatically implement sibling-project changes, remove
 compatibility APIs, or broaden the refactor**. Follow the user's next explicit request.
 
-## Recorded verification (not rerun by documentation-only updates)
+## Recorded verification
 
 - Offline Maven `test-compile` succeeded, targeting Java 21 with a local JDK 24.
-- 27 targeted tests passed via a temporary cached-JUnit launcher under ignored `target/`:
+- Latest service-endpoint change: offline `test-compile` and 30 targeted tests passed via a temporary
+  cached-JUnit launcher under ignored `target/` (previous checkpoint: 27 tests):
   `TextAdapterConfigTest`, `IndexSelectionTest`, `ElasticsearchIndexScopeTest`,
   `DocumentReferenceTest`, `DocumentHitTest`, `SchemaValidationTest`.
 - Standard Maven test execution was blocked by an uncached Surefire JUnit provider. The temporary
   launcher is not a portable committed test command; normal Maven execution remains unverified here.
 - No Docker integration tests, downloads, or external service calls were performed.
-- `git diff --check` passed at the implementation checkpoint.
+- `git diff --check` passed at the implementation checkpoint; rerun after subsequent edits.
 
 For subsequent runs, use the targeted command in the configuration guide; request approval before
 network downloads or expensive/container suites. Do not assume ignored verification helpers still exist.

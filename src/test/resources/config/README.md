@@ -3,8 +3,8 @@
 ## Configuration
 
 Both legacy YAML and `configVersion: 2` are supported by `TextAdapterConfig.getInstance(path)`.
-See [`Example_Adapter_v2.yml`](src/test/resources/config/Example_Adapter_v2.yml) and the
-[configuration schema](src/main/resources/text_adapter_config_schema.json).
+See [`Example_Adapter_v2.yml`](Example_Adapter_v2.yml) and the
+[configuration schema](../../../main/resources/text_adapter_config_schema.json).
 
 ```yaml
 configVersion: 2
@@ -14,10 +14,13 @@ connection:
     - https://localhost:9201
     - http://localhost:9202
 source:
-  indices: [documents, imported_documents]
+  indices:
+    - documents
+    - imported_documents
   batchSize: 30
 search:
-  fields: [text]
+  fields:
+    - text
 pipeline:
   documentMapping:
     renameFields: {text: content}
@@ -25,9 +28,13 @@ pipeline:
     idField: id
 services:
   conceptGraph:
-    endpoint: http://localhost:5000
+    endpoints:
+      - http://localhost:5000
+      - http://localhost:5001
   vectorStore:
-    endpoint: http://localhost:8882
+    endpoints:
+      - http://localhost:8882
+      - http://localhost:8883
 ```
 
 - `source.indices` lists allowed index/alias names, not an implicit import destination. V2 requires
@@ -35,7 +42,11 @@ services:
 - `source.batchSize` is shared by Java retrieval/page sizes and downstream ingestion fetches.
 - `search.fields` controls search/highlight fields. Pipeline mappings are downstream ingestion
   settings; they do not change Java's fixed `DocumentEntity` fields.
-- Services are optional in this library. The calling backend must handle missing services explicitly.
+- Services are optional. Each configured service requires a nonempty, unique `endpoints` list,
+  ordered primary first, then fallbacks; singular `endpoint` is not accepted. The loader preserves
+  all candidates in `getConnection().getEndpoints()`. Runtime full-list service selection still needs
+  backend/Python integration; this change introduces no service request retries. The calling backend
+  must handle missing services explicitly.
 - Complete HTTP(S) endpoints preserve scheme and per-endpoint ports. Elasticsearch endpoints are
   tried in order at initialization; failed transports are closed and failure of all endpoints throws.
   This is startup fallback, not automatic per-request failover or a node pool. URI paths, embedded
@@ -119,7 +130,7 @@ from different indices; it rejects legacy exports lacking provenance instead of 
 
 Existing backend ID-keyed result maps, persisted queries, shared TOP API models, frontend selectors,
 and pipeline-to-source bindings still need changes in their owning projects. See the
-[cross-project impact inventory](docs/index-selection-impact.md).
+[cross-project impact inventory](../../../../docs/index-selection-impact.md).
 
 ## Validation and tests
 

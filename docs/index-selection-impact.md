@@ -42,7 +42,7 @@ Under `src/main/java/care/smith/top/top_document_query/`:
 
 | Source | Present responsibility |
 | --- | --- |
-| `adapter/config/AdapterConfigLoader.java`, `TextAdapterConfig.java`, `Connection.java` | V1/v2 input normalization/validation and complete endpoints; legacy Java getters remain. |
+| `adapter/config/AdapterConfigLoader.java`, `TextAdapterConfig.java`, `Connection.java` | V1/v2 normalization/validation; complete ordered Elasticsearch and service endpoint lists. Legacy getters remain; full-list service fallback is not wired downstream yet. |
 | `adapter/IndexSelection.java`, `TextAdapter.java` | Validated immutable scopes and adapter entry points. `TextFinder.java` delegates to the supplied adapter; caller must provide the intended scope. |
 | `adapter/elasticsearch/ElasticsearchAdapter.java` | Scoped reads/imports, exact references, indexed reads, PIT batching, startup fallback/client ownership. |
 | `adapter/DocumentReference.java`, `IndexedDocument.java`, `DocumentHit.java` | Exact identities and provenance-bearing results. |
@@ -67,7 +67,7 @@ Paths under `top-backend/src/main/java/care/smith/top/backend/`:
 | `api/nlp/DocumentApiDelegateImpl.java` | Accept/validate read scope, one import destination, exact document references; preserve all filter branches. |
 | `service/nlp/DocumentService.java` | Scope adapters safely; review `dataSourceAdapter`/`queryAdapter` cache keys and global/scoped counts. |
 | `service/nlp/DocumentQueryService.java` | Persist/apply query scope; replace ID-only result reconstruction; expose authorized index choices. Current `textAdapterConfigToDataSource()` returns no indices. |
-| `api/nlp/ConceptPipelineApiDelegateImpl.java` | Replace first-index choice in `createDocumentServerConfigMap()`; pass selection through JSON/multipart; separate pipeline name from source lookup. Migrate split URL/port forwarding. |
+| `api/nlp/ConceptPipelineApiDelegateImpl.java` | Replace first-index choice in `createDocumentServerConfigMap()`; pass selection through JSON/multipart; separate pipeline name from source lookup. Forward full ordered service/Elasticsearch endpoint lists instead of split URL/port projections. |
 | `service/nlp/ConceptGraphsService.java` | Retain process-to-input binding. Adapter-specific endpoint selection currently differs between JSON and multipart starts. |
 | `service/nlp/ConceptClusterService.java` | Hydrate graph documents from the pipeline-bound input in `createSpecificGraphsInNeo4j()` / `createGraphInNeo4j()`. |
 | `api/nlp/ConceptClusterApiDelegateImpl.java`, `PhraseApiDelegateImpl.java` | Exact original-document lookup and correct graph-corpus binding. |

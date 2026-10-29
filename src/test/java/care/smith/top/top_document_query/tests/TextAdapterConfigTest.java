@@ -39,7 +39,11 @@ class TextAdapterConfigTest {
     assertEquals(List.of("http://localhost:9201", "http://192.168.48.111:9201"), config.getConnection().getEndpoints());
     assertEquals("http://localhost", config.getConceptGraph().getConnection().getUrl());
     assertEquals("5000", config.getConceptGraph().getConnection().getPort());
+    assertEquals(List.of("http://localhost:5000", "http://192.168.48.111:5000"),
+        config.getConceptGraph().getConnection().getEndpoints());
     assertEquals("8882", config.getVectorStore().getConnection().getPort());
+    assertEquals(List.of("http://localhost:8882", "http://192.168.48.111:8882"),
+        config.getVectorStore().getConnection().getEndpoints());
   }
 
   @Test
@@ -81,6 +85,41 @@ class TextAdapterConfigTest {
     assertEquals(Map.of("body", "content"), config.getReplaceFields());
     assertEquals("category", config.getLabelKey());
     assertEquals("external_id", config.getOtherId());
+  }
+
+  @Test
+  void serviceEndpointsPreserveOrderSchemesAndIndependentPorts() throws IOException {
+    List<String> expected = List.of(
+        "https://primary.example:5000", "http://fallback.example:5001", "https://third.example");
+    TextAdapterConfig config = load(v2("  indices: [one]\n") + """
+        services:
+          conceptGraph:
+            endpoints: [https://primary.example:5000, http://fallback.example:5001, https://third.example]
+          vectorStore:
+            endpoints: [https://primary.example:5000, http://fallback.example:5001, https://third.example]
+        """);
+    for (Connection connection : List.of(
+        config.getConceptGraph().getConnection(), config.getVectorStore().getConnection())) {
+      assertEquals(expected, connection.getEndpoints());
+      assertEquals("https://primary.example", connection.getUrl());
+      assertEquals("http://fallback.example", connection.getAlternateUrl());
+      assertEquals("5000", connection.getPort());
+    }
+  }
+
+  @Test
+  void malformedServiceEndpointsFailFast() {
+    for (String service : List.of("conceptGraph", "vectorStore")) {
+      for (String settings : List.of(
+          "{}", "{endpoints: null}", "{endpoints: []}",
+          "{endpoints: ['http://localhost:5000', 'http://localhost:5000']}",
+          "{endpoints: ['localhost:5000']}", "{endpoints: ['http://localhost/path']}",
+          "{endpoints: [' ']}", "{endpoint: 'http://localhost:5000'}",
+          "{endpoints: ['http://localhost:5000'], endpoint: 'http://localhost:5001'}")) {
+        String yaml = v2("  indices: [one]\n") + "services: {" + service + ": " + settings + "}\n";
+        assertThrows(IllegalArgumentException.class, () -> load(yaml), yaml);
+      }
+    }
   }
 
   @Test

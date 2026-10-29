@@ -114,8 +114,9 @@ Location: `adapter/config/Connection.java`: `url`, `alternateUrl`, string `port`
 pairs, `legacyEndpoint(...)`, `hasLegacyAddress()`, mixed-format checks; reassess
 `baseUrl(...)` / `defaultPort(...)` after removing projections.
 
-Replacement: `getEndpoints()/setEndpoints()`. Old getters also project v2 to primary URL/port and
-one alternate URL; this loses further endpoints and the alternate's independent port.
+Replacement: `getEndpoints()/setEndpoints()`, populated from v2 Elasticsearch and service `endpoints`
+lists. Old getters project these to primary URL/port and one alternate URL; this loses further
+endpoints and the alternate's independent port. No full-list service fallback is wired downstream yet.
 
 Blockers: backend `ConceptPipelineApiDelegateImpl.createDocumentServerConfigMap()`,
 `createVectorStoreServerMap()`, `createCgServerMap()`; local `AbstractElasticTest.initAdaper()` mutates
