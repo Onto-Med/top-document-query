@@ -1,7 +1,7 @@
 # Start here: v2 configuration and index-selection handoff
 
-**Review state:** document-query implementation exists, but the user is still reviewing changes.
-Implemented does **not** mean individually reviewed/accepted or integrated end-to-end.
+**Review state:** the user has completed file-by-file review. Verification is in progress;
+review completion does **not** establish integration correctness or end-to-end readiness.
 
 ## Read next
 
@@ -26,7 +26,7 @@ locations and removal prerequisites. Prefer current source over stale prose; upd
 - Track retained compatibility before removing it. The compatibility rationale was explained;
   **no legacy removal or blanket deprecation has been authorized**.
 
-## Implemented here, still under broader review
+## Implemented and user-reviewed here
 
 | Area | Present implementation |
 | --- | --- |
@@ -38,7 +38,7 @@ locations and removal prerequisites. Prefer current source over stale prose; upd
 | Connections | Elasticsearch: complete URIs/HTTPS, ordered startup fallback, failed-transport cleanup, ownership-aware `close()`. Services: ordered lists loaded/validated; full-list runtime fallback still needs backend/Python integration. |
 | Batching | PIT-backed `SearchCursor`, shared by query execution and document streams. |
 
-Additional behavior changes requiring attention during review: query/stream failures now propagate
+Behavior changes to preserve explicitly in validation: query/stream failures now propagate
 rather than look like empty final batches; invalid config throws instead of returning null; all failed
 connection attempts throw; stream callers must close early-stopped streams. Endpoint paths/credentials
 are rejected, not silently discarded. These changes must not be presented as behavior-neutral.
@@ -52,24 +52,52 @@ Still to decide: UI single/multi-select policy, shared API document/query models
 persisted source binding, legacy-request/archive policy, and eventual public Java configuration shape.
 Library support for a feature is not approval of the corresponding end-to-end UX/contract.
 
-Next expected activity is answering the user's remaining implementation-review questions. The task
-lists in these docs are **not instructions to automatically implement sibling-project changes, remove
-compatibility APIs, or broaden the refactor**. Follow the user's next explicit request.
+Current task: progressively stronger verification. Offline and standard targeted Maven tests have
+passed; approved test dependencies were downloaded. Local Docker execution is unavailable on the
+user's Windows machine; use a Docker-capable CI runner for integration verification. Approved CI
+improvements are implemented locally; pushing/triggering workflows has not been authorized. These
+lists are **not instructions to automatically implement sibling-project changes, remove compatibility
+APIs, or broaden the refactor**.
 
 ## Recorded verification
 
-- Offline Maven `test-compile` succeeded, targeting Java 21 with a local JDK 24.
-- Latest service-endpoint change: offline `test-compile` and 30 targeted tests passed via a temporary
-  cached-JUnit launcher under ignored `target/` (previous checkpoint: 27 tests):
-  `TextAdapterConfigTest`, `IndexSelectionTest`, `ElasticsearchIndexScopeTest`,
-  `DocumentReferenceTest`, `DocumentHitTest`, `SchemaValidationTest`.
-- Standard Maven test execution was blocked by an uncached Surefire JUnit provider. The temporary
-  launcher is not a portable committed test command; normal Maven execution remains unverified here.
-- No Docker integration tests, downloads, or external service calls were performed.
+- Latest local check (2026-10-29): the CI non-container selection passed offline through standard
+  Maven: **42 tests, 0 failures/errors/skips**, including 12 existing `SongTest` cases. Compilation
+  targets Java 21; the local check used JDK 24, while CI uses JDK 21.
+- Earlier migration-focused selection: 30 tests passed through both the cached launcher and Maven.
+  Approved Central downloads resolved the Surefire provider blocker; the temporary launcher is no
+  longer required. The configuration guide retains the narrower targeted command.
+- No Docker integration tests or external application-service calls have been performed.
+- Integration preparation completed: `AbstractElasticTest.initAdaper()` replaces the example's
+  connection with the container's sole endpoint. The import test uses a separate v2 allowlist,
+  explicit destination and scoped read without mutating the shared adapter; refresh replaces sleep.
+  Test bytecode was checked. Changed integration tests have not run yet; coverage of new
+  multi-index/alias/PIT/fallback cases remains pending.
 - `git diff --check` passed at the implementation checkpoint; rerun after subsequent edits.
 
 For subsequent runs, use the targeted command in the configuration guide; request approval before
 network downloads or expensive/container suites. Do not assume ignored verification helpers still exist.
+
+## CI: integration route
+
+`.github/workflows/run-tests.yml` now defines independent checks on Ubuntu/JDK 21:
+
+- Formatting (10-minute limit), non-container tests (10 minutes), and Elasticsearch integration
+  (20 minutes). Formatting failure does not prevent tests; matrix fail-fast is disabled.
+- Non-container selection: `!ElasticsearchAdapterTest,!TextFinderTest`. Integration selection:
+  `ElasticsearchAdapterTest,TextFinderTest`; Testcontainers starts Elasticsearch 8.8.1 and helpers.
+  No external Elasticsearch service is required. Keep these lists paired when adding container tests.
+- Both suites upload `target/surefire-reports/` even after test failure, when available; artifacts
+  `surefire-unit` / `surefire-integration` expire after 7 days.
+- The existing `test` check remains an aggregate gate requiring formatting and both suites to pass.
+- Main pushes/PRs and manual dispatch are supported. Manual dispatch becomes available once the
+  workflow is on the default branch. Publishing/release workflows are unchanged.
+
+YAML parsing, triggers, suite partition, and aggregate dependencies were checked locally using a cached
+parser; this is not an Actions schema/actionlint validation. No workflow was triggered or checked
+remotely; a green integration run is still required. Package access uses existing CI secrets (values
+not inspected); fork PRs may lack them. After the changes are pushed with approval, inspect all checks
+and download integration reports on failure; do not treat workflow configuration as test evidence.
 
 ## Keep the handoff current
 

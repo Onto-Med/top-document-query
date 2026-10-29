@@ -59,8 +59,9 @@ independently. `documentCollector()` also serves the exact-reference lookup and 
 Locations: `TextAdapter.importDocuments(Document[], String)` and Elasticsearch override.
 Explicit entry: `importDocuments(String index, Document[], String)`.
 
-Callers: backend `api/nlp/DocumentApiDelegateImpl.importDocuments()`;
-local `ElasticsearchAdapterTest.createIndexAndUploadDocuments()`.
+Caller: backend `api/nlp/DocumentApiDelegateImpl.importDocuments()`.
+Local `ElasticsearchAdapterTest.createIndexAndUploadDocuments()` now uses an explicit destination;
+scope tests still intentionally exercise legacy dispatch/rejection.
 
 The older signature is still the **scoped implementation hook**: the new overload calls
 `forIndex(index)` then that hook. Direct use on a single-index-scoped adapter is unambiguous.
@@ -119,8 +120,9 @@ lists. Old getters project these to primary URL/port and one alternate URL; this
 endpoints and the alternate's independent port. No full-list service fallback is wired downstream yet.
 
 Blockers: backend `ConceptPipelineApiDelegateImpl.createDocumentServerConfigMap()`,
-`createVectorStoreServerMap()`, `createCgServerMap()`; local `AbstractElasticTest.initAdaper()` mutates
-legacy port, and `TextAdapterConfigTest` verifies projections/legacy input.
+`createVectorStoreServerMap()`, `createCgServerMap()`; local `TextAdapterConfigTest` verifies
+projections/legacy input. `AbstractElasticTest.initAdaper()` now replaces the legacy connection with
+the container's sole endpoint rather than mutating its port.
 
 **Gate:** migrate backend forwarding, downstream Python URL/port contracts, and tests; preserve
 HTTPS, ordered endpoints and independent ports. Keep full-URI validation/handling.
@@ -134,9 +136,10 @@ Replacement: exact v2 names and explicit multi-index scope.
 **Gate:** complete L05 and request-scope migration, then remove version-specific branches, not
 `IndexSelection` or the globally used naming utility.
 
-Older code can still use `getConfig().setIndex(...)` as operation selection;
-`ElasticsearchAdapterTest.createIndexAndUploadDocuments()` does this. Replace it with an allowlist
-and scoped/explicit import. Configuration construction remains valid; do not delete every setter.
+Older code can still use `getConfig().setIndex(...)` as operation selection; migrate any such caller
+to a configured allowlist and scoped/explicit import. `ElasticsearchAdapterTest` now follows that
+pattern without shared configuration mutation. Configuration construction remains valid; do not
+delete every setter.
 
 ## L09 — CSV compatibility and optional hit provenance
 

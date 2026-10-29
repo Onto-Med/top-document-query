@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import care.smith.top.model.Document;
+import care.smith.top.top_document_query.adapter.config.Connection;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -15,6 +16,7 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -123,7 +125,11 @@ public abstract class AbstractElasticTest {
     assertNotNull(configFile);
 
     TextAdapterConfig config = TextAdapterConfig.getInstance(configFile.getPath());
-    config.getConnection().setPort(String.valueOf(elasticsearchContainer.getMappedPort(9200)));
+    // Replace the example connection entirely: never contact its alternate host from a test.
+    Connection connection = new Connection();
+    connection.setEndpoints(List.of(
+        HttpHost.create(elasticsearchContainer.getHttpHostAddress()).toURI()));
+    config.setConnection(connection);
 
     adapter = (ElasticsearchAdapter) ElasticsearchAdapter.getInstance(config);
     assertNotNull(adapter);
