@@ -187,7 +187,8 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
     importConfig.setConnection(adapter.getConfig().getConnection());
     importConfig.setIndex(new String[] {ELASTIC_INDEX[0], "test_index"});
 
-    // Separate allowlist, same container client; the shared adapter's configuration stays unchanged.
+    // Separate allowlist, same container client; the shared adapter's configuration stays
+    // unchanged.
     try (ElasticsearchAdapter importAdapter = new ElasticsearchAdapter(importConfig, esClient)) {
       Document[] documents = {document1, document2};
       DocumentImport result = importAdapter.importDocuments("test_index", documents, "de");

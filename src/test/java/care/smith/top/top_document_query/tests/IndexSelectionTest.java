@@ -20,17 +20,21 @@ class IndexSelectionTest {
     assertEquals("two", selection.singleIndex());
     assertArrayEquals(new String[] {"one", "two"}, config.getIndex());
     assertThrows(UnsupportedOperationException.class, () -> selection.indices().add("one"));
-    assertThrows(IllegalArgumentException.class, () -> IndexSelection.select(config, List.of("outside")));
+    assertThrows(
+        IllegalArgumentException.class, () -> IndexSelection.select(config, List.of("outside")));
     assertThrows(IllegalArgumentException.class, () -> IndexSelection.select(config, List.of()));
-    assertThrows(IllegalArgumentException.class, () -> IndexSelection.select(config, List.of("one", "one")));
+    assertThrows(
+        IllegalArgumentException.class, () -> IndexSelection.select(config, List.of("one", "one")));
   }
 
   @Test
   void legacySelectionsUseTheSameNameNormalizationAsLegacyReads() {
     TextAdapterConfig config = new TextAdapterConfig();
     config.setIndex(new String[] {"Test Documents"});
-    assertEquals("test_documents", IndexSelection.select(config, List.of("Test Documents")).singleIndex());
-    assertEquals("test_documents", IndexSelection.select(config, List.of("test_documents")).singleIndex());
+    assertEquals(
+        "test_documents", IndexSelection.select(config, List.of("Test Documents")).singleIndex());
+    assertEquals(
+        "test_documents", IndexSelection.select(config, List.of("test_documents")).singleIndex());
   }
 
   @Test
@@ -38,7 +42,8 @@ class IndexSelectionTest {
     TextAdapterConfig config = new TextAdapterConfig();
     config.setIndex(new String[] {"one", "two"});
     assertEquals(List.of("one", "two"), IndexSelection.defaultRead(config).indices());
-    assertThrows(IllegalStateException.class, () -> IndexSelection.configured(config).singleIndex());
+    assertThrows(
+        IllegalStateException.class, () -> IndexSelection.configured(config).singleIndex());
     config.setConfigVersion(2);
     assertThrows(IllegalStateException.class, () -> IndexSelection.defaultRead(config));
     config.setIndex(new String[] {"one"});

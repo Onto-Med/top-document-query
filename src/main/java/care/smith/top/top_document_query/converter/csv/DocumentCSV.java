@@ -4,13 +4,13 @@ import care.smith.top.model.Concept;
 import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.DocumentReference;
-import java.util.regex.Pattern;
 import care.smith.top.top_document_query.util.Entities;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class DocumentCSV {
@@ -111,7 +111,8 @@ public class DocumentCSV {
         String[] columns = line.split(Pattern.quote(entriesDelimiter), -1);
         if (!headerFound) {
           if (!Arrays.asList(columns).equals(CSVDataRecord.FIELDS)) {
-            throw new IllegalArgumentException("CSV does not contain index-aware document references");
+            throw new IllegalArgumentException(
+                "CSV does not contain index-aware document references");
           }
           headerFound = true;
           continue;
@@ -121,10 +122,12 @@ public class DocumentCSV {
             || columns[CSVDataRecord.Field.DATA_SOURCE.columnIndex].isBlank()) {
           throw new IllegalArgumentException("CSV row lacks document provenance");
         }
-        references.add(new DocumentReference(
-            columns[CSVDataRecord.Field.DATA_SOURCE.columnIndex],
-            columns[CSVDataRecord.Field.INDEX.columnIndex],
-            columns[CSVDataRecord.Field.ID.columnIndex].split(Pattern.quote(entryPartsDelimiter), 2)[0]));
+        references.add(
+            new DocumentReference(
+                columns[CSVDataRecord.Field.DATA_SOURCE.columnIndex],
+                columns[CSVDataRecord.Field.INDEX.columnIndex],
+                columns[CSVDataRecord.Field.ID.columnIndex]
+                    .split(Pattern.quote(entryPartsDelimiter), 2)[0]));
       }
     }
     if (!headerFound) throw new IllegalArgumentException("CSV header is missing");
@@ -152,8 +155,10 @@ public class DocumentCSV {
         }
         if (position >= columns.length) continue;
         String item = columns[position];
-        records.add(position == CSVDataRecord.Field.ID.columnIndex
-            ? item.split(Pattern.quote(entryPartsDelimiter), 2)[0] : item);
+        records.add(
+            position == CSVDataRecord.Field.ID.columnIndex
+                ? item.split(Pattern.quote(entryPartsDelimiter), 2)[0]
+                : item);
       }
     }
     return List.copyOf(records);

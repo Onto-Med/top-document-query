@@ -10,7 +10,8 @@ import java.util.List;
 /** Immutable operation scope; never changes the adapter's configured allowlist. */
 public record IndexSelection(List<String> indices) {
   public IndexSelection {
-    if (indices == null || indices.isEmpty()
+    if (indices == null
+        || indices.isEmpty()
         || indices.stream().anyMatch(index -> index == null || index.isBlank())) {
       throw new IllegalArgumentException("Select at least one nonblank index");
     }
@@ -21,13 +22,16 @@ public record IndexSelection(List<String> indices) {
   }
 
   public static IndexSelection select(TextAdapterConfig config, Collection<String> indices) {
-    IndexSelection selection = new IndexSelection(indices == null ? null : new ArrayList<>(indices));
+    IndexSelection selection =
+        new IndexSelection(indices == null ? null : new ArrayList<>(indices));
     if (config.getConfigVersion() == 1) {
-      selection = new IndexSelection(selection.indices().stream().map(NLPUtils::stringConformity).toList());
+      selection =
+          new IndexSelection(selection.indices().stream().map(NLPUtils::stringConformity).toList());
     }
     List<String> allowed = configured(config).indices();
     if (!allowed.containsAll(selection.indices())) {
-      throw new IllegalArgumentException("Selected indices must belong to the adapter's configured indices");
+      throw new IllegalArgumentException(
+          "Selected indices must belong to the adapter's configured indices");
     }
     return selection;
   }

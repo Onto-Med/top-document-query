@@ -44,9 +44,7 @@ public class Connection {
     if (endpoints != null) return endpoints;
     if (url == null) throw new IllegalArgumentException("connection.url is required");
     String primary = legacyEndpoint(url);
-    return alternateUrl == null
-        ? List.of(primary)
-        : List.of(primary, legacyEndpoint(alternateUrl));
+    return alternateUrl == null ? List.of(primary) : List.of(primary, legacyEndpoint(alternateUrl));
   }
 
   public void setEndpoints(List<String> endpoints) {
@@ -86,7 +84,9 @@ public class Connection {
           || uri.getUserInfo() != null
           || uri.getQuery() != null
           || uri.getFragment() != null
-          || (uri.getRawPath() != null && !uri.getRawPath().isEmpty() && !"/".equals(uri.getRawPath()))
+          || (uri.getRawPath() != null
+              && !uri.getRawPath().isEmpty()
+              && !"/".equals(uri.getRawPath()))
           || uri.getRawAuthority().endsWith(":")
           || uri.getPort() == 0
           || uri.getPort() > 65535) {
@@ -94,7 +94,8 @@ public class Connection {
       }
       return uri;
     } catch (RuntimeException e) {
-      throw new IllegalArgumentException("Endpoint must be an HTTP(S) URI with a host and valid port, without credentials or a path");
+      throw new IllegalArgumentException(
+          "Endpoint must be an HTTP(S) URI with a host and valid port, without credentials or a path");
     }
   }
 

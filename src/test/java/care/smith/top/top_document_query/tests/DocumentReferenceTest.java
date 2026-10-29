@@ -16,37 +16,49 @@ class DocumentReferenceTest {
   @Test
   void csvRetainsDuplicateIdsFromDifferentIndicesAndOldColumnPositions() {
     DocumentEntity document = new DocumentEntity().setId("same").setName("name").setText("text");
-    List<DocumentHit> hits = List.of(
-        new DocumentHit("same", document).setIndex("one").setDataSourceId("source"),
-        new DocumentHit("same", document).setIndex("two").setDataSourceId("source"));
+    List<DocumentHit> hits =
+        List.of(
+            new DocumentHit("same", document).setIndex("one").setDataSourceId("source"),
+            new DocumentHit("same", document).setIndex("two").setDataSourceId("source"));
     DocumentCSV csv = new DocumentCSV();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     csv.write(hits, output);
-    assertEquals(List.of(new DocumentReference("source", "one", "same"),
-        new DocumentReference("source", "two", "same")),
+    assertEquals(
+        List.of(
+            new DocumentReference("source", "one", "same"),
+            new DocumentReference("source", "two", "same")),
         csv.readDocumentReferences(new ByteArrayInputStream(output.toByteArray())));
-    assertEquals(List.of("same", "same"), csv.readFirstColumn(new ByteArrayInputStream(output.toByteArray())));
-    assertEquals(List.of("NA", "NA"), csv.readColumn(new ByteArrayInputStream(output.toByteArray()), 3));
+    assertEquals(
+        List.of("same", "same"),
+        csv.readFirstColumn(new ByteArrayInputStream(output.toByteArray())));
+    assertEquals(
+        List.of("NA", "NA"), csv.readColumn(new ByteArrayInputStream(output.toByteArray()), 3));
   }
 
   @Test
   void legacyCsvCanStillBeReadButCannotInventProvenance() {
-    byte[] legacy = "id\tscore\ttitle\toffsets\nid;field\t0.0\tname\t0-2\n".getBytes(StandardCharsets.UTF_8);
+    byte[] legacy =
+        "id\tscore\ttitle\toffsets\nid;field\t0.0\tname\t0-2\n".getBytes(StandardCharsets.UTF_8);
     DocumentCSV csv = new DocumentCSV();
     assertEquals(List.of("id"), csv.readFirstColumn(new ByteArrayInputStream(legacy)));
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(
+        IllegalArgumentException.class,
         () -> csv.readDocumentReferences(new ByteArrayInputStream(legacy)));
   }
 
   @Test
   void headerLikeIdsAndNaNamedSourcesRemainValidData() {
-    DocumentHit hit = new DocumentHit("index", new DocumentEntity().setName("title").setText("text"))
-        .setIndex("one").setDataSourceId("NA");
+    DocumentHit hit =
+        new DocumentHit("index", new DocumentEntity().setName("title").setText("text"))
+            .setIndex("one")
+            .setDataSourceId("NA");
     DocumentCSV csv = new DocumentCSV();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     csv.write(List.of(hit), output);
-    assertEquals(List.of("index"), csv.readFirstColumn(new ByteArrayInputStream(output.toByteArray())));
-    assertEquals(List.of(new DocumentReference("NA", "one", "index")),
+    assertEquals(
+        List.of("index"), csv.readFirstColumn(new ByteArrayInputStream(output.toByteArray())));
+    assertEquals(
+        List.of(new DocumentReference("NA", "one", "index")),
         csv.readDocumentReferences(new ByteArrayInputStream(output.toByteArray())));
   }
 

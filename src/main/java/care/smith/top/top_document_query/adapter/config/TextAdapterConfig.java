@@ -79,9 +79,12 @@ public class TextAdapterConfig {
     }
     if (configVersion == 2) {
       for (String name : index) {
-        if (!name.matches("[a-z0-9.][a-z0-9._-]*") || name.equals(".") || name.equals("..")
+        if (!name.matches("[a-z0-9.][a-z0-9._-]*")
+            || name.equals(".")
+            || name.equals("..")
             || name.length() > 255) {
-          throw new IllegalArgumentException("v2 source.indices must contain concrete lowercase index or alias names");
+          throw new IllegalArgumentException(
+              "v2 source.indices must contain concrete lowercase index or alias names");
         }
       }
     }
@@ -89,25 +92,33 @@ public class TextAdapterConfig {
       throw new IllegalArgumentException("batchSize must be positive");
     }
     if (replaceFields == null
-        || replaceFields.entrySet().stream().anyMatch(e -> e.getKey() == null
-            || e.getKey().isBlank() || e.getValue() == null || e.getValue().isBlank())) {
+        || replaceFields.entrySet().stream()
+            .anyMatch(
+                e ->
+                    e.getKey() == null
+                        || e.getKey().isBlank()
+                        || e.getValue() == null
+                        || e.getValue().isBlank())) {
       throw new IllegalArgumentException("Field mappings must contain nonblank names");
     }
     if (labelKey == null || labelKey.isBlank() || otherId == null || otherId.isBlank()) {
       throw new IllegalArgumentException("Label and ID field names must not be blank");
     }
     if (conceptGraph != null) {
-      if (conceptGraph.getConnection() == null) throw new IllegalArgumentException("conceptGraph connection is required");
+      if (conceptGraph.getConnection() == null)
+        throw new IllegalArgumentException("conceptGraph connection is required");
       conceptGraph.getConnection().validate();
     }
     if (vectorStore != null) {
-      if (vectorStore.getConnection() == null) throw new IllegalArgumentException("vectorStore connection is required");
+      if (vectorStore.getConnection() == null)
+        throw new IllegalArgumentException("vectorStore connection is required");
       vectorStore.getConnection().validate();
     }
   }
 
   private static void validateNames(String[] names, String description) {
-    if (names == null || names.length == 0
+    if (names == null
+        || names.length == 0
         || Arrays.stream(names).anyMatch(name -> name == null || name.isBlank())) {
       throw new IllegalArgumentException(description + " must not be empty or contain blank names");
     }

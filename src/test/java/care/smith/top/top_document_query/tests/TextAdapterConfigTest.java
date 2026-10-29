@@ -22,7 +22,8 @@ class TextAdapterConfigTest {
   }
 
   private String v2(String source) {
-    return "configVersion: 2\nconnection:\n  endpoints: [https://localhost:9201, http://localhost:9202]\nsource:\n" + source;
+    return "configVersion: 2\nconnection:\n  endpoints: [https://localhost:9201, http://localhost:9202]\nsource:\n"
+        + source;
   }
 
   @Test
@@ -36,21 +37,26 @@ class TextAdapterConfigTest {
     assertEquals(Map.of("text", "content"), config.getReplaceFields());
     assertEquals("label", config.getLabelKey());
     assertEquals("id", config.getOtherId());
-    assertEquals(List.of("http://localhost:9201", "http://192.168.48.111:9201"), config.getConnection().getEndpoints());
+    assertEquals(
+        List.of("http://localhost:9201", "http://192.168.48.111:9201"),
+        config.getConnection().getEndpoints());
     assertEquals("http://localhost", config.getConceptGraph().getConnection().getUrl());
     assertEquals("5000", config.getConceptGraph().getConnection().getPort());
-    assertEquals(List.of("http://localhost:5000", "http://192.168.48.111:5000"),
+    assertEquals(
+        List.of("http://localhost:5000", "http://192.168.48.111:5000"),
         config.getConceptGraph().getConnection().getEndpoints());
     assertEquals("8882", config.getVectorStore().getConnection().getPort());
-    assertEquals(List.of("http://localhost:8882", "http://192.168.48.111:8882"),
+    assertEquals(
+        List.of("http://localhost:8882", "http://192.168.48.111:8882"),
         config.getVectorStore().getConnection().getEndpoints());
   }
 
   @Test
   void legacyExamplesStillLoad() throws Exception {
     for (String name : List.of("Example_Adapter.yml", "Example_Adapter_Local.yml")) {
-      TextAdapterConfig config = TextAdapterConfig.getInstance(
-          Path.of(getClass().getResource("/config/" + name).toURI()).toString());
+      TextAdapterConfig config =
+          TextAdapterConfig.getInstance(
+              Path.of(getClass().getResource("/config/" + name).toURI()).toString());
       assertEquals(1, config.getConfigVersion());
       assertEquals(2, config.getConnection().getEndpoints().size());
     }
@@ -71,7 +77,10 @@ class TextAdapterConfigTest {
 
   @Test
   void nestedSettingsOverrideDefaults() throws IOException {
-    TextAdapterConfig config = load(v2("  indices: [one]\n  batchSize: 5\n") + """
+    TextAdapterConfig config =
+        load(
+            v2("  indices: [one]\n  batchSize: 5\n")
+                + """
         search:
           fields: [body, title]
         pipeline:
@@ -89,17 +98,24 @@ class TextAdapterConfigTest {
 
   @Test
   void serviceEndpointsPreserveOrderSchemesAndIndependentPorts() throws IOException {
-    List<String> expected = List.of(
-        "https://primary.example:5000", "http://fallback.example:5001", "https://third.example");
-    TextAdapterConfig config = load(v2("  indices: [one]\n") + """
+    List<String> expected =
+        List.of(
+            "https://primary.example:5000",
+            "http://fallback.example:5001",
+            "https://third.example");
+    TextAdapterConfig config =
+        load(
+            v2("  indices: [one]\n")
+                + """
         services:
           conceptGraph:
             endpoints: [https://primary.example:5000, http://fallback.example:5001, https://third.example]
           vectorStore:
             endpoints: [https://primary.example:5000, http://fallback.example:5001, https://third.example]
         """);
-    for (Connection connection : List.of(
-        config.getConceptGraph().getConnection(), config.getVectorStore().getConnection())) {
+    for (Connection connection :
+        List.of(
+            config.getConceptGraph().getConnection(), config.getVectorStore().getConnection())) {
       assertEquals(expected, connection.getEndpoints());
       assertEquals("https://primary.example", connection.getUrl());
       assertEquals("http://fallback.example", connection.getAlternateUrl());
@@ -110,12 +126,17 @@ class TextAdapterConfigTest {
   @Test
   void malformedServiceEndpointsFailFast() {
     for (String service : List.of("conceptGraph", "vectorStore")) {
-      for (String settings : List.of(
-          "{}", "{endpoints: null}", "{endpoints: []}",
-          "{endpoints: ['http://localhost:5000', 'http://localhost:5000']}",
-          "{endpoints: ['localhost:5000']}", "{endpoints: ['http://localhost/path']}",
-          "{endpoints: [' ']}", "{endpoint: 'http://localhost:5000'}",
-          "{endpoints: ['http://localhost:5000'], endpoint: 'http://localhost:5001'}")) {
+      for (String settings :
+          List.of(
+              "{}",
+              "{endpoints: null}",
+              "{endpoints: []}",
+              "{endpoints: ['http://localhost:5000', 'http://localhost:5000']}",
+              "{endpoints: ['localhost:5000']}",
+              "{endpoints: ['http://localhost/path']}",
+              "{endpoints: [' ']}",
+              "{endpoint: 'http://localhost:5000'}",
+              "{endpoints: ['http://localhost:5000'], endpoint: 'http://localhost:5001'}")) {
         String yaml = v2("  indices: [one]\n") + "services: {" + service + ": " + settings + "}\n";
         assertThrows(IllegalArgumentException.class, () -> load(yaml), yaml);
       }
@@ -124,40 +145,51 @@ class TextAdapterConfigTest {
 
   @Test
   void malformedAmbiguousAndUnknownSettingsFailFast() {
-    for (String yaml : List.of(
-        "configVersion: 3\n",
-        "configVersion: 2.5\n",
-        "[]",
-        v2("  indices: []\n"),
-        v2("  indices: [one, one]\n"),
-        v2("  indices: [One]\n"),
-        v2("  indices: ['*']\n"),
-        v2("  indices: ['.']\n"),
-        v2("  indices: ['..']\n"),
-        v2("  indices: [one]\n  batchSize: 0\n"),
-        v2("  indices: [one]\n") + "field: [text]\n",
-        v2("  indices: [one]\n") + "search: {fileds: [text]}\n",
-        v2("  indices: [one]\n") + "id: one\nid: two\n",
-        v2("  indices: [one]\n") + "services: {conceptGraph: {}}\n",
-        "configVersion: 2\nconnection: {url: 'http://localhost', endpoints: ['http://localhost:9200']}\nsource: {indices: [one]}\n",
-        "connection: {endpoints: ['http://localhost:9200']}\n")) {
+    for (String yaml :
+        List.of(
+            "configVersion: 3\n",
+            "configVersion: 2.5\n",
+            "[]",
+            v2("  indices: []\n"),
+            v2("  indices: [one, one]\n"),
+            v2("  indices: [One]\n"),
+            v2("  indices: ['*']\n"),
+            v2("  indices: ['.']\n"),
+            v2("  indices: ['..']\n"),
+            v2("  indices: [one]\n  batchSize: 0\n"),
+            v2("  indices: [one]\n") + "field: [text]\n",
+            v2("  indices: [one]\n") + "search: {fileds: [text]}\n",
+            v2("  indices: [one]\n") + "id: one\nid: two\n",
+            v2("  indices: [one]\n") + "services: {conceptGraph: {}}\n",
+            "configVersion: 2\nconnection: {url: 'http://localhost', endpoints: ['http://localhost:9200']}\nsource: {indices: [one]}\n",
+            "connection: {endpoints: ['http://localhost:9200']}\n")) {
       assertThrows(IllegalArgumentException.class, () -> load(yaml), yaml);
     }
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(
+        IllegalArgumentException.class,
         () -> TextAdapterConfig.getInstance(directory.resolve("missing.yml").toString()));
   }
 
   @Test
   void endpointValidationPreservesSchemeAndPerEndpointPorts() {
     Connection connection = new Connection();
-    connection.setEndpoints(List.of("https://localhost", "http://localhost:9202", "http://[::1]:9203"));
+    connection.setEndpoints(
+        List.of("https://localhost", "http://localhost:9202", "http://[::1]:9203"));
     connection.validate();
     assertEquals("443", connection.getPort());
     assertEquals("http://[::1]:9203", connection.getEndpoints().getLast());
-    assertThrows(UnsupportedOperationException.class, () -> connection.getEndpoints().add("http://other"));
-    for (String endpoint : List.of("localhost:9200", "ftp://localhost", "https://localhost:0",
-        "https://localhost:65536", "https://localhost/path", "https://user:password@localhost",
-        "https://localhost?q=x", "https://localhost#fragment")) {
+    assertThrows(
+        UnsupportedOperationException.class, () -> connection.getEndpoints().add("http://other"));
+    for (String endpoint :
+        List.of(
+            "localhost:9200",
+            "ftp://localhost",
+            "https://localhost:0",
+            "https://localhost:65536",
+            "https://localhost/path",
+            "https://user:password@localhost",
+            "https://localhost?q=x",
+            "https://localhost#fragment")) {
       assertThrows(IllegalArgumentException.class, () -> Connection.validateEndpoint(endpoint));
     }
   }

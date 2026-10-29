@@ -5,8 +5,8 @@ import care.smith.top.top_document_query.adapter.DocumentHit;
 import care.smith.top.top_document_query.adapter.DocumentReference;
 import care.smith.top.top_document_query.adapter.IndexSelection;
 import care.smith.top.top_document_query.adapter.IndexedDocument;
-import care.smith.top.top_document_query.adapter.config.Connection;
 import care.smith.top.top_document_query.adapter.TextAdapter;
+import care.smith.top.top_document_query.adapter.config.Connection;
 import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
 import care.smith.top.top_document_query.elasticsearch.DocumentEntity;
 import care.smith.top.top_document_query.elasticsearch.DocumentFields;
@@ -31,8 +31,8 @@ import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import java.io.IOException;
-import java.net.URI;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -85,7 +85,9 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
     this.ownsClient = false;
   }
 
-  /** Scoped views share the client, not mutable selection state. The owner must outlive its views. */
+  /**
+   * Scoped views share the client, not mutable selection state. The owner must outlive its views.
+   */
   @Override
   public ElasticsearchAdapter forIndices(Collection<String> indices) {
     IndexSelection selected = IndexSelection.select(config, indices);
@@ -188,18 +190,19 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
               @Override
               public List<DocumentHit> get() {
                 try {
-                  List<Hit<DocumentEntity>> hits =
-                      cursor.next(query, highlight, bs);
+                  List<Hit<DocumentEntity>> hits = cursor.next(query, highlight, bs);
                   return hits.stream()
                       .map(
                           hit ->
                               new DocumentHit(
-                                  hit.id(),
-                                  hit.source(),
-                                  exactHighlight
-                                      ? mergeHighlights(hit.highlight(), queryString)
-                                      : hit.highlight(),
-                                  hit.score()).setIndex(hit.index()).setDataSourceId(config.getId()))
+                                      hit.id(),
+                                      hit.source(),
+                                      exactHighlight
+                                          ? mergeHighlights(hit.highlight(), queryString)
+                                          : hit.highlight(),
+                                      hit.score())
+                                  .setIndex(hit.index())
+                                  .setDataSourceId(config.getId()))
                       .toList();
                 } catch (IOException e) {
                   throw new UncheckedIOException("Could not retrieve query results", e);
@@ -262,9 +265,15 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
   @Override
   public Page<IndexedDocument> getIndexedDocumentsByNamePaged(
       String name, Integer page, Boolean simplified) throws IOException {
-    Query query = name.trim().isEmpty() ? matchAllQuery() : WildcardQuery.of(
-        q -> q.field(DocumentFields.TITLE.getValue()).wildcard(name.trim() + "*")
-            .caseInsensitive(true))._toQuery();
+    Query query =
+        name.trim().isEmpty()
+            ? matchAllQuery()
+            : WildcardQuery.of(
+                    q ->
+                        q.field(DocumentFields.TITLE.getValue())
+                            .wildcard(name.trim() + "*")
+                            .caseInsensitive(true))
+                ._toQuery();
     return searchIndexedDocuments(query, page, simplified);
   }
 
@@ -281,15 +290,20 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
   }
 
   /** Advanced read API for term/combined filters without discarding each hit's identity. */
-  public Page<IndexedDocument> searchIndexedDocuments(
-      Query query, Integer page, Boolean simplified) throws IOException {
+  public Page<IndexedDocument> searchIndexedDocuments(Query query, Integer page, Boolean simplified)
+      throws IOException {
     int batchSize = prepareBatchSize(config.getBatchSize());
-    SearchResponse<DocumentEntity> response = esClient.search(s -> {
-      s.index(Arrays.asList(indexArrayStringConformity())).query(query).size(batchSize)
-          .trackTotalHits(t -> t.enabled(true));
-      if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
-      return s;
-    }, DocumentEntity.class);
+    SearchResponse<DocumentEntity> response =
+        esClient.search(
+            s -> {
+              s.index(Arrays.asList(indexArrayStringConformity()))
+                  .query(query)
+                  .size(batchSize)
+                  .trackTotalHits(t -> t.enabled(true));
+              if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
+              return s;
+            },
+            DocumentEntity.class);
     return toIndexedPage(response, page, simplified);
   }
 
@@ -390,10 +404,13 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
   public Optional<Document> getDocumentById(@NonNull String documentId, Boolean simplified)
       throws IOException {
     String index = readSelection().singleIndex();
-    SearchResponse<DocumentEntity> response = esClient.search(
-        s -> s.index(index).query(queryForIds(List.of(documentId))).size(2), DocumentEntity.class);
+    SearchResponse<DocumentEntity> response =
+        esClient.search(
+            s -> s.index(index).query(queryForIds(List.of(documentId))).size(2),
+            DocumentEntity.class);
     if (response.hits().hits().size() > 1) {
-      throw new IllegalStateException("Document ID is ambiguous; select a concrete index rather than a multi-index alias");
+      throw new IllegalStateException(
+          "Document ID is ambiguous; select a concrete index rather than a multi-index alias");
     }
     List<Document> documents = new ArrayList<>();
     response.hits().hits().forEach(documentCollector(documents, simplified));
@@ -407,12 +424,23 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
     if (!Objects.equals(config.getId(), reference.dataSourceId())) {
       throw new IllegalArgumentException("Document reference belongs to a different data source");
     }
-    List<String> allowed = (selection == null ? IndexSelection.configured(config) : selection).indices();
-    SearchResponse<DocumentEntity> response = esClient.search(
-        s -> s.index(allowed).size(2).query(q -> q.bool(b -> b.filter(
-            queryForIds(List.of(reference.documentId())),
-            TermQuery.of(t -> t.field("_index").value(reference.index()))._toQuery()))),
-        DocumentEntity.class);
+    List<String> allowed =
+        (selection == null ? IndexSelection.configured(config) : selection).indices();
+    SearchResponse<DocumentEntity> response =
+        esClient.search(
+            s ->
+                s.index(allowed)
+                    .size(2)
+                    .query(
+                        q ->
+                            q.bool(
+                                b ->
+                                    b.filter(
+                                        queryForIds(List.of(reference.documentId())),
+                                        TermQuery.of(
+                                                t -> t.field("_index").value(reference.index()))
+                                            ._toQuery()))),
+            DocumentEntity.class);
     if (response.hits().hits().size() > 1) {
       throw new IllegalStateException("Document reference did not resolve uniquely");
     }
@@ -606,7 +634,9 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
     }
   }
 
-  /** PIT plus _shard_doc makes ties safe across shards/indices; use try-with-resources on streams. */
+  /**
+   * PIT plus _shard_doc makes ties safe across shards/indices; use try-with-resources on streams.
+   */
   private final class SearchCursor implements AutoCloseable {
     private final List<String> indices = readSelection().indices();
     private String pitId;
@@ -618,16 +648,19 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
       if (finished) return List.of();
       try {
         if (pitId == null) {
-          pitId = esClient.openPointInTime(
-              p -> p.index(indices).keepAlive(t -> t.time("1m"))).id();
+          pitId = esClient.openPointInTime(p -> p.index(indices).keepAlive(t -> t.time("1m"))).id();
         }
-        SearchResponse<DocumentEntity> response = esClient.search(
-            s -> s.pit(p -> p.id(pitId).keepAlive(t -> t.time("1m")))
-                .query(query).highlight(highlight)
-                .sort(sort -> sort.field(f -> f.field("name.keyword").order(SortOrder.Asc)))
-                .sort(sort -> sort.field(f -> f.field("_shard_doc").order(SortOrder.Asc)))
-                .size(batchSize).searchAfter(sortValues),
-            DocumentEntity.class);
+        SearchResponse<DocumentEntity> response =
+            esClient.search(
+                s ->
+                    s.pit(p -> p.id(pitId).keepAlive(t -> t.time("1m")))
+                        .query(query)
+                        .highlight(highlight)
+                        .sort(sort -> sort.field(f -> f.field("name.keyword").order(SortOrder.Asc)))
+                        .sort(sort -> sort.field(f -> f.field("_shard_doc").order(SortOrder.Asc)))
+                        .size(batchSize)
+                        .searchAfter(sortValues),
+                DocumentEntity.class);
         if (response.pitId() != null) pitId = response.pitId();
         List<Hit<DocumentEntity>> hits = response.hits().hits();
         if (!hits.isEmpty()) sortValues = hits.getLast().sort();
@@ -662,16 +695,21 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
   public Stream<List<IndexedDocument>> streamIndexedDocuments(
       Query query, Integer batchSize, Boolean simplified) {
     SearchCursor cursor = new SearchCursor();
-    return Stream.generate(() -> {
-          try {
-            return cursor.next(query, null, prepareBatchSize(batchSize));
-          } catch (IOException e) {
-            throw new UncheckedIOException("Could not retrieve documents", e);
-          }
-        })
+    return Stream.generate(
+            () -> {
+              try {
+                return cursor.next(query, null, prepareBatchSize(batchSize));
+              } catch (IOException e) {
+                throw new UncheckedIOException("Could not retrieve documents", e);
+              }
+            })
         .takeWhile(hits -> !hits.isEmpty())
-        .map(hits -> hits.stream().filter(hit -> hit.source() != null)
-            .map(hit -> indexedDocument(hit, simplified)).toList())
+        .map(
+            hits ->
+                hits.stream()
+                    .filter(hit -> hit.source() != null)
+                    .map(hit -> indexedDocument(hit, simplified))
+                    .toList())
         .onClose(cursor::close);
   }
 
@@ -714,10 +752,16 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
 
   private IndexedDocument indexedDocument(Hit<DocumentEntity> hit, Boolean simplified) {
     DocumentEntity source = hit.source();
-    Document document = source.getId() == null
-        ? (Boolean.TRUE.equals(simplified) ? source.toSimplifiedApiModel(hit.id()) : source.toApiModel(hit.id()))
-        : (Boolean.TRUE.equals(simplified) ? source.toSimplifiedApiModel() : source.toApiModel());
-    return new IndexedDocument(new DocumentReference(config.getId(), hit.index(), hit.id()), document);
+    Document document =
+        source.getId() == null
+            ? (Boolean.TRUE.equals(simplified)
+                ? source.toSimplifiedApiModel(hit.id())
+                : source.toApiModel(hit.id()))
+            : (Boolean.TRUE.equals(simplified)
+                ? source.toSimplifiedApiModel()
+                : source.toApiModel());
+    return new IndexedDocument(
+        new DocumentReference(config.getId(), hit.index(), hit.id()), document);
   }
 
   private Consumer<Hit<DocumentEntity>> documentCollector(
@@ -734,8 +778,11 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
 
   private Page<IndexedDocument> toIndexedPage(
       SearchResponse<DocumentEntity> response, Integer page, Boolean simplified) {
-    List<IndexedDocument> content = response.hits().hits().stream()
-        .filter(hit -> hit.source() != null).map(hit -> indexedDocument(hit, simplified)).toList();
+    List<IndexedDocument> content =
+        response.hits().hits().stream()
+            .filter(hit -> hit.source() != null)
+            .map(hit -> indexedDocument(hit, simplified))
+            .toList();
     PageRequest pageRequest =
         page == null || page < 1
             ? PageRequest.ofSize(prepareBatchSize(config.getBatchSize()))
@@ -747,8 +794,8 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
   private void initConnection() {
     for (String endpoint : config.getConnection().getEndpoints()) {
       URI uri = Connection.validateEndpoint(endpoint);
-      RestClient restClient = RestClient.builder(
-          new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme())).build();
+      RestClient restClient =
+          RestClient.builder(new HttpHost(uri.getHost(), uri.getPort(), uri.getScheme())).build();
       ElasticsearchTransport transport =
           new RestClientTransport(restClient, new JacksonJsonpMapper());
       ElasticsearchClient candidate = new ElasticsearchClient(transport);

@@ -50,7 +50,8 @@ final class AdapterConfigLoader {
       throw new IllegalArgumentException("v2 requires connection.endpoints");
     }
     if (value.connection().hasLegacyAddress()) {
-      throw new IllegalArgumentException("Do not mix connection.endpoints with legacy URL/port keys");
+      throw new IllegalArgumentException(
+          "Do not mix connection.endpoints with legacy URL/port keys");
     }
     if (value.source() == null || value.source().indices() == null) {
       throw new IllegalArgumentException("v2 requires source.indices");

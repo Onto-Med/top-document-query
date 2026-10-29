@@ -81,8 +81,10 @@ class ElasticsearchIndexScopeTest {
   void indexedPagesRetainIdentityWhenIdsCollide() throws Exception {
     RecordingTransport transport = new RecordingTransport();
     transport.responses.add(search(List.of(hit("one", "same", 1), hit("two", "same", 2))));
-    var page = adapter(config(), transport).forIndices(List.of("one", "two"))
-        .getIndexedDocumentsByIdsPaged(List.of("same"), 0, false);
+    var page =
+        adapter(config(), transport)
+            .forIndices(List.of("one", "two"))
+            .getIndexedDocumentsByIdsPaged(List.of("same"), 0, false);
     assertEquals(List.of("one", "two"), page.stream().map(d -> d.reference().index()).toList());
     assertNotEquals(page.getContent().get(0).reference(), page.getContent().get(1).reference());
     assertEquals(List.of("one", "two"), ((SearchRequest) transport.requests.getFirst()).index());
@@ -92,16 +94,30 @@ class ElasticsearchIndexScopeTest {
   void importCreatesAndWritesTheExplicitDestinationOnly() {
     RecordingTransport transport = new RecordingTransport();
     transport.responses.add(new BooleanResponse(false));
-    transport.responses.add(CreateIndexResponse.of(r -> r.index("two").acknowledged(true).shardsAcknowledged(true)));
-    transport.responses.add(BulkResponse.of(r -> r.errors(false).took(1).items(
-        i -> i.operationType(co.elastic.clients.elasticsearch.core.bulk.OperationType.Index)
-            .index("two").id("id").status(201))));
+    transport.responses.add(
+        CreateIndexResponse.of(r -> r.index("two").acknowledged(true).shardsAcknowledged(true)));
+    transport.responses.add(
+        BulkResponse.of(
+            r ->
+                r.errors(false)
+                    .took(1)
+                    .items(
+                        i ->
+                            i.operationType(
+                                    co.elastic.clients.elasticsearch.core.bulk.OperationType.Index)
+                                .index("two")
+                                .id("id")
+                                .status(201))));
     ElasticsearchAdapter root = adapter(config(), transport);
-    assertEquals(1, root.importDocuments("two", new Document[] {
-        new Document().id("id").name("name").text("text")}, "en").getCount());
+    assertEquals(
+        1,
+        root.importDocuments(
+                "two", new Document[] {new Document().id("id").name("name").text("text")}, "en")
+            .getCount());
     assertEquals(List.of("two"), ((ExistsRequest) transport.requests.get(0)).index());
     assertEquals("two", ((CreateIndexRequest) transport.requests.get(1)).index());
-    assertEquals("two", ((BulkRequest) transport.requests.get(2)).operations().getFirst().index().index());
+    assertEquals(
+        "two", ((BulkRequest) transport.requests.get(2)).operations().getFirst().index().index());
     assertArrayEquals(new String[] {"one", "two"}, root.getConfig().getIndex());
   }
 
@@ -115,12 +131,14 @@ class ElasticsearchIndexScopeTest {
     transport.responses.add(ClosePointInTimeResponse.of(r -> r.succeeded(true).numFreed(1)));
     ElasticsearchAdapter root = adapter(config(), transport);
     List<DocumentHit> hits;
-    try (Stream<List<DocumentHit>> stream = root.forIndices(List.of("one", "two")).execute("text")) {
+    try (Stream<List<DocumentHit>> stream =
+        root.forIndices(List.of("one", "two")).execute("text")) {
       hits = stream.flatMap(List::stream).toList();
     }
     assertEquals(List.of("one", "two"), hits.stream().map(DocumentHit::getIndex).toList());
     assertNotEquals(hits.get(0).getReference(), hits.get(1).getReference());
-    assertEquals(List.of("one", "two"), ((OpenPointInTimeRequest) transport.requests.getFirst()).index());
+    assertEquals(
+        List.of("one", "two"), ((OpenPointInTimeRequest) transport.requests.getFirst()).index());
     SearchRequest first = (SearchRequest) transport.requests.get(1);
     SearchRequest second = (SearchRequest) transport.requests.get(2);
     assertTrue(first.searchAfter().isEmpty());
@@ -137,8 +155,8 @@ class ElasticsearchIndexScopeTest {
     transport.responses.add(openPit());
     transport.responses.add(search(List.of(hit("one", "id", 1))));
     transport.responses.add(ClosePointInTimeResponse.of(r -> r.succeeded(true).numFreed(1)));
-    try (Stream<List<Document>> stream = adapter(config(), transport).forIndex("one")
-        .getAllDocumentsBatched(1, false)) {
+    try (Stream<List<Document>> stream =
+        adapter(config(), transport).forIndex("one").getAllDocumentsBatched(1, false)) {
       assertEquals(1, stream.limit(1).count());
     }
     assertInstanceOf(ClosePointInTimeRequest.class, transport.requests.getLast());
@@ -150,7 +168,8 @@ class ElasticsearchIndexScopeTest {
     transport.responses.add(openPit());
     transport.responses.add(new IOException("simulated"));
     transport.responses.add(ClosePointInTimeResponse.of(r -> r.succeeded(true).numFreed(1)));
-    try (Stream<List<DocumentHit>> stream = adapter(config(), transport).forIndex("one").execute("text")) {
+    try (Stream<List<DocumentHit>> stream =
+        adapter(config(), transport).forIndex("one").execute("text")) {
       assertThrows(UncheckedIOException.class, () -> stream.toList());
     }
     assertInstanceOf(ClosePointInTimeRequest.class, transport.requests.getLast());
@@ -163,40 +182,59 @@ class ElasticsearchIndexScopeTest {
     config.setIndex(new String[] {"alias"});
     transport.responses.add(search(List.of(hit("actual-index", "same", 1))));
     ElasticsearchAdapter root = adapter(config, transport);
-    assertTrue(root.getDocument(new DocumentReference(config.getId(), "actual-index", "same"), false).isPresent());
+    assertTrue(
+        root.getDocument(new DocumentReference(config.getId(), "actual-index", "same"), false)
+            .isPresent());
     SearchRequest request = (SearchRequest) transport.requests.getFirst();
     assertEquals(List.of("alias"), request.index());
     assertEquals("_index", request.query().bool().filter().get(1).term().field());
-    assertThrows(IllegalArgumentException.class,
-        () -> root.getDocument(new DocumentReference("other-source", "actual-index", "same"), false));
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            root.getDocument(new DocumentReference("other-source", "actual-index", "same"), false));
   }
 
   @Test
   void idOnlyLookupRequiresOneIndexAndRejectsAliasCollisions() {
     RecordingTransport transport = new RecordingTransport();
     ElasticsearchAdapter root = adapter(config(), transport);
-    assertThrows(IllegalStateException.class,
+    assertThrows(
+        IllegalStateException.class,
         () -> root.forIndices(List.of("one", "two")).getDocumentById("same", false));
     transport.responses.add(search(List.of(hit("one", "same", 1), hit("two", "same", 2))));
-    assertThrows(IllegalStateException.class, () -> root.forIndex("one").getDocumentById("same", false));
+    assertThrows(
+        IllegalStateException.class, () -> root.forIndex("one").getDocumentById("same", false));
   }
 
   private OpenPointInTimeResponse openPit() {
-    return OpenPointInTimeResponse.of(r -> r.id("pit")
-        .shards(s -> s.total(1).successful(1).failed(0)));
+    return OpenPointInTimeResponse.of(
+        r -> r.id("pit").shards(s -> s.total(1).successful(1).failed(0)));
   }
 
   private Hit<DocumentEntity> hit(String index, String id, long shardSort) {
-    return Hit.of(h -> h.index(index).id(id).source(
-        new DocumentEntity().setId(id).setName("same-name").setText("text"))
-        .sort(List.of(FieldValue.of("same-name"), FieldValue.of(shardSort))));
+    return Hit.of(
+        h ->
+            h.index(index)
+                .id(id)
+                .source(new DocumentEntity().setId(id).setName("same-name").setText("text"))
+                .sort(List.of(FieldValue.of("same-name"), FieldValue.of(shardSort))));
   }
 
   private SearchResponse<DocumentEntity> search(List<Hit<DocumentEntity>> hits) {
-    return SearchResponse.of(r -> r.took(1).timedOut(false)
-        .shards(s -> s.total(1).successful(1).failed(0))
-        .hits(h -> h.hits(hits).total(t -> t.value(hits.size())
-            .relation(co.elastic.clients.elasticsearch.core.search.TotalHitsRelation.Eq))));
+    return SearchResponse.of(
+        r ->
+            r.took(1)
+                .timedOut(false)
+                .shards(s -> s.total(1).successful(1).failed(0))
+                .hits(
+                    h ->
+                        h.hits(hits)
+                            .total(
+                                t ->
+                                    t.value(hits.size())
+                                        .relation(
+                                            co.elastic.clients.elasticsearch.core.search
+                                                .TotalHitsRelation.Eq))));
   }
 
   private static final class RecordingTransport implements ElasticsearchTransport {
@@ -217,17 +255,25 @@ class ElasticsearchIndexScopeTest {
 
     @Override
     public <RequestT, ResponseT, ErrorT> CompletableFuture<ResponseT> performRequestAsync(
-        RequestT request, Endpoint<RequestT, ResponseT, ErrorT> endpoint, TransportOptions options) {
+        RequestT request,
+        Endpoint<RequestT, ResponseT, ErrorT> endpoint,
+        TransportOptions options) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public JsonpMapper jsonpMapper() { return new JacksonJsonpMapper(); }
+    public JsonpMapper jsonpMapper() {
+      return new JacksonJsonpMapper();
+    }
 
     @Override
-    public TransportOptions options() { return new RestClientOptions(RequestOptions.DEFAULT, false); }
+    public TransportOptions options() {
+      return new RestClientOptions(RequestOptions.DEFAULT, false);
+    }
 
     @Override
-    public void close() { closed = true; }
+    public void close() {
+      closed = true;
+    }
   }
 }

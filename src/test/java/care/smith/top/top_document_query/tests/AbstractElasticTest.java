@@ -127,8 +127,8 @@ public abstract class AbstractElasticTest {
     TextAdapterConfig config = TextAdapterConfig.getInstance(configFile.getPath());
     // Replace the example connection entirely: never contact its alternate host from a test.
     Connection connection = new Connection();
-    connection.setEndpoints(List.of(
-        HttpHost.create(elasticsearchContainer.getHttpHostAddress()).toURI()));
+    connection.setEndpoints(
+        List.of(HttpHost.create(elasticsearchContainer.getHttpHostAddress()).toURI()));
     config.setConnection(connection);
 
     adapter = (ElasticsearchAdapter) ElasticsearchAdapter.getInstance(config);

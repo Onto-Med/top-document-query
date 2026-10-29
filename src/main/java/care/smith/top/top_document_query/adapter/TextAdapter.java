@@ -83,7 +83,8 @@ public abstract class TextAdapter {
 
   /** Return a request-scoped view; implementations must not mutate shared configuration. */
   public TextAdapter forIndices(Collection<String> indices) {
-    throw new UnsupportedOperationException("This adapter does not support explicit index selection");
+    throw new UnsupportedOperationException(
+        "This adapter does not support explicit index selection");
   }
 
   public TextAdapter forIndex(String index) {
