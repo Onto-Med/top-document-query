@@ -2,82 +2,121 @@
   "$id": "https://github.com/Onto-Med/top-document-query/blob/main/src/main/resources/text_adapter_config_schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "TOP Text Adapter Configuration Schema",
-  "description": "Schema of TOP text adapter configurations",
+  "oneOf": [
+    { "$ref": "#/definitions/legacy" },
+    { "$ref": "#/definitions/v2" }
+  ],
   "definitions": {
-    "authentication": {
-      "type": "object",
-      "properties": {
-        "username": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        }
-      },
-      "required": ["username"]
+    "name": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "names": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": { "$ref": "#/definitions/name" }
     },
-    "conceptGraph": {
+    "endpoint": {
+      "type": "string", "format": "uri",
+      "pattern": "^https?://[^/?#@]+/?$"
+    },
+    "mapping": {
       "type": "object",
+      "propertyNames": { "$ref": "#/definitions/name" },
+      "additionalProperties": { "$ref": "#/definitions/name" }
+    },
+    "legacyConnection": {
+      "type": "object", "additionalProperties": false,
       "properties": {
-        "connection": {
-          "$ref": "#/definitions/connection"
-        }
+        "url": { "$ref": "#/definitions/name" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "alternateUrl": { "$ref": "#/definitions/name" }
+      },
+      "required": ["url"]
+    },
+    "legacyService": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "connection": { "$ref": "#/definitions/legacyConnection" } },
+      "required": ["connection"]
+    },
+    "legacy": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "configVersion": { "const": 1 },
+        "id": { "$ref": "#/definitions/name" },
+        "adapter": { "$ref": "#/definitions/name" },
+        "connection": { "$ref": "#/definitions/legacyConnection" },
+        "dateField": { "$ref": "#/definitions/name", "description": "Legacy metadata; not used by the adapter." },
+        "index": { "$ref": "#/definitions/names" },
+        "field": { "$ref": "#/definitions/names" },
+        "batchSize": { "type": "integer", "minimum": 1 },
+        "labelKey": { "$ref": "#/definitions/name" },
+        "otherId": { "$ref": "#/definitions/name" },
+        "replaceFields": { "$ref": "#/definitions/mapping" },
+        "conceptGraph": { "$ref": "#/definitions/legacyService" },
+        "vectorStore": { "$ref": "#/definitions/legacyService" }
       },
       "required": ["connection"]
     },
-    "connection": {
-      "type": "object",
+    "service": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "endpoint": { "$ref": "#/definitions/endpoint" } },
+      "required": ["endpoint"]
+    },
+    "v2": {
+      "type": "object", "additionalProperties": false,
       "properties": {
-        "url": {
-          "type": "string",
-          "description": "IP or hostname to connect to"
+        "configVersion": { "const": 2 },
+        "id": { "$ref": "#/definitions/name" },
+        "adapter": { "$ref": "#/definitions/name" },
+        "connection": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "endpoints": {
+              "type": "array", "minItems": 1, "uniqueItems": true,
+              "items": { "$ref": "#/definitions/endpoint" },
+              "description": "Complete HTTP(S) URIs, tried in order during connection initialization."
+            }
+          },
+          "required": ["endpoints"]
         },
-        "port": {
-          "type": "integer",
-          "description": "Port to connect to"
+        "source": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "indices": {
+              "type": "array", "minItems": 1, "uniqueItems": true,
+              "items": { "type": "string", "maxLength": 255, "pattern": "^(?!\\.{1,2}$)[a-z0-9.][a-z0-9._-]*$" },
+              "description": "Allowed concrete document index or alias names; selection belongs to each operation."
+            },
+            "batchSize": {
+              "type": "integer", "minimum": 1, "default": 30,
+              "description": "Shared Java retrieval/page size and downstream ingestion fetch size."
+            }
+          },
+          "required": ["indices"]
+        },
+        "search": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "fields": { "$ref": "#/definitions/names" } }
+        },
+        "pipeline": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "documentMapping": {
+              "type": "object", "additionalProperties": false,
+              "properties": {
+                "renameFields": { "$ref": "#/definitions/mapping" },
+                "labelField": { "$ref": "#/definitions/name" },
+                "idField": { "$ref": "#/definitions/name" }
+              }
+            }
+          }
+        },
+        "services": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "conceptGraph": { "$ref": "#/definitions/service" },
+            "vectorStore": { "$ref": "#/definitions/service" }
+          }
         }
       },
-      "required": ["url"]
+      "required": ["configVersion", "connection", "source"]
     }
-  },
-  "type": "object",
-  "properties": {
-    "id": {
-      "type": "string"
-    },
-    "adapter": {
-      "type": "string"
-    },
-    "connection": {
-      "$ref": "#/definitions/connection"
-    },
-    "dateFiled": {
-      "type": "string"
-    },
-    "index": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "field": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "batchSize": {
-      "type": "integer"
-    },
-    "replaceFields": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
-    },
-    "conceptGraph": {
-      "$ref": "#/definitions/conceptGraph"
-    }
-  },
-  "required": ["id", "adapter", "connection"]
+  }
 }

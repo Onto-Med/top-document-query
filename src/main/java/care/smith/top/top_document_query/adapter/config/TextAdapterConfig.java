@@ -3,17 +3,14 @@ package care.smith.top.top_document_query.adapter.config;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import java.io.File;
-import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TextAdapterConfig {
-  private static final Logger LOGGER = Logger.getLogger(TextAdapterConfig.class.getName());
+  private int configVersion = 1;
 
   @JsonSetter(nulls = Nulls.SKIP)
   private String id = "Default Adapter";
@@ -54,14 +51,66 @@ public class TextAdapterConfig {
   private VectorStoreConfig vectorStore;
 
   public static TextAdapterConfig getInstance(String yamlFilePath) {
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    TextAdapterConfig config = null;
-    try {
-      config = mapper.readValue(new File(yamlFilePath), TextAdapterConfig.class);
-    } catch (IOException e) {
-      LOGGER.severe(e.getMessage());
+    return AdapterConfigLoader.load(Path.of(yamlFilePath));
+  }
+
+  public int getConfigVersion() {
+    return configVersion;
+  }
+
+  public void setConfigVersion(int configVersion) {
+    this.configVersion = configVersion;
+  }
+
+  /** Validate both file-loaded and programmatically constructed configurations. */
+  public void validate() {
+    if (configVersion != 1 && configVersion != 2) {
+      throw new IllegalArgumentException("Unsupported configVersion");
     }
-    return config;
+    if (id == null || id.isBlank() || adapter == null || adapter.isBlank()) {
+      throw new IllegalArgumentException("Adapter id and class must not be blank");
+    }
+    if (connection == null) throw new IllegalArgumentException("connection is required");
+    connection.validate();
+    validateNames(index, "source indices");
+    validateNames(field, "search fields");
+    if (Arrays.stream(index).distinct().count() != index.length) {
+      throw new IllegalArgumentException("Source indices must be unique");
+    }
+    if (configVersion == 2) {
+      for (String name : index) {
+        if (!name.matches("[a-z0-9.][a-z0-9._-]*") || name.equals(".") || name.equals("..")
+            || name.length() > 255) {
+          throw new IllegalArgumentException("v2 source.indices must contain concrete lowercase index or alias names");
+        }
+      }
+    }
+    if (batchSize == null || batchSize <= 0) {
+      throw new IllegalArgumentException("batchSize must be positive");
+    }
+    if (replaceFields == null
+        || replaceFields.entrySet().stream().anyMatch(e -> e.getKey() == null
+            || e.getKey().isBlank() || e.getValue() == null || e.getValue().isBlank())) {
+      throw new IllegalArgumentException("Field mappings must contain nonblank names");
+    }
+    if (labelKey == null || labelKey.isBlank() || otherId == null || otherId.isBlank()) {
+      throw new IllegalArgumentException("Label and ID field names must not be blank");
+    }
+    if (conceptGraph != null) {
+      if (conceptGraph.getConnection() == null) throw new IllegalArgumentException("conceptGraph connection is required");
+      conceptGraph.getConnection().validate();
+    }
+    if (vectorStore != null) {
+      if (vectorStore.getConnection() == null) throw new IllegalArgumentException("vectorStore connection is required");
+      vectorStore.getConnection().validate();
+    }
+  }
+
+  private static void validateNames(String[] names, String description) {
+    if (names == null || names.length == 0
+        || Arrays.stream(names).anyMatch(name -> name == null || name.isBlank())) {
+      throw new IllegalArgumentException(description + " must not be empty or contain blank names");
+    }
   }
 
   public Integer getBatchSize() {

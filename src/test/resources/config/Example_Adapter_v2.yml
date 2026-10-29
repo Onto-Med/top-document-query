@@ -1,0 +1,36 @@
+# v2 format. Select an index explicitly for operations on multi-index sources.
+configVersion: 2
+
+id: Lucene Data Source
+adapter: care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter
+
+connection:
+  # Ordered fallback: try the primary endpoint before the alternate.
+  endpoints:
+    - http://localhost:9201
+    - http://192.168.48.111:9201
+
+source:
+  # Available indices; operations select their target explicitly.
+  indices:
+    - test_documents
+  # Shared by Java retrieval/page sizes and downstream pipeline ingestion fetches.
+  batchSize: 30
+
+search:
+  fields:
+    - text
+
+pipeline:
+  # Applied during downstream concept-graphs ingestion, not Java deserialization.
+  documentMapping:
+    renameFields:
+      text: content
+    labelField: label
+    idField: id
+
+services:
+  conceptGraph:
+    endpoint: http://localhost:5000
+  vectorStore:
+    endpoint: http://localhost:8882

@@ -3,6 +3,8 @@ package care.smith.top.top_document_query.converter.csv;
 import care.smith.top.model.Concept;
 import care.smith.top.model.Entity;
 import care.smith.top.top_document_query.adapter.DocumentHit;
+import care.smith.top.top_document_query.adapter.DocumentReference;
+import java.util.regex.Pattern;
 import care.smith.top.top_document_query.util.Entities;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -74,7 +76,9 @@ public class DocumentCSV {
                 document.getDocumentId(),
                 String.valueOf(document.getScore()),
                 document.getDocument().getName(),
-                nullValueString));
+                nullValueString,
+                Objects.requireNonNullElse(document.getIndex(), ""),
+                Objects.requireNonNullElse(document.getDataSourceId(), "")));
       } else {
         for (Map.Entry<String, List<Pair<Integer, Integer>>> hl : highlights.entrySet()) {
           writer.write(
@@ -87,11 +91,44 @@ public class DocumentCSV {
                       entryPartsDelimiter,
                       hl.getValue().stream()
                           .map(p -> String.format("%s-%s", p.getLeft(), p.getRight()))
-                          .toList())));
+                          .toList()),
+                  Objects.requireNonNullElse(document.getIndex(), ""),
+                  Objects.requireNonNullElse(document.getDataSourceId(), "")));
         }
       }
     }
     writer.flush();
+  }
+
+  /** Read exact identities from new exports; legacy ID-only exports cannot supply provenance. */
+  public List<DocumentReference> readDocumentReferences(InputStream inputStream) {
+    Set<DocumentReference> references = new LinkedHashSet<>();
+    boolean headerFound = false;
+    try (Scanner scanner = new Scanner(inputStream, charset)) {
+      while (scanner.hasNextLine()) {
+        String line = scanner.nextLine();
+        if (line.startsWith("sep=")) continue;
+        String[] columns = line.split(Pattern.quote(entriesDelimiter), -1);
+        if (!headerFound) {
+          if (!Arrays.asList(columns).equals(CSVDataRecord.FIELDS)) {
+            throw new IllegalArgumentException("CSV does not contain index-aware document references");
+          }
+          headerFound = true;
+          continue;
+        }
+        if (columns.length != CSVDataRecord.FIELDS.size()
+            || columns[CSVDataRecord.Field.INDEX.columnIndex].isBlank()
+            || columns[CSVDataRecord.Field.DATA_SOURCE.columnIndex].isBlank()) {
+          throw new IllegalArgumentException("CSV row lacks document provenance");
+        }
+        references.add(new DocumentReference(
+            columns[CSVDataRecord.Field.DATA_SOURCE.columnIndex],
+            columns[CSVDataRecord.Field.INDEX.columnIndex],
+            columns[CSVDataRecord.Field.ID.columnIndex].split(Pattern.quote(entryPartsDelimiter), 2)[0]));
+      }
+    }
+    if (!headerFound) throw new IllegalArgumentException("CSV header is missing");
+    return List.copyOf(references);
   }
 
   public List<String> readFirstColumn(InputStream inputStream) {
@@ -99,26 +136,24 @@ public class DocumentCSV {
   }
 
   public List<String> readColumn(InputStream inputStream, int position) {
+    if (position < 0) throw new IllegalArgumentException("Column position must not be negative");
     List<String> records = new ArrayList<>();
-
+    boolean firstRecord = true;
     try (Scanner scanner = new Scanner(inputStream, charset)) {
       while (scanner.hasNextLine()) {
-        try (Scanner rowScanner = new Scanner(scanner.nextLine())) {
-          rowScanner.useDelimiter(entriesDelimiter);
-          int currentPos = 0;
-          while (rowScanner.hasNext()) {
-            String item = rowScanner.next();
-            if ((currentPos > position)
-                || item.contains("sep=")
-                || CSVDataRecord.FIELDS.contains(item)) break;
-            else if (currentPos == position) {
-              if (position == CSVDataRecord.Field.ID.columnIndex) {
-                Arrays.stream(item.split(entryPartsDelimiter)).findFirst().ifPresent(records::add);
-              } else records.add(item);
-            }
-            currentPos++;
-          }
+        String line = scanner.nextLine();
+        if (line.startsWith("sep=")) continue;
+        String[] columns = line.split(Pattern.quote(entriesDelimiter), -1);
+        if (firstRecord) {
+          firstRecord = false;
+          List<String> header = Arrays.asList(columns);
+          if (header.equals(CSVDataRecord.FIELDS)
+              || header.equals(CSVDataRecord.FIELDS.subList(0, 4))) continue;
         }
+        if (position >= columns.length) continue;
+        String item = columns[position];
+        records.add(position == CSVDataRecord.Field.ID.columnIndex
+            ? item.split(Pattern.quote(entryPartsDelimiter), 2)[0] : item);
       }
     }
     return List.copyOf(records);

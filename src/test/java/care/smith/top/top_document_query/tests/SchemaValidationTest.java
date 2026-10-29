@@ -25,6 +25,25 @@ public class SchemaValidationTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(SchemaValidationTest.class);
 
   @Test
+  public void rejectsUnknownMixedAndInvalidV2Settings() throws IOException {
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    SchemaRegistry registry = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_7);
+    Schema schema = registry.getSchema(TextAdapterConfig.class.getResourceAsStream(SCHEMA_FILE));
+    String valid = "configVersion: 2\nconnection: {endpoints: ['https://localhost:9200']}\nsource: {indices: [one]}\n";
+    Assertions.assertTrue(schema.validate(mapper.readTree(valid)).isEmpty());
+    for (String invalid : List.of(
+        valid + "index: [one]\n",
+        valid + "search: {fileds: [text]}\n",
+        valid.replace("indices: [one]", "indices: []"),
+        valid.replace("indices: [one]", "indices: [one, one]"),
+        valid.replace("indices: [one]", "indices: [one], batchSize: 0"),
+        valid.replace("https://localhost:9200", "localhost:9200"),
+        valid.replace("configVersion: 2", "configVersion: 3"))) {
+      Assertions.assertFalse(schema.validate(mapper.readTree(invalid)).isEmpty(), invalid);
+    }
+  }
+
+  @Test
   public void testSchemataAreValid() throws IOException {
     ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 

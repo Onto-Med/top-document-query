@@ -12,6 +12,8 @@ import org.apache.commons.lang3.tuple.Pair;
 public class DocumentHit {
   private DocumentEntity document;
   private String documentId;
+  private String index;
+  private String dataSourceId;
   private Map<String, List<Pair<Integer, Integer>>> highlights;
   private double score;
 
@@ -49,6 +51,28 @@ public class DocumentHit {
   public DocumentHit setDocumentId(String documentId) {
     this.documentId = documentId;
     return this;
+  }
+
+  public String getIndex() {
+    return index;
+  }
+
+  public DocumentHit setIndex(String index) {
+    this.index = index;
+    return this;
+  }
+
+  public String getDataSourceId() {
+    return dataSourceId;
+  }
+
+  public DocumentHit setDataSourceId(String dataSourceId) {
+    this.dataSourceId = dataSourceId;
+    return this;
+  }
+
+  public DocumentReference getReference() {
+    return new DocumentReference(dataSourceId, index, documentId);
   }
 
   public double getScore() {

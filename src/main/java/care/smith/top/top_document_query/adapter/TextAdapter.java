@@ -81,6 +81,54 @@ public abstract class TextAdapter {
     return config;
   }
 
+  /** Return a request-scoped view; implementations must not mutate shared configuration. */
+  public TextAdapter forIndices(Collection<String> indices) {
+    throw new UnsupportedOperationException("This adapter does not support explicit index selection");
+  }
+
+  public TextAdapter forIndex(String index) {
+    return forIndices(List.of(index));
+  }
+
+  public Optional<Document> getDocument(DocumentReference reference, Boolean simplified)
+      throws IOException {
+    if (!Objects.equals(config.getId(), reference.dataSourceId())) {
+      throw new IllegalArgumentException("Document reference belongs to a different data source");
+    }
+    return forIndex(reference.index()).getDocumentById(reference.documentId(), simplified);
+  }
+
+  public DocumentImport importDocuments(
+      String index, @NonNull Document[] documents, String language) {
+    return forIndex(index).importDocuments(documents, language);
+  }
+
+  /** Provenance-preserving alternatives to legacy Document-only read methods. */
+  public Page<IndexedDocument> getAllIndexedDocumentsPaged(Integer page, Boolean simplified)
+      throws IOException {
+    throw new UnsupportedOperationException("This adapter does not expose document provenance");
+  }
+
+  public Page<IndexedDocument> getIndexedDocumentsByIdsPaged(
+      Collection<String> ids, Integer page, Boolean simplified) throws IOException {
+    throw new UnsupportedOperationException("This adapter does not expose document provenance");
+  }
+
+  public Page<IndexedDocument> getIndexedDocumentsByNamePaged(
+      String name, Integer page, Boolean simplified) throws IOException {
+    throw new UnsupportedOperationException("This adapter does not expose document provenance");
+  }
+
+  public Stream<List<IndexedDocument>> getAllIndexedDocumentsBatched(
+      Integer batchSize, Boolean simplified) {
+    throw new UnsupportedOperationException("This adapter does not expose document provenance");
+  }
+
+  public Stream<List<IndexedDocument>> getIndexedDocumentsByIdsBatched(
+      Collection<String> ids, Integer batchSize, Boolean simplified) {
+    throw new UnsupportedOperationException("This adapter does not expose document provenance");
+  }
+
   public abstract Stream<List<Document>> getAllDocumentsBatched(
       Integer batchSize, Boolean simplified);
 
