@@ -20,14 +20,17 @@ import co.elastic.clients.json.JsonpMapper;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.Endpoint;
+import co.elastic.clients.transport.JsonEndpoint;
 import co.elastic.clients.transport.TransportOptions;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientOptions;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 import org.elasticsearch.client.RequestOptions;
@@ -150,6 +153,29 @@ class ElasticsearchIndexScopeTest {
   }
 
   @Test
+  void openingPitUsesStandardClientEndpointAndPreservesRoutingAndOptions() {
+    RecordingTransport transport = new RecordingTransport();
+    transport.responses.add(openPit());
+    transport.responses.add(search(List.of(hit("one", "id", 1))));
+    transport.responses.add(ClosePointInTimeResponse.of(r -> r.succeeded(true).numFreed(1)));
+    TransportOptions options =
+        transport.options().toBuilder().addHeader("X-Test", "pit-options").build();
+    ElasticsearchClient client = new ElasticsearchClient(transport).withTransportOptions(options);
+    try (Stream<List<Document>> stream =
+        new ElasticsearchAdapter(config(), client)
+            .forIndex("one")
+            .getAllDocumentsBatched(1, false)) {
+      assertEquals(1, stream.limit(1).count());
+    }
+    PitRequestDetails pit = transport.pitRequests.getFirst();
+    assertSame(OpenPointInTimeRequest._ENDPOINT, pit.endpoint());
+    assertEquals("POST", pit.method());
+    assertEquals("/one/_pit", pit.path());
+    assertEquals(Map.of("keep_alive", "1m"), pit.parameters());
+    assertSame(client._transportOptions(), pit.options());
+  }
+
+  @Test
   void closingShortCircuitedStreamReleasesItsPit() {
     RecordingTransport transport = new RecordingTransport();
     transport.responses.add(openPit());
@@ -206,9 +232,8 @@ class ElasticsearchIndexScopeTest {
         IllegalStateException.class, () -> root.forIndex("one").getDocumentById("same", false));
   }
 
-  private OpenPointInTimeResponse openPit() {
-    return OpenPointInTimeResponse.of(
-        r -> r.id("pit").shards(s -> s.total(1).successful(1).failed(0)));
+  private String openPit() {
+    return "{\"id\":\"pit\",\"_shards\":{\"total\":1,\"successful\":1,\"failed\":0}}";
   }
 
   private Hit<DocumentEntity> hit(String index, String id, long shardSort) {
@@ -237,8 +262,16 @@ class ElasticsearchIndexScopeTest {
                                                 .TotalHitsRelation.Eq))));
   }
 
+  private record PitRequestDetails(
+      Endpoint<?, ?, ?> endpoint,
+      String method,
+      String path,
+      Map<String, String> parameters,
+      TransportOptions options) {}
+
   private static final class RecordingTransport implements ElasticsearchTransport {
     final List<Object> requests = new ArrayList<>();
+    final List<PitRequestDetails> pitRequests = new ArrayList<>();
     final ArrayDeque<Object> responses = new ArrayDeque<>();
     boolean closed;
 
@@ -248,8 +281,26 @@ class ElasticsearchIndexScopeTest {
         RequestT request, Endpoint<RequestT, ResponseT, ErrorT> endpoint, TransportOptions options)
         throws IOException {
       requests.add(request);
+      if (request instanceof OpenPointInTimeRequest) {
+        pitRequests.add(
+            new PitRequestDetails(
+                endpoint,
+                endpoint.method(request),
+                endpoint.requestUrl(request),
+                endpoint.queryParameters(request),
+                options));
+      }
       Object response = responses.removeFirst();
       if (response instanceof IOException error) throw error;
+      // Exercise the standard client's PIT response decoder using the aligned server response.
+      if (request instanceof OpenPointInTimeRequest && response instanceof String json) {
+        JsonpMapper mapper = jsonpMapper();
+        try (var parser = mapper.jsonProvider().createParser(new StringReader(json))) {
+          return ((JsonEndpoint<RequestT, ResponseT, ErrorT>) endpoint)
+              .responseDeserializer()
+              .deserialize(parser, mapper);
+        }
+      }
       return (ResponseT) response;
     }
 

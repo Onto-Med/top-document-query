@@ -1,7 +1,7 @@
 # Legacy and compatibility removal inventory
 
-Read [handoff/status](index.md) first. **All L01–L11 are open; tracking is not deprecation or deletion
-authorization.** Scope: compatibility retained during this migration, not a full historical dead-code audit.
+Read [handoff/status](index.md) first. **L01–L11 remain open; L12 is removed, pending CI verification.
+Tracking alone is not deprecation or deletion authorization.** Scope: compatibility retained during this migration, not a full historical dead-code audit.
 Callers below were source-checked locally/in backend; recheck external consumers before removal.
 
 Locations are relative to `src/main/java/care/smith/top/top_document_query/`, unless noted.
@@ -174,6 +174,16 @@ use older hooks (L02/L04).
 
 These are new bridges, not obsolete indexed features. **Gate:** inventory/migrate supported subclasses,
 then consider required abstract methods or capability interfaces. Do not remove the replacement APIs.
+
+## L12 — PIT wire-format compatibility — removed
+
+Removed with user approval on 2026-10-30 after aligning both clients and the target/test Elasticsearch
+server to 8.19.23. `SearchCursor` uses standard `openPointInTime()` and its typed response again;
+`OPEN_PIT_WITHOUT_BODY` and id-only parsing are gone. Tests retain routing, keep-alive, client-option,
+response-decoding and lifecycle coverage. All 43 non-container tests pass; CI confirmation is pending.
+
+Historical reason: the 8.18.8 client sent an empty body rejected by the old 8.8.1 test server. Removing
+the shim does not establish support for that older server; revisit compatibility only if required.
 
 ## Removal rules
 

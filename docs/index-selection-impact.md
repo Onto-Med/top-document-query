@@ -2,7 +2,7 @@
 
 Read [handoff/status](index.md) first. This is a source-location/task inventory, **not implementation
 authorization**. Document-query changes exist; sibling-project findings below describe the inspected,
-unmigrated source and must be rechecked before editing. Removal tracking: [L01–L11](legacy-removal-inventory.md).
+unmigrated source and must be rechecked before editing. Removal tracking: [L01–L12](legacy-removal-inventory.md).
 
 ## Scope and key distinction
 
