@@ -1,6 +1,6 @@
 # Legacy and compatibility removal inventory
 
-Read [handoff/status](index.md) first. **L01–L11 remain open; L12 is removed, pending CI verification.
+Read [handoff/status](index.md) first. **L01–L11 remain open; L12 is removed, with a passing CI run reported by the user.
 Tracking alone is not deprecation or deletion authorization.** Scope: compatibility retained during this migration, not a full historical dead-code audit.
 Callers below were source-checked locally/in backend; recheck external consumers before removal.
 
@@ -180,7 +180,8 @@ then consider required abstract methods or capability interfaces. Do not remove 
 Removed with user approval on 2026-10-30 after aligning both clients and the target/test Elasticsearch
 server to 8.19.23. `SearchCursor` uses standard `openPointInTime()` and its typed response again;
 `OPEN_PIT_WITHOUT_BODY` and id-only parsing are gone. Tests retain routing, keep-alive, client-option,
-response-decoding and lifecycle coverage. All 43 non-container tests pass; CI confirmation is pending.
+response-decoding and lifecycle coverage. All 43 non-container tests pass; the user reports a clean
+CI run after the subsequent `search_after` fix. The agent did not fetch the CI run.
 
 Historical reason: the 8.18.8 client sent an empty body rejected by the old 8.8.1 test server. Removing
 the shim does not establish support for that older server; revisit compatibility only if required.

@@ -1,7 +1,8 @@
 # Start here: v2 configuration and index-selection handoff
 
-**Review state:** the user has completed file-by-file review. Verification is in progress;
-review completion does **not** establish integration correctness or end-to-end readiness.
+**Review/verification state:** file-by-file user review is complete. The user reports all existing
+CI checks passing after version alignment and the search fix. Broader cross-project readiness and
+additional edge-case integration coverage are not established by that result.
 
 ## Read next
 
@@ -53,15 +54,16 @@ Still to decide: UI single/multi-select policy, shared API document/query models
 persisted source binding, legacy-request/archive policy, and eventual public Java configuration shape.
 Library support for a feature is not approval of the corresponding end-to-end UX/contract.
 
-Current task: progressively stronger verification. Offline and standard targeted Maven tests have
-passed; approved test dependencies were downloaded. Local Docker execution is unavailable on the
-user's Windows machine; use a Docker-capable CI runner for integration verification. Approved CI
-improvements are implemented; the user supplied the first integration-run failure log. No remote
-workflow was triggered by the agent. These lists are **not instructions to automatically implement sibling-project changes, remove compatibility
-APIs, or broaden the refactor**.
+Baseline review/testing is complete: local non-container tests pass and the user reports a clean
+CI run, including the existing Elasticsearch integration suite. Local Docker remains unavailable;
+CI provides that execution environment. Await the next agreed task. These lists are **not instructions
+to automatically implement sibling-project changes, remove compatibility APIs, or broaden the refactor**.
 
 ## Recorded verification
 
+- Latest CI result (2026-10-30): user reports the workflow completed without problems/errors after
+  the `search_after` fix, with clients/test server aligned to 8.19.23 and the PIT shim removed.
+  This covers the existing workflow suites; the agent did not fetch the run or verify its totals.
 - Latest local check (2026-10-30): the CI non-container selection passed offline through standard
   Maven: **43 tests, 0 failures/errors/skips**, including 12 existing `SongTest` cases and a new
   standard-client PIT regression. The serialized-search regression reproduced the empty
@@ -80,10 +82,10 @@ APIs, or broaden the refactor**.
   standard `openPointInTime()` and its typed response again; the agreed PIT pagination is unchanged.
   The aligned CI run progressed to search requests (see below). Do not infer continued 8.8 compatibility from this
   change. No local Docker execution was attempted.
-- Latest user-supplied CI log (2026-10-30, aligned versions): **12 tests, 5 search errors** from
+- Earlier user-supplied CI log (2026-10-30, aligned versions): **12 tests, 5 search errors** from
   explicitly serialized `search_after: []`. Fixed by setting it only when sort values exist; the
   first request now omits it and later requests retain full server sort values. JSON assertions
-  cover both shapes. All 43 non-container tests pass; another integration rerun is pending.
+  cover both shapes. All 43 non-container tests pass; the subsequent CI run passed per the user.
 - Integration preparation completed: `AbstractElasticTest.initAdaper()` replaces the example's
   connection with the container's sole endpoint. The import test uses a separate v2 allowlist,
   explicit destination and scoped read without mutating the shared adapter; refresh replaces sleep.
@@ -110,8 +112,8 @@ network downloads or expensive/container suites. Do not assume ignored verificat
   workflow is on the default branch. Publishing/release workflows are unchanged.
 
 YAML parsing, triggers, suite partition, and aggregate dependencies were checked locally using a cached
-parser; this is not an Actions schema/actionlint validation. The user's first CI failure is recorded
-above; no run was triggered or fetched by the agent. A green integration rerun is still required.
+parser; this is not an Actions schema/actionlint validation. CI failures and the subsequent successful
+run are recorded above from user reports; no run was triggered or fetched by the agent.
 Package access uses existing CI secrets (values not inspected); fork PRs may lack them. Inspect all
 checks and download reports on failure; workflow configuration alone is not test evidence.
 
