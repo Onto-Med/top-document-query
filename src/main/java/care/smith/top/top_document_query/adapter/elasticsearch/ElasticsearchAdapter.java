@@ -652,14 +652,18 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
         }
         SearchResponse<DocumentEntity> response =
             esClient.search(
-                s ->
-                    s.pit(p -> p.id(pitId).keepAlive(t -> t.time("1m")))
-                        .query(query)
-                        .highlight(highlight)
-                        .sort(sort -> sort.field(f -> f.field("name.keyword").order(SortOrder.Asc)))
-                        .sort(sort -> sort.field(f -> f.field("_shard_doc").order(SortOrder.Asc)))
-                        .size(batchSize)
-                        .searchAfter(sortValues),
+                s -> {
+                  s.pit(p -> p.id(pitId).keepAlive(t -> t.time("1m")))
+                      .query(query)
+                      .highlight(highlight)
+                      .sort(sort -> sort.field(f -> f.field("name.keyword").order(SortOrder.Asc)))
+                      .sort(sort -> sort.field(f -> f.field("_shard_doc").order(SortOrder.Asc)))
+                      .size(batchSize);
+                  if (!sortValues.isEmpty()) {
+                    s.searchAfter(sortValues);
+                  }
+                  return s;
+                },
                 DocumentEntity.class);
         if (response.pitId() != null) pitId = response.pitId();
         List<Hit<DocumentEntity>> hits = response.hits().hits();

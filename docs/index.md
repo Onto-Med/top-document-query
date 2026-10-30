@@ -64,9 +64,8 @@ APIs, or broaden the refactor**.
 
 - Latest local check (2026-10-30): the CI non-container selection passed offline through standard
   Maven: **43 tests, 0 failures/errors/skips**, including 12 existing `SongTest` cases and a new
-  standard-client PIT routing/options/response-decoding regression. This run is after shim removal.
-  Compilation
-  targets Java 21; the local check used JDK 24, while CI uses JDK 21.
+  standard-client PIT regression. The serialized-search regression reproduced the empty
+  `search_after` bug before the conditional fix and passed afterward. Compilation targets Java 21; the local check used JDK 24, while CI uses JDK 21.
 - Earlier migration-focused selection: 30 tests passed through both the cached launcher and Maven.
   Approved Central downloads resolved the Surefire provider blocker; the temporary launcher is no
   longer required. The configuration guide retains the narrower targeted command.
@@ -79,8 +78,12 @@ APIs, or broaden the refactor**.
   client. A bodyless/id-only compatibility shim was introduced, then removed with user approval on
   2026-10-30 after aligning clients and the target/test server to 8.19.23. `SearchCursor` now uses
   standard `openPointInTime()` and its typed response again; the agreed PIT pagination is unchanged.
-  CI rerun on the aligned versions is pending. Do not infer continued 8.8 compatibility from this
+  The aligned CI run progressed to search requests (see below). Do not infer continued 8.8 compatibility from this
   change. No local Docker execution was attempted.
+- Latest user-supplied CI log (2026-10-30, aligned versions): **12 tests, 5 search errors** from
+  explicitly serialized `search_after: []`. Fixed by setting it only when sort values exist; the
+  first request now omits it and later requests retain full server sort values. JSON assertions
+  cover both shapes. All 43 non-container tests pass; another integration rerun is pending.
 - Integration preparation completed: `AbstractElasticTest.initAdaper()` replaces the example's
   connection with the container's sole endpoint. The import test uses a separate v2 allowlist,
   explicit destination and scoped read without mutating the shared adapter; refresh replaces sleep.
