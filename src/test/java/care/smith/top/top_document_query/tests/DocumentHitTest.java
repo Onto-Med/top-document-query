@@ -68,7 +68,9 @@ class DocumentHitTest {
                 documentName,
                 testOffsets.get(fieldName).stream()
                     .map(s -> String.format("%s-%s", s.getLeft(), s.getRight()))
-                    .collect(Collectors.joining(DocumentCSV.entryPartsDelimiter))));
+                    .collect(Collectors.joining(DocumentCSV.entryPartsDelimiter)),
+                "",
+                ""));
     assertEquals(expected, outPut.get(outPut.size() - 1));
   }
 

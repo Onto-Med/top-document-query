@@ -6,6 +6,8 @@ import care.smith.top.model.Concept;
 import care.smith.top.model.Document;
 import care.smith.top.model.DocumentImport;
 import care.smith.top.top_document_query.adapter.DocumentHit;
+import care.smith.top.top_document_query.adapter.config.TextAdapterConfig;
+import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchAdapter;
 import care.smith.top.top_document_query.adapter.elasticsearch.ElasticsearchSong;
 import care.smith.top.top_document_query.functions.And;
 import care.smith.top.top_document_query.util.Entities;
@@ -180,22 +182,25 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
 
   @Test
   void createIndexAndUploadDocuments() throws IOException {
-    adapter.getConfig().setIndex(new String[] {"test_index"});
-    Document[] documents = {document1, document2};
-    DocumentImport result = adapter.importDocuments(documents, "de");
-    assertEquals(2, result.getCount());
-    try {
-      Thread.sleep(2000); // need to wait a bit so that the documents are indexed
-      assertEquals(
-          Set.of(document1, document2),
-          adapter
-              .getAllDocumentsBatched(2, false)
-              .flatMap(List::stream)
-              .collect(Collectors.toSet()));
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    TextAdapterConfig importConfig = new TextAdapterConfig();
+    importConfig.setConfigVersion(2);
+    importConfig.setConnection(adapter.getConfig().getConnection());
+    importConfig.setIndex(new String[] {ELASTIC_INDEX[0], "test_index"});
 
-    adapter.getConfig().setIndex(ELASTIC_INDEX);
+    // Separate allowlist, same container client; the shared adapter's configuration stays
+    // unchanged.
+    try (ElasticsearchAdapter importAdapter = new ElasticsearchAdapter(importConfig, esClient)) {
+      Document[] documents = {document1, document2};
+      DocumentImport result = importAdapter.importDocuments("test_index", documents, "de");
+      assertEquals(2, result.getCount());
+      esClient.indices().refresh(r -> r.index("test_index"));
+      try (var batches = importAdapter.forIndex("test_index").getAllDocumentsBatched(2, false)) {
+        assertEquals(
+            Set.of(document1, document2),
+            batches.flatMap(List::stream).collect(Collectors.toSet()));
+      }
+    }
+    assertArrayEquals(ELASTIC_INDEX, adapter.getConfig().getIndex());
+    assertEquals(Long.valueOf(3), adapter.count());
   }
 }
