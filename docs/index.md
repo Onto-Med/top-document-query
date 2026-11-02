@@ -113,7 +113,13 @@ network downloads or expensive/container suites. Do not assume ignored verificat
   `surefire-unit` / `surefire-integration` expire after 7 days.
 - The existing `test` check remains an aggregate gate requiring formatting and both suites to pass.
 - Main pushes/PRs and manual dispatch are supported. Manual dispatch becomes available once the
-  workflow is on the default branch. Publishing/release workflows are unchanged.
+  workflow is on the default branch.
+- Publishing authentication fix (2026-11-02): `create-package.yml` and `release.yml` now pass only
+  `-s .mvn-ci.xml`. Repeated `-s` selects the first file, not a merge; previously dependency-read
+  credentials were ignored. The shared settings now contain `top-api`/`simple-onto-api` read entries
+  and a `github` publishing entry using workflow-token environment references. Existing credential
+  references were preserved. Settings/command checks and offline Maven `validate` passed; no deploy
+  or authenticated remote check was performed. The next publishing run must confirm token access.
 
 YAML parsing, triggers, suite partition, and aggregate dependencies were checked locally using a cached
 parser; this is not an Actions schema/actionlint validation. CI failures and the subsequent successful
