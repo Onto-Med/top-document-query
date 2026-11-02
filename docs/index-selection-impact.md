@@ -17,9 +17,9 @@ operation; downstream document links should inherit it rather than repeatedly pr
 
 | Operation | Needed choice/context; pending unless noted |
 | --- | --- |
-| Browse/name filter/page | Source-index selector, potentially multi-select; preserve scope through filters/pages. Library supports scoped reads. |
+| Browse/name filter/page | One active source index; preserve it through filters/pages. Library supports scoped reads; multi-select is not initial product policy. |
 | Upload/import | One explicit destination; creation/check/bulk-write now use it in the library. UI/backend still need transport and scoped polling. |
-| Create/execute concept query | Select and persist indices. Library execution can be scoped; query model/storage cannot yet carry that choice. |
+| Create/execute concept query | Select and persist one index. Library execution can be scoped; query model/storage cannot yet carry that choice. |
 | Saved-query results | Restore stored scope and each hit's index; never reinterpret existing results using a new choice. Backend ID-keyed maps need replacement. |
 | Start pipeline from Elasticsearch | Initially propose one input index, through both JSON and multipart starts; persist source/index binding. Backend currently forwards the first configured index. |
 | Start pipeline from ZIP | No Elasticsearch input selection needed; distinguish uploaded versus server input. |
@@ -33,8 +33,11 @@ operation; downstream document links should inherit it rather than repeatedly pr
 | Python document-server check | Caller supplies selected input index; Python already checks that index. |
 | Standalone Streamlit pipeline UI | Already has free-text “Index / collection”; a selectbox needs a source of configured choices. |
 
-Single/multi-select UX, automatic single-option selection, and pipeline naming remain proposals, not
-implemented cross-project policy. Duplicate document IDs across indices require provenance, not just selectors.
+Agreed initial policy: one active index per browsing/query context, not one global index shared by
+all users. Saved queries retain their chosen index. The library's multi-index APIs remain available,
+but initial product behavior is single-select; shared API representation is not yet decided.
+Automatic single-option selection and pipeline naming remain proposals. Provenance is still required:
+selecting a different index must not reinterpret an existing document/result identity.
 
 ## Document-query: implemented boundary
 

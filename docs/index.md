@@ -18,6 +18,10 @@ locations and removal prerequisites. Prefer current source over stale prose; upd
 
 - Configure available document indices only under `source.indices`; no `readIndices`/`writeIndex` split.
   Choose the target in the operation/UI instead of relying on list order.
+- Initial product policy: exactly one active index per browsing/query context; saved queries persist
+  that choice. This is not shared global state. Existing library multi-index capabilities remain,
+  but are not exposed as multi-select in the initial UI/API behavior. Contract representation is
+  still to be agreed; document provenance remains required.
 - Keep one shared `source.batchSize` for Java retrieval/page sizes and Python ingestion fetches.
 - Use ordered complete URI lists: Elasticsearch `connection.endpoints` and service
   `services.conceptGraph.endpoints` / `services.vectorStore.endpoints` (primary, then fallbacks).
@@ -46,11 +50,11 @@ connection attempts throw; stream callers must close early-stopped streams. Endp
 are rejected, not silently discarded. These changes must not be presented as behavior-neutral.
 
 The implementation and its tests were changed **only in this repository**. Sibling-project review was
-read-only. No claim is made that existing backend/frontend flows already support multi-index selection.
+read-only. No claim is made that existing backend/frontend flows already support explicit index selection.
 
 ## Pending decisions and authorization boundary
 
-Still to decide: UI single/multi-select policy, shared API document/query models, pipeline identity and
+Still to decide: shared API document/query models and scope representation, pipeline identity and
 persisted source binding, legacy-request/archive policy, and eventual public Java configuration shape.
 Library support for a feature is not approval of the corresponding end-to-end UX/contract.
 
