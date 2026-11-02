@@ -47,15 +47,14 @@ public class ConceptGraphEntity {
               .label(node.getLabel())
               .documents(
                   Arrays.stream(node.getDocuments())
-                      .map(
-                          phraseDocumentObject -> {
-                            return new NodeDocuments()
-                                .id(phraseDocumentObject.getId())
-                                .offsets(
-                                    phraseDocumentObject.getOffsets().stream()
-                                        .map(integers -> Arrays.stream(integers).toList())
-                                        .toList());
-                          })
+                      .map(phraseDocumentObject -> {
+                        return new NodeDocuments()
+                            .id(phraseDocumentObject.getId())
+                            .offsets(
+                                phraseDocumentObject.getOffsets().stream()
+                                    .map(integers -> Arrays.stream(integers).toList())
+                                    .toList());
+                      })
                       .collect(Collectors.toList())));
     }
 

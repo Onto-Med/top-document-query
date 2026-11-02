@@ -114,7 +114,6 @@ public abstract class AbstractExternalManager {
           this.conceptGraphsApi = this.conceptGraphsApi.mutate().baseUrl(tmpUrl.toString()).build();
           return false;
         }
-        ;
         logger.info("New base url is: " + "'" + conceptGraphApiEndpoint + "'.");
         return true;
       } catch (Exception e) {

@@ -81,27 +81,21 @@ public abstract class AbstractElasticTest {
       //                .index(Arrays.asList(ELASTIC_INDEX))
       //                .properties("name", p -> p.text(tp -> tp))
       //                .properties("name", p -> p.keyword(kp -> kp)));
-      esClient.index(
-          i ->
-              i.id(document1.getId())
-                  .index(ELASTIC_INDEX[0])
-                  .document(
-                      new TextDocument(
-                          document1.getId(), document1.getName(), document1.getText())));
-      esClient.index(
-          i ->
-              i.id(document2.getId())
-                  .index(ELASTIC_INDEX[0])
-                  .document(
-                      new TextDocument(
-                          document2.getId(), document2.getName(), document2.getText())));
-      esClient.index(
-          i ->
-              i.id(document3.getId())
-                  .index(ELASTIC_INDEX[0])
-                  .document(
-                      new TextDocument(
-                          document3.getId(), document3.getName(), document3.getText())));
+      esClient.index(i ->
+          i.id(document1.getId())
+              .index(ELASTIC_INDEX[0])
+              .document(
+                  new TextDocument(document1.getId(), document1.getName(), document1.getText())));
+      esClient.index(i ->
+          i.id(document2.getId())
+              .index(ELASTIC_INDEX[0])
+              .document(
+                  new TextDocument(document2.getId(), document2.getName(), document2.getText())));
+      esClient.index(i ->
+          i.id(document3.getId())
+              .index(ELASTIC_INDEX[0])
+              .document(
+                  new TextDocument(document3.getId(), document3.getName(), document3.getText())));
       await().until(() -> esClient.count().count() == 3);
     } catch (IOException e) {
       throw new RuntimeException(e);

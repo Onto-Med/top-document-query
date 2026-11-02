@@ -16,13 +16,10 @@ public class ElasticsearchIndexSettings implements DocumentIndexSettings {
           Map.of(
               "id", Property.of(p -> p.keyword(k -> k.index(true))),
               "name",
-                  Property.of(
-                      p ->
-                          p.text(
-                              t ->
-                                  t.fields(
-                                      "keyword",
-                                      Property.of(ip -> ip.keyword(k -> k.ignoreAbove(256)))))),
+                  Property.of(p ->
+                      p.text(t ->
+                          t.fields(
+                              "keyword", Property.of(ip -> ip.keyword(k -> k.ignoreAbove(256)))))),
               "text", Property.of(p -> p.text(t -> t.analyzer("medical_analyzer_german")))));
     } else {
       return Map.of("properties", Map.of());

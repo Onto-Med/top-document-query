@@ -161,27 +161,24 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
         QueryStringQuery.of(q -> q.query(queryString).fields(Arrays.asList(config.getField())))
             ._toQuery();
     Highlight highlight =
-        Highlight.of(
-            h ->
-                h.type(HighlighterType.Unified)
-                    .fields(
-                        Arrays.stream(config.getField())
-                            .map(
-                                f ->
-                                    new HashMap<String, HighlightField>() {
-                                      {
-                                        put(
-                                            f,
-                                            HighlightField.of(
-                                                hf -> hf.numberOfFragments(0).fragmentSize(30)));
-                                      }
-                                    })
-                            .reduce(
-                                (firstMap, secondMap) -> {
-                                  firstMap.putAll(secondMap);
-                                  return firstMap;
-                                })
-                            .orElseThrow()));
+        Highlight.of(h ->
+            h.type(HighlighterType.Unified)
+                .fields(
+                    Arrays.stream(config.getField())
+                        .map(f ->
+                            new HashMap<String, HighlightField>() {
+                              {
+                                put(
+                                    f,
+                                    HighlightField.of(
+                                        hf -> hf.numberOfFragments(0).fragmentSize(30)));
+                              }
+                            })
+                        .reduce((firstMap, secondMap) -> {
+                          firstMap.putAll(secondMap);
+                          return firstMap;
+                        })
+                        .orElseThrow()));
     SearchCursor cursor = new SearchCursor();
     return Stream.generate(
             new Supplier<List<DocumentHit>>() {
@@ -192,17 +189,16 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
                 try {
                   List<Hit<DocumentEntity>> hits = cursor.next(query, highlight, bs);
                   return hits.stream()
-                      .map(
-                          hit ->
-                              new DocumentHit(
-                                      hit.id(),
-                                      hit.source(),
-                                      exactHighlight
-                                          ? mergeHighlights(hit.highlight(), queryString)
-                                          : hit.highlight(),
-                                      hit.score())
-                                  .setIndex(hit.index())
-                                  .setDataSourceId(config.getId()))
+                      .map(hit ->
+                          new DocumentHit(
+                                  hit.id(),
+                                  hit.source(),
+                                  exactHighlight
+                                      ? mergeHighlights(hit.highlight(), queryString)
+                                      : hit.highlight(),
+                                  hit.score())
+                              .setIndex(hit.index())
+                              .setDataSourceId(config.getId()))
                       .toList();
                 } catch (IOException e) {
                   throw new UncheckedIOException("Could not retrieve query results", e);
@@ -268,11 +264,10 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
     Query query =
         name.trim().isEmpty()
             ? matchAllQuery()
-            : WildcardQuery.of(
-                    q ->
-                        q.field(DocumentFields.TITLE.getValue())
-                            .wildcard(name.trim() + "*")
-                            .caseInsensitive(true))
+            : WildcardQuery.of(q ->
+                    q.field(DocumentFields.TITLE.getValue())
+                        .wildcard(name.trim() + "*")
+                        .caseInsensitive(true))
                 ._toQuery();
     return searchIndexedDocuments(query, page, simplified);
   }
@@ -363,14 +358,13 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
               return s.index(Arrays.asList(indexArrayStringConformity()))
-                  .query(
-                      q ->
-                          q.wildcard(
-                              new WildcardQuery.Builder()
-                                  .field(DocumentFields.TITLE.getValue())
-                                  .wildcard(finalDocumentName + "*")
-                                  .caseInsensitive(true)
-                                  .build()));
+                  .query(q ->
+                      q.wildcard(
+                          new WildcardQuery.Builder()
+                              .field(DocumentFields.TITLE.getValue())
+                              .wildcard(finalDocumentName + "*")
+                              .caseInsensitive(true)
+                              .build()));
             },
             DocumentEntity.class);
     return toPage(response, page, simplified);
@@ -384,11 +378,10 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
       return getAllDocumentsBatched(batchSize, simplified);
     }
     Query wcq =
-        WildcardQuery.of(
-                q ->
-                    q.field(DocumentFields.TITLE.getValue())
-                        .wildcard(finalDocumentName + "*")
-                        .caseInsensitive(true))
+        WildcardQuery.of(q ->
+                q.field(DocumentFields.TITLE.getValue())
+                    .wildcard(finalDocumentName + "*")
+                    .caseInsensitive(true))
             ._toQuery();
     return documentStream(wcq, batchSize, simplified);
   }
@@ -431,15 +424,12 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
             s ->
                 s.index(allowed)
                     .size(2)
-                    .query(
-                        q ->
-                            q.bool(
-                                b ->
-                                    b.filter(
-                                        queryForIds(List.of(reference.documentId())),
-                                        TermQuery.of(
-                                                t -> t.field("_index").value(reference.index()))
-                                            ._toQuery()))),
+                    .query(q ->
+                        q.bool(b ->
+                            b.filter(
+                                queryForIds(List.of(reference.documentId())),
+                                TermQuery.of(t -> t.field("_index").value(reference.index()))
+                                    ._toQuery()))),
             DocumentEntity.class);
     if (response.hits().hits().size() > 1) {
       throw new IllegalStateException("Document reference did not resolve uniquely");
@@ -522,13 +512,10 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
             s -> {
               if (page != null && page >= 0) s.from(page * batchSize).size(batchSize);
               return s.index(Arrays.asList(indexArrayStringConformity()))
-                  .query(
-                      q ->
-                          q.bool(
-                              BoolQuery.of(
-                                  qb ->
-                                      qb.filter(
-                                          queryForQueryString(queryString), queryForIds(ids)))));
+                  .query(q ->
+                      q.bool(
+                          BoolQuery.of(qb ->
+                              qb.filter(queryForQueryString(queryString), queryForIds(ids)))));
             },
             DocumentEntity.class);
     return toPage(response, page, simplified);
@@ -541,13 +528,11 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
     if (initDocumentIndex(index, language)) {
       BulkRequest.Builder br = new BulkRequest.Builder();
       for (Document document : documents) {
-        br.operations(
-            op ->
-                op.index(
-                    idx ->
-                        idx.index(index)
-                            .id(document.getId())
-                            .document(new DocumentEntity().fromDocumentModel(document))));
+        br.operations(op ->
+            op.index(idx ->
+                idx.index(index)
+                    .id(document.getId())
+                    .document(new DocumentEntity().fromDocumentModel(document))));
       }
       BulkResponse result;
       try {
@@ -599,21 +584,16 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
     try {
       esClient
           .indices()
-          .create(
-              c ->
-                  c.index(index)
-                      .mappings(
-                          m ->
-                              m.properties(
-                                  Objects.requireNonNull(
-                                          ElasticsearchIndexSettings.getMappings(language))
-                                      .get("properties")))
-                      .settings(
-                          s ->
-                              s.analysis(
-                                  Objects.requireNonNull(
-                                          ElasticsearchIndexSettings.getSettings(language))
-                                      .get("analysis"))));
+          .create(c ->
+              c.index(index)
+                  .mappings(m ->
+                      m.properties(
+                          Objects.requireNonNull(ElasticsearchIndexSettings.getMappings(language))
+                              .get("properties")))
+                  .settings(s ->
+                      s.analysis(
+                          Objects.requireNonNull(ElasticsearchIndexSettings.getSettings(language))
+                              .get("analysis"))));
     } catch (IOException e) {
       return false;
     } catch (ElasticsearchException e) {
@@ -708,12 +688,11 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
               }
             })
         .takeWhile(hits -> !hits.isEmpty())
-        .map(
-            hits ->
-                hits.stream()
-                    .filter(hit -> hit.source() != null)
-                    .map(hit -> indexedDocument(hit, simplified))
-                    .toList())
+        .map(hits ->
+            hits.stream()
+                .filter(hit -> hit.source() != null)
+                .map(hit -> indexedDocument(hit, simplified))
+                .toList())
         .onClose(cursor::close);
   }
 
@@ -732,10 +711,8 @@ public class ElasticsearchAdapter extends TextAdapter implements AutoCloseable {
 
   @SuppressWarnings("unused")
   private SortOptions defaultSort() {
-    return SortOptions.of(
-        sob ->
-            sob.field(
-                fb -> fb.field("id").order(SortOrder.Asc).field("name").order(SortOrder.Asc)));
+    return SortOptions.of(sob ->
+        sob.field(fb -> fb.field("id").order(SortOrder.Asc).field("name").order(SortOrder.Asc)));
   }
 
   private Query matchAllQuery() {

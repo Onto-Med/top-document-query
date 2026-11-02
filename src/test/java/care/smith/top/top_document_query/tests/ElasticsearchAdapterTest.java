@@ -82,11 +82,10 @@ class ElasticsearchAdapterTest extends AbstractElasticTest {
     AtomicInteger count = new AtomicInteger();
     adapter
         .getAllDocumentsBatched(1, false)
-        .forEach(
-            result -> {
-              assertEquals(1, result.size());
-              count.getAndIncrement();
-            });
+        .forEach(result -> {
+          assertEquals(1, result.size());
+          count.getAndIncrement();
+        });
     assertEquals(3, count.get());
   }
 

@@ -93,12 +93,11 @@ public class TextAdapterConfig {
     }
     if (replaceFields == null
         || replaceFields.entrySet().stream()
-            .anyMatch(
-                e ->
-                    e.getKey() == null
-                        || e.getKey().isBlank()
-                        || e.getValue() == null
-                        || e.getValue().isBlank())) {
+            .anyMatch(e ->
+                e.getKey() == null
+                    || e.getKey().isBlank()
+                    || e.getValue() == null
+                    || e.getValue().isBlank())) {
       throw new IllegalArgumentException("Field mappings must contain nonblank names");
     }
     if (labelKey == null || labelKey.isBlank() || otherId == null || otherId.isBlank()) {

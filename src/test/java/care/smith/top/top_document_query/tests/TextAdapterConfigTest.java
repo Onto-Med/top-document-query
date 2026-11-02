@@ -81,14 +81,14 @@ class TextAdapterConfigTest {
         load(
             v2("  indices: [one]\n  batchSize: 5\n")
                 + """
-        search:
-          fields: [body, title]
-        pipeline:
-          documentMapping:
-            renameFields: {body: content}
-            labelField: category
-            idField: external_id
-        """);
+                search:
+                  fields: [body, title]
+                pipeline:
+                  documentMapping:
+                    renameFields: {body: content}
+                    labelField: category
+                    idField: external_id
+                """);
     assertEquals(5, config.getBatchSize());
     assertArrayEquals(new String[] {"body", "title"}, config.getField());
     assertEquals(Map.of("body", "content"), config.getReplaceFields());
@@ -107,12 +107,12 @@ class TextAdapterConfigTest {
         load(
             v2("  indices: [one]\n")
                 + """
-        services:
-          conceptGraph:
-            endpoints: [https://primary.example:5000, http://fallback.example:5001, https://third.example]
-          vectorStore:
-            endpoints: [https://primary.example:5000, http://fallback.example:5001, https://third.example]
-        """);
+                services:
+                  conceptGraph:
+                    endpoints: [https://primary.example:5000, http://fallback.example:5001, https://third.example]
+                  vectorStore:
+                    endpoints: [https://primary.example:5000, http://fallback.example:5001, https://third.example]
+                """);
     for (Connection connection :
         List.of(
             config.getConceptGraph().getConnection(), config.getVectorStore().getConnection())) {

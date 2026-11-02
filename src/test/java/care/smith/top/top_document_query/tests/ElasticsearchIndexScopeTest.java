@@ -101,17 +101,14 @@ class ElasticsearchIndexScopeTest {
     transport.responses.add(
         CreateIndexResponse.of(r -> r.index("two").acknowledged(true).shardsAcknowledged(true)));
     transport.responses.add(
-        BulkResponse.of(
-            r ->
-                r.errors(false)
-                    .took(1)
-                    .items(
-                        i ->
-                            i.operationType(
-                                    co.elastic.clients.elasticsearch.core.bulk.OperationType.Index)
-                                .index("two")
-                                .id("id")
-                                .status(201))));
+        BulkResponse.of(r ->
+            r.errors(false)
+                .took(1)
+                .items(i ->
+                    i.operationType(co.elastic.clients.elasticsearch.core.bulk.OperationType.Index)
+                        .index("two")
+                        .id("id")
+                        .status(201))));
     ElasticsearchAdapter root = adapter(config(), transport);
     assertEquals(
         1,
@@ -245,29 +242,25 @@ class ElasticsearchIndexScopeTest {
   }
 
   private Hit<DocumentEntity> hit(String index, String id, long shardSort) {
-    return Hit.of(
-        h ->
-            h.index(index)
-                .id(id)
-                .source(new DocumentEntity().setId(id).setName("same-name").setText("text"))
-                .sort(List.of(FieldValue.of("same-name"), FieldValue.of(shardSort))));
+    return Hit.of(h ->
+        h.index(index)
+            .id(id)
+            .source(new DocumentEntity().setId(id).setName("same-name").setText("text"))
+            .sort(List.of(FieldValue.of("same-name"), FieldValue.of(shardSort))));
   }
 
   private SearchResponse<DocumentEntity> search(List<Hit<DocumentEntity>> hits) {
-    return SearchResponse.of(
-        r ->
-            r.took(1)
-                .timedOut(false)
-                .shards(s -> s.total(1).successful(1).failed(0))
-                .hits(
-                    h ->
-                        h.hits(hits)
-                            .total(
-                                t ->
-                                    t.value(hits.size())
-                                        .relation(
-                                            co.elastic.clients.elasticsearch.core.search
-                                                .TotalHitsRelation.Eq))));
+    return SearchResponse.of(r ->
+        r.took(1)
+            .timedOut(false)
+            .shards(s -> s.total(1).successful(1).failed(0))
+            .hits(h ->
+                h.hits(hits)
+                    .total(t ->
+                        t.value(hits.size())
+                            .relation(
+                                co.elastic.clients.elasticsearch.core.search.TotalHitsRelation
+                                    .Eq))));
   }
 
   private record PitRequestDetails(
