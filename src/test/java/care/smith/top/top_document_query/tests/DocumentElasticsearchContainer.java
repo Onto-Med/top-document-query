@@ -5,7 +5,7 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 
 public class DocumentElasticsearchContainer extends ElasticsearchContainer {
   private static final String DOCKER_ELASTIC =
-      "docker.elastic.co/elasticsearch/elasticsearch:8.8.1";
+      "docker.elastic.co/elasticsearch/elasticsearch:8.19.23";
   private static final String CLUSTER_NAME = "sample-cluster";
 
   @Value("spring.elasticsearch.index.name")

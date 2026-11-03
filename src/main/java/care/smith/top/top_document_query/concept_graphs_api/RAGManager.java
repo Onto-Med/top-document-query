@@ -34,13 +34,12 @@ public class RAGManager extends AbstractExternalManager {
     Mono<RAGAnswer> apiResponse =
         conceptGraphsApi
             .get()
-            .uri(
-                uriBuilder ->
-                    uriBuilder
-                        .path(ApiRagMethod.QUESTION.getEndpoint())
-                        .queryParam("process", finalProcessName)
-                        .queryParam("q", question)
-                        .build())
+            .uri(uriBuilder ->
+                uriBuilder
+                    .path(ApiRagMethod.QUESTION.getEndpoint())
+                    .queryParam("process", finalProcessName)
+                    .queryParam("q", question)
+                    .build())
             .exchangeToMono(responseToRAGAnswer);
     return apiResponse.block();
   }
@@ -62,13 +61,12 @@ public class RAGManager extends AbstractExternalManager {
     Mono<RAGAnswer> apiResponse =
         conceptGraphsApi
             .post()
-            .uri(
-                uriBuilder ->
-                    uriBuilder
-                        .path(ApiRagMethod.QUESTION.getEndpoint())
-                        .queryParam("process", finalProcessName)
-                        .queryParam("q", question)
-                        .build())
+            .uri(uriBuilder ->
+                uriBuilder
+                    .path(ApiRagMethod.QUESTION.getEndpoint())
+                    .queryParam("process", finalProcessName)
+                    .queryParam("q", question)
+                    .build())
             .contentType(MediaType.APPLICATION_JSON)
             .body(Mono.just(filterIds), FilterIds.class)
             .exchangeToMono(responseToRAGAnswer);
@@ -76,28 +74,24 @@ public class RAGManager extends AbstractExternalManager {
   }
 
   private final Function<ClientResponse, Mono<RAGAnswer>> responseToRAGAnswer =
-      (response) -> {
+      response -> {
         if (response.statusCode().equals(HttpStatus.OK)) {
           return response.bodyToMono(RAGAnswer.class);
         } else if (response.statusCode().equals(HttpStatus.NOT_FOUND)) {
-          return Mono.fromSupplier(
-              () ->
-                  new RAGAnswer()
-                      .answer("No active and ready rag component found.")
-                      .info(
-                          "You need to initialize it first and wait for it to be ready with"
-                              + " '/document/rag/init' endpoint."));
+          return Mono.fromSupplier(() ->
+              new RAGAnswer()
+                  .answer("No active and ready rag component found.")
+                  .info(
+                      "You need to initialize it first and wait for it to be ready with"
+                          + " '/document/rag/init' endpoint."));
         } else if (response.statusCode().equals(HttpStatus.BAD_REQUEST)) {
-          return Mono.fromSupplier(
-              () ->
-                  new RAGAnswer()
-                      .answer("Either no question was posed or method not supported; use GET!"));
+          return Mono.fromSupplier(() ->
+              new RAGAnswer()
+                  .answer("Either no question was posed or method not supported; use GET!"));
         } else {
-          return Mono.fromSupplier(
-              () ->
-                  new RAGAnswer()
-                      .answer(
-                          "Something went wrong. Please see the logs of 'concept-graphs-api'."));
+          return Mono.fromSupplier(() ->
+              new RAGAnswer()
+                  .answer("Something went wrong. Please see the logs of 'concept-graphs-api'."));
         }
       };
 
@@ -106,13 +100,12 @@ public class RAGManager extends AbstractExternalManager {
     Mono<String> apiResponse =
         conceptGraphsApi
             .post()
-            .uri(
-                uriBuilder ->
-                    uriBuilder
-                        .path(ApiRagMethod.INIT.getEndpoint())
-                        .queryParam("process", finalProcessName)
-                        .queryParam("force", force)
-                        .build())
+            .uri(uriBuilder ->
+                uriBuilder
+                    .path(ApiRagMethod.INIT.getEndpoint())
+                    .queryParam("process", finalProcessName)
+                    .queryParam("force", force)
+                    .build())
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(jsonBody.toString())
             .exchangeToMono(response -> response.bodyToMono(String.class));
@@ -124,12 +117,11 @@ public class RAGManager extends AbstractExternalManager {
     Mono<RAGStatus> apiResponse =
         conceptGraphsApi
             .get()
-            .uri(
-                uriBuilder ->
-                    uriBuilder
-                        .path(ApiStatus.RAG.getEndpoint())
-                        .queryParam("process", finalProcessName)
-                        .build())
+            .uri(uriBuilder ->
+                uriBuilder
+                    .path(ApiStatus.RAG.getEndpoint())
+                    .queryParam("process", finalProcessName)
+                    .build())
             .exchangeToMono(response -> response.bodyToMono(RAGStatus.class));
 
     return apiResponse.block();

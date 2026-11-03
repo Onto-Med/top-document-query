@@ -85,10 +85,9 @@ public class Entities {
 
   public Collection<Concept> getConcepts() {
     return getEntities().stream()
-        .filter(
-            e ->
-                Arrays.asList(EntityType.SINGLE_CONCEPT, EntityType.COMPOSITE_CONCEPT)
-                    .contains(e.getEntityType()))
+        .filter(e ->
+            Arrays.asList(EntityType.SINGLE_CONCEPT, EntityType.COMPOSITE_CONCEPT)
+                .contains(e.getEntityType()))
         .map(Concept.class::cast)
         .collect(Collectors.toSet());
   }

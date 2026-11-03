@@ -144,14 +144,13 @@ public class ConceptPipelineManager extends AbstractExternalManager {
       return Optional.ofNullable(
           conceptGraphsApi
               .get()
-              .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path(ApiPipelineMethod.CONFIG.getEndpoint())
-                          .queryParam("process", finalProcessName)
-                          .queryParam("default", defaultConfig)
-                          .queryParam("language", lang)
-                          .build())
+              .uri(uriBuilder ->
+                  uriBuilder
+                      .path(ApiPipelineMethod.CONFIG.getEndpoint())
+                      .queryParam("process", finalProcessName)
+                      .queryParam("default", defaultConfig)
+                      .queryParam("language", lang)
+                      .build())
               .retrieve()
               .bodyToMono(String.class)
               .block());
@@ -177,20 +176,17 @@ public class ConceptPipelineManager extends AbstractExternalManager {
     if (graphIds == null || graphIds.isEmpty()) {
       ids =
           getGraphStatisticsForProcess(finalProcessName)
-              .map(
-                  conceptGraphStatisticsEntity ->
-                      Arrays.stream(conceptGraphStatisticsEntity.getConceptGraphs())
-                          .map(GraphStatsEntity::getId)
-                          .collect(Collectors.toList()))
+              .map(conceptGraphStatisticsEntity ->
+                  Arrays.stream(conceptGraphStatisticsEntity.getConceptGraphs())
+                      .map(GraphStatsEntity::getId)
+                      .collect(Collectors.toList()))
               .orElseGet(ArrayList::new);
     } else {
       ids = new ArrayList<>(graphIds);
     }
     HashMap<String, ConceptGraphEntity> result = new HashMap<>();
-    ids.forEach(
-        id ->
-            getGraphForIdAndProcess(id, finalProcessName)
-                .ifPresent(graph -> result.put(id, graph)));
+    ids.forEach(id ->
+        getGraphForIdAndProcess(id, finalProcessName).ifPresent(graph -> result.put(id, graph)));
     return result;
   }
 
@@ -214,31 +210,29 @@ public class ConceptPipelineManager extends AbstractExternalManager {
     }
     List<ConceptGraphPipeline> conceptGraphPipelines =
         (processOverviewEntity != null ? processOverviewEntity.toApiModel() : new ArrayList<>());
-    conceptGraphPipelines.forEach(
-        conceptGraphPipeline -> {
-          if (conceptGraphPipeline.getSteps().stream()
-              .anyMatch(step -> step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED))) {
-            conceptGraphPipeline.setStatus(PipelineResponseStatus.STOPPED);
-            return;
-          }
-          conceptGraphPipeline.getSteps().stream()
-              .filter(step -> step.getName().equals(ConceptGraphPipelineStepsEnum.GRAPH))
-              .forEach(
-                  step -> {
-                    if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.FINISHED)) {
-                      conceptGraphPipeline.setStatus(PipelineResponseStatus.SUCCESSFUL);
-                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.RUNNING)
-                        || step.getStatus().equals(ConceptGraphPipelineStatusEnum.STARTED)) {
-                      conceptGraphPipeline.setStatus(PipelineResponseStatus.RUNNING);
-                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED)) {
-                      conceptGraphPipeline.setStatus(PipelineResponseStatus.STOPPED);
-                    } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.ABORTED)) {
-                      conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
-                    } else {
-                      conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
-                    }
-                  });
-        });
+    conceptGraphPipelines.forEach(conceptGraphPipeline -> {
+      if (conceptGraphPipeline.getSteps().stream()
+          .anyMatch(step -> step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED))) {
+        conceptGraphPipeline.setStatus(PipelineResponseStatus.STOPPED);
+        return;
+      }
+      conceptGraphPipeline.getSteps().stream()
+          .filter(step -> step.getName().equals(ConceptGraphPipelineStepsEnum.GRAPH))
+          .forEach(step -> {
+            if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.FINISHED)) {
+              conceptGraphPipeline.setStatus(PipelineResponseStatus.SUCCESSFUL);
+            } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.RUNNING)
+                || step.getStatus().equals(ConceptGraphPipelineStatusEnum.STARTED)) {
+              conceptGraphPipeline.setStatus(PipelineResponseStatus.RUNNING);
+            } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.STOPPED)) {
+              conceptGraphPipeline.setStatus(PipelineResponseStatus.STOPPED);
+            } else if (step.getStatus().equals(ConceptGraphPipelineStatusEnum.ABORTED)) {
+              conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
+            } else {
+              conceptGraphPipeline.setStatus(PipelineResponseStatus.FAILED);
+            }
+          });
+    });
     return conceptGraphPipelines;
   }
 
@@ -254,9 +248,8 @@ public class ConceptPipelineManager extends AbstractExternalManager {
     try {
       return conceptGraphsApi
           .get()
-          .uri(
-              uriBuilder ->
-                  uriBuilder.path(ApiProcessMethod.STOP.getEndpoint(finalProcessId)).build())
+          .uri(uriBuilder ->
+              uriBuilder.path(ApiProcessMethod.STOP.getEndpoint(finalProcessId)).build())
           .exchangeToMono(response -> response.bodyToMono(String.class))
           .block();
     } catch (WebClientResponseException e) {
@@ -276,19 +269,17 @@ public class ConceptPipelineManager extends AbstractExternalManager {
     try {
       return conceptGraphsApi
           .delete()
-          .uri(
-              uriBuilder ->
-                  uriBuilder.path(ApiProcessMethod.DELETE.getEndpoint(finalProcessId)).build())
-          .exchangeToMono(
-              response -> {
-                if (ArrayUtils.contains(
-                    new int[] {HttpStatus.OK.value(), HttpStatus.NOT_FOUND.value()},
-                    response.statusCode().value())) {
-                  return response.bodyToMono(String.class);
-                }
-                return Mono.just(
-                    "Http Status of concept graphs pipeline could not be evaluated. See its logs.");
-              })
+          .uri(uriBuilder ->
+              uriBuilder.path(ApiProcessMethod.DELETE.getEndpoint(finalProcessId)).build())
+          .exchangeToMono(response -> {
+            if (ArrayUtils.contains(
+                new int[] {HttpStatus.OK.value(), HttpStatus.NOT_FOUND.value()},
+                response.statusCode().value())) {
+              return response.bodyToMono(String.class);
+            }
+            return Mono.just(
+                "Http Status of concept graphs pipeline could not be evaluated. See its logs.");
+          })
           .block();
     } catch (WebClientResponseException e) {
       LOGGER.warning(e.getResponseBodyAsString() + " -- " + e.getMessage());
@@ -309,12 +300,11 @@ public class ConceptPipelineManager extends AbstractExternalManager {
       return Optional.ofNullable(
           conceptGraphsApi
               .get()
-              .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path(ApiGraphMethod.GRAPH.getEndpoint(graphId))
-                          .queryParam("process", finalProcessName)
-                          .build())
+              .uri(uriBuilder ->
+                  uriBuilder
+                      .path(ApiGraphMethod.GRAPH.getEndpoint(graphId))
+                      .queryParam("process", finalProcessName)
+                      .build())
               .retrieve()
               .bodyToMono(ConceptGraphEntity.class)
               .block());
@@ -337,12 +327,11 @@ public class ConceptPipelineManager extends AbstractExternalManager {
       return Optional.ofNullable(
           conceptGraphsApi
               .get()
-              .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path(ApiGraphMethod.STATISTICS.getEndpoint())
-                          .queryParam("process", finalProcessName)
-                          .build())
+              .uri(uriBuilder ->
+                  uriBuilder
+                      .path(ApiGraphMethod.STATISTICS.getEndpoint())
+                      .queryParam("process", finalProcessName)
+                      .build())
               .retrieve()
               .bodyToMono(ConceptGraphStatisticsEntity.class)
               .block());
@@ -364,12 +353,11 @@ public class ConceptPipelineManager extends AbstractExternalManager {
       return Optional.ofNullable(
           conceptGraphsApi
               .get()
-              .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path(ApiStatus.SELF.getEndpoint())
-                          .queryParam("process", finalProcessName)
-                          .build())
+              .uri(uriBuilder ->
+                  uriBuilder
+                      .path(ApiStatus.SELF.getEndpoint())
+                      .queryParam("process", finalProcessName)
+                      .build())
               .retrieve()
               .bodyToMono(PipelineStatusEntity.class)
               .block());
@@ -395,16 +383,14 @@ public class ConceptPipelineManager extends AbstractExternalManager {
       Mono<PipelineResponseEntity> apiResponse =
           conceptGraphsApi
               .post()
-              .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path(ApiPipelineMethod.INITIALIZE.getEndpoint())
-                          .queryParam("process", finalProcessName)
-                          .queryParam("lang", language == null ? "en" : language)
-                          .queryParam("skip_present", skipPresent == null || skipPresent)
-                          .queryParam(
-                              "return_statistics", returnStatistics != null && returnStatistics)
-                          .build())
+              .uri(uriBuilder ->
+                  uriBuilder
+                      .path(ApiPipelineMethod.INITIALIZE.getEndpoint())
+                      .queryParam("process", finalProcessName)
+                      .queryParam("lang", language == null ? "en" : language)
+                      .queryParam("skip_present", skipPresent == null || skipPresent)
+                      .queryParam("return_statistics", returnStatistics != null && returnStatistics)
+                      .build())
               .body(BodyInserters.fromMultipartData(parts))
               .exchangeToMono(responseToPipelineResponse);
       return apiResponse.block();
@@ -425,16 +411,14 @@ public class ConceptPipelineManager extends AbstractExternalManager {
       Mono<PipelineResponseEntity> apiResponse =
           conceptGraphsApi
               .post()
-              .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path(ApiPipelineMethod.INITIALIZE.getEndpoint())
-                          .queryParam("process", finalProcessName)
-                          .queryParam("lang", language == null ? "en" : language)
-                          .queryParam("skip_present", skipPresent == null || skipPresent)
-                          .queryParam(
-                              "return_statistics", returnStatistics != null && returnStatistics)
-                          .build())
+              .uri(uriBuilder ->
+                  uriBuilder
+                      .path(ApiPipelineMethod.INITIALIZE.getEndpoint())
+                      .queryParam("process", finalProcessName)
+                      .queryParam("lang", language == null ? "en" : language)
+                      .queryParam("skip_present", skipPresent == null || skipPresent)
+                      .queryParam("return_statistics", returnStatistics != null && returnStatistics)
+                      .build())
               .contentType(MediaType.APPLICATION_JSON)
               .bodyValue(jsonBody.toString())
               .exchangeToMono(responseToPipelineResponse);
@@ -446,7 +430,7 @@ public class ConceptPipelineManager extends AbstractExternalManager {
   }
 
   private final Function<ClientResponse, Mono<PipelineResponseEntity>> responseToPipelineResponse =
-      (response) -> {
+      response -> {
         if (response.statusCode().equals(HttpStatus.OK)) {
           return response.bodyToMono(ConceptGraphStatisticsEntity.class);
         } else if (response.statusCode().equals(HttpStatus.ACCEPTED)) {
